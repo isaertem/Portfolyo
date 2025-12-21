@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    
+    <title>Personal Portfolio | İsa Ertem</title>
+
+    
+    <meta name="description" content="İsa Ertem's personal portfolio website. Projects developed using modern web technologies (React, Tailwind, HTML, JavaScript), skills, and contact information. Full-stack developer and designer." />
+
+    
+    <meta name="keywords" content="İsa Ertem, Web Developer, Frontend Developer, Backend Developer, UI/UX Design, React Specialist, Tailwind CSS, Javascript Developer, Portfolio, Istanbul Web Design, Sinop Web Development, Bursa Web Design, Bursa Website Design, Bursa Furniture Website Design, Bursa Logo Design, Bursa Website, Software" />
+
+    
+    <meta name="author" content="İsa Ertem" />
+    <meta name="copyright" content="İsa Ertem 2025" />
+    <meta name="robots" content="index, follow" /> 
+
+    
+    <meta property="og:title" content="İsa Ertem | Web Developer & Designer" />
+    <meta property="og:description" content="Modern web experiences at the intersection of software and design. Check out my projects." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.isaertem.com" />
+    <meta property="og:image" content="https://www.isaertem.com/site-kapak.jpg" /> 
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="İsa Ertem | Portfolio" />
+    <meta name="twitter:description" content="Modern web solutions and creative designs." />
+
+    
+    <script type="application/ld+json">
+    {
+      "@context": "http://schema.org",
+      "@type": "Person",
+      "name": "İsa Ertem",
+      "jobTitle": "Web Developer",
+      "url": "https://www.isaertem.com",
+      "sameAs": [
+        "https://www.linkedin.com/in/isaertem",
+        "https://github.com/isaertem",
+        "https://www.instagram.com/isa_ertem1283"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "İstanbul",
+        "addressCountry": "Türkiye"
+      }
+    }
+    </script>
+    
+
+
+    
+       <script async src="https://www.googletagmanager.com/gtag/js?id=G-1VS0YEBG9Y"></script>
+       <script>
+             window.dataLayer = window.dataLayer || [];
+             function gtag(){dataLayer.push(arguments);}
+             gtag('js', new Date());
+
+            gtag('config', 'G-1VS0YEBG9Y');
+       </script>
+
+
+    
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-TRNQGFZ6');
+    </script>
+    
+     
+    
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='g1' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%2300d4ff' /%3E%3Cstop offset='1' stop-color='%237c5cff' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='100' cy='100' r='90' fill='%230f1724' stroke='url(%23g1)' stroke-width='10' /%3E%3Cpath d='M48 72 L76 100 L48 128' fill='none' stroke='url(%23g1)' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M152 72 L124 100 L152 128' fill='none' stroke='url(%23g1)' stroke-width='10' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='92' y='64' width='16' height='72' rx='4' fill='url(%23g1)'/%3E%3Ccircle cx='100' cy='48' r='8' fill='url(%23g1)' /%3E%3C/svg%3E" type="image/svg+xml" />
+    
+    
+    <script>
+        const myTailwindConfig = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#06b6d4', 
+                        secondary: '#3b82f6', 
+                        dark: '#111827', 
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'sway': 'sway 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        sway: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = myTailwindConfig;
+        } else {
+            window.addEventListener('load', function() {
+                if (typeof tailwind !== 'undefined') {
+                    tailwind.config = myTailwindConfig;
+                }
+            });
+        }
+    </script>
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="css/cahtbot.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    
+</head>
+
+<body class="bg-gray-950 text-white font-sans">
+
+    
+    
+
+    
+    <nav id="navbar" class="fixed top-0 w-full z-40 transition-all duration-300 py-6 bg-transparent">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            
+            
+            
+            <div class="flex items-center gap-2 sm:gap-4">
+                
+                <a href="index-en.html" class="no-underline group">
+                    <div class="nav-card" role="img" aria-label="İsa ERTEM kodlama logosu">
+                      <div class="nav-logoBox">
+                        
+                        <svg class="code-mark w-full h-auto" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                              <stop offset="0" stop-color="var(--accent1)" stop-opacity="1" />
+                              <stop offset="1" stop-color="var(--accent2)" stop-opacity="1" />
+                            </linearGradient>
+                            <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+                              <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity="0.5" />
+                            </filter>
+                          </defs>
+
+                          
+                          <circle cx="100" cy="100" r="82" fill="url(#g1)" opacity="0.12" />
+
+                          
+                          <circle cx="100" cy="100" r="88" fill="none" stroke="url(#g1)" stroke-width="3" stroke-linecap="round" class="stroke-anim" style="filter: url(#softShadow)" />
+
+                          
+                          <path d="M48 72 L76 100 L48 128" fill="none" stroke="url(#g1)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="stroke-anim"/>
+
+                          
+                          <path d="M152 72 L124 100 L152 128" fill="none" stroke="url(#g1)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="stroke-anim"/>
+
+                          
+                          <rect x="92" y="64" width="16" height="72" rx="4" fill="url(#g1)"/>
+
+                          
+                          <circle cx="100" cy="48" r="6" fill="url(#g1)" />
+
+                          
+                          <rect x="42" y="34" width="6" height="6" rx="1" opacity="0.12" fill="var(--accent1)" />
+                          <rect x="152" y="158" width="6" height="6" rx="1" opacity="0.12" fill="var(--accent2)" />
+                        </svg>
+                      </div>
+                      <div class="nav-brand">
+                        <div class="name-tag">
+                          <h1>İsa <strong style="color:var(--accent1)">ERTEM</strong></h1>
+                          
+                        </div>
+                      </div>
+                    </div>
+                </a>
+
+                
+                <div class="flex items-center space-x-1 sm:space-x-2 pl-2 sm:pl-4 border-l border-gray-700">
+                    <a href="index.html" class="text-[10px] sm:text-xs font-bold text-gray-400 border border-gray-600 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded transition-colors hover:border-white hover:text-white">TR</a>
+                    <a href="#" class="text-[10px] sm:text-xs font-bold text-cyan-400 border border-cyan-400 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded transition-colors hover:bg-cyan-400 hover:text-gray-900 shadow-[0_0_10px_rgba(34,211,238,0.3)]">EN</a>
+                </div>
+            </div>
+            
+            
+            <ul class="hidden md:flex space-x-8 text-gray-300 font-medium">
+                <li><a href="index-en.html" class="hover:text-[var(--accent1)] transition-colors">Home</a></li>
+                <li><a href="about.html" class="hover:text-[var(--accent1)] transition-colors">About</a></li>
+                
+                <li><a href="contact.html" class="hover:text-[var(--accent1)] transition-colors">Contact</a></li>
+            </ul>
+
+            
+            <button id="mobile-menu-btn" class="md:hidden text-white focus:outline-none p-2">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </div>
+        
+        
+        <div id="mobile-menu" class="hidden md:hidden bg-gray-900/95 backdrop-blur-md border-t border-gray-800 absolute w-screen left-0 top-full shadow-xl">
+            <ul class="flex flex-col p-4 space-y-4 text-center text-gray-300">
+                <li><a href="index-en.html" class="block hover:text-cyan-400 py-2" onclick="toggleMobileMenu()">Home</a></li>
+                <li><a href="about.html" class="block hover:text-cyan-400 py-2" onclick="toggleMobileMenu()">About</a></li>
+                
+                <li><a href="contact.html" class="block hover:text-cyan-400 py-2" onclick="toggleMobileMenu()">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    
+    <section id="hero" class="relative h-screen flex items-center justify-center overflow-hidden bg-gray-900">
+        
+        <div class="absolute inset-0 z-0">
+            <canvas id="hero-canvas" class="w-full h-full block"></canvas>
+            
+            
+            <div class="absolute inset-0 bg-gradient-to-b from-gray-900/50 via-gray-900/30 to-gray-900"></div>
+        </div>
+
+        
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto">
+            <div class="inline-block px-4 py-1 mb-4 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-sm font-medium animate-pulse">
+                Web Development & UI Design
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 text-white drop-shadow-lg tracking-tight">
+                Hello, I am <span class="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent1)] to-[var(--accent2)]">İSA ERTEM</span>
+            </h1>
+            <div class="text-xl md:text-3xl font-light text-gray-300 h-12 flex justify-center items-center gap-2 drop-shadow-md mb-8">
+                I am a <span id="typewriter" class="font-semibold text-cyan-400 border-r-4 border-cyan-500 pr-1"></span>
+            </div>
+
+            <div class="mt-8 flex flex-wrap justify-center gap-4">
+                
+                <a href="isa_ertem_cv-en.pdf" target="_blank" class="group relative px-8 py-3 rounded-full bg-cyan-600 text-white font-semibold overflow-hidden transition-all hover:bg-cyan-500 shadow-[0_0_20px_rgba(8,145,178,0.4)] flex items-center gap-2 cursor-pointer">
+                    <span class="relative z-10">Download CV</span>
+                    <i class="fas fa-download relative z-10 text-sm"></i>
+                    <div class="absolute inset-0 h-full w-full scale-0 rounded-full transition-all duration-300 group-hover:scale-100 group-hover:bg-cyan-500"></div>
+                </a>
+                <a href="#projects" class="px-8 py-3 rounded-full border border-gray-500 hover:border-cyan-400 hover:text-cyan-400 text-gray-300 font-semibold transition-all glass hover:bg-gray-800/50">
+                    View Projects
+                </a>
+            </div>
+        </div>
+
+        
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce-slow cursor-pointer z-20 opacity-70 hover:opacity-100 transition-opacity" onclick="document.getElementById('about').scrollIntoView()">
+            <div class="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center p-2 backdrop-blur-sm">
+                <div class="w-1 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
+            </div>
+        </div>
+    </section>
+
+    
+    <section id="about" class="py-24 bg-gray-900 relative">
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl"></div>
+
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="relative group mx-auto md:mx-0 max-w-sm md:max-w-full">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+                    <div class="relative w-full aspect-[3/4] rounded-2xl overflow-hidden bg-gray-800 border border-gray-700">
+                        
+                        <img src="isaertem.jpg" alt="İsa Ertem" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 transform group-hover:scale-105"/>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-4xl font-bold mb-6 flex items-center">
+                        <span class="w-2 h-8 bg-cyan-500 mr-4 rounded-full"></span>
+                        About Me
+                    </h2>
+                    <p class="text-gray-300 text-lg leading-relaxed mb-6">
+                        I am a developer who closely follows developments in the technology world and designs user-friendly interfaces using modern web technologies. Combining my ongoing education at Sinop University with my experience in an advertising agency, I transform complex problems into simple and aesthetically pleasing solutions. By focusing on both the logic of the code and the spirit of the design, I create work that leaves a mark in the digital world.
+                    </p>
+                    
+                    <div class="mb-8">
+                        <a href="about.html" class="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-gradient-to-r from-[var(--accent1)] to-[var(--accent2)] text-white font-semibold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 transform hover:-translate-y-1 transition-all duration-300 group">
+                            <span>More Info</span>
+                            <i class="fas fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+                        </a>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-6 border-t border-gray-800 pt-8">
+                        <div class="text-center md:text-left">
+                            <span class="block text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tabular-nums counter" data-target="3">0</span>
+                            <span class="text-sm text-gray-400 font-medium">Years Exp.</span>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <span class="block text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tabular-nums counter" data-target="15">0</span>
+                            <span class="text-sm text-gray-400 font-medium">Projects</span>
+                        </div>
+                        <div class="text-center md:text-left">
+                            <span class="block text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 tabular-nums counter" data-target="10">0</span>
+                            <span class="text-sm text-gray-400 font-medium">Clients</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <section id="skills" class="py-24 bg-gray-950 relative overflow-hidden">
+        
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiMxZjI5MzciLz48L3N2Zz4=')] opacity-20"></div>
+
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-16">
+                
+                <div class="inline-block relative mb-4">
+                    <h2 class="text-4xl font-bold text-white relative z-10">Skills</h2>
+                    <div class="absolute -bottom-2 left-0 w-full h-1 bg-cyan-500 rounded-full"></div>
+                </div>
+                <p class="text-gray-400 max-w-2xl mx-auto mt-4">Technologies I use and my areas of expertise.</p>
+            </div>
+            
+            
+            <div id="skills-grid">
+                
+            </div>
+        </div>
+    </section>
+
+    
+    <section id="projects" class="py-24 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12">
+                <div>
+                    <h2 class="text-4xl font-bold mb-4 text-white">Latest Projects</h2>
+                    <p class="text-gray-400">Some of my selected works.</p>
+                </div>
+                <button class="hidden md:block text-cyan-500 hover:text-cyan-400 font-medium transition-colors">
+                    View All <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="projects-grid">
+                
+            </div>
+            
+            <div class="mt-8 text-center md:hidden">
+                <button class="text-cyan-500 hover:text-cyan-400 font-medium transition-colors">
+                    View All <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    
+    <section id="contact" class="py-24 bg-gray-950">
+        <div class="container mx-auto px-6">
+            <div class="glass rounded-3xl p-8 md:p-12 overflow-hidden relative">
+                
+                <div class="absolute top-0 right-0 w-64 h-64 bg-cyan-600/20 rounded-full blur-[80px] -mr-16 -mt-16"></div>
+
+                <div class="grid md:grid-cols-2 gap-12 relative z-10">
+                    <div class="space-y-8">
+                        <div>
+                            <h3 class="text-3xl font-bold text-white mb-4">Have an idea?</h3>
+                            <p class="text-gray-400 leading-relaxed">
+                                Contact me to start a new project, improve an existing system, or just to chat about technology.
+                            </p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="flex items-start space-x-4 text-gray-300 group">
+                                <div class="w-12 h-12 bg-gray-800/50 rounded-lg flex items-center justify-center text-cyan-500 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-300">
+                                    <i class="fas fa-envelope text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Email</p>
+                                    <p class="font-medium">isaertem27@gmail.com</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start space-x-4 text-gray-300 group">
+                                <div class="w-12 h-12 bg-gray-800/50 rounded-lg flex items-center justify-center text-cyan-500 group-hover:bg-cyan-500 group-hover:text-white transition-all duration-300">
+                                    <i class="fas fa-map-marker-alt text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500 mb-1">Location</p>
+                                    <p class="font-medium">Ayancık / Sinop, Türkiye</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4 pt-4">
+                                <a href="https://github.com/isaertem" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-cyan-600 hover:text-white transition-all"><i class="fab fa-github"></i></a>
+                                <a href="https://www.linkedin.com/in/isaertem/" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all"><i class="fab fa-linkedin-in"></i></a>
+                                <a href="https://www.instagram.com/isa_ertem1283/" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all"><i class="fab fa-instagram"></i></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-gray-400 text-sm font-medium mb-2">Name</label>
+                                <input type="text" class="w-full bg-gray-900/50 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all placeholder-gray-600" placeholder="John Doe">
+                            </div>
+                            <div>
+                                <label class="block text-gray-400 text-sm font-medium mb-2">Subject</label>
+                                <input type="text" class="w-full bg-gray-900/50 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all placeholder-gray-600" placeholder="Project Inquiry">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-sm font-medium mb-2">Email</label>
+                            <input type="email" class="w-full bg-gray-900/50 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-all placeholder-gray-600" placeholder="example@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 text-sm font-medium mb-2">Message</label>
+                            <textarea rows="4" class="w-full bg-gray-900/50 border border-gray-700 text-white rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 resize-none transition-all placeholder-gray-600" placeholder="Your message..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-4 rounded-lg transition-all transform hover:-translate-y-1 shadow-lg flex items-center justify-center gap-2">
+                            <span>Send</span>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <footer class="bg-gray-950 border-t border-gray-800 pt-16 pb-8">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col lg:flex-row justify-between items-center gap-10 mb-12">
+                
+                <div class="flex items-center gap-3">
+                    
+                    <a href="index-en.html" class="no-underline group">
+                     <svg id="footer-logo" class="code-mark h-10 w-10 md:h-12 md:w-12" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                       <defs>
+                         <linearGradient id="gFooter" x1="0" x2="1" y1="0" y2="1">
+                          <stop offset="0" stop-color="var(--accent1)" stop-opacity="1" />
+                          <stop offset="1" stop-color="var(--accent2)" stop-opacity="1" />
+                         </linearGradient>
+                         <filter id="softShadowFooter" x="-50%" y="-50%" width="200%" height="200%">
+                          <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity="0.5" />
+                         </filter>
+                       </defs>
+
+                      <circle cx="100" cy="100" r="82" fill="url(#gFooter)" opacity="0.12" />
+                      <circle cx="100" cy="100" r="88" fill="none" stroke="url(#gFooter)" stroke-width="3" stroke-linecap="round" class="footer-stroke" style="filter: url(#softShadowFooter)" />
+                      <path d="M48 72 L76 100 L48 128" fill="none" stroke="url(#gFooter)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="footer-stroke"/>
+                      <path d="M152 72 L124 100 L152 128" fill="none" stroke="url(#gFooter)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="footer-stroke"/>
+                      <rect x="92" y="64" width="16" height="72" rx="4" fill="url(#gFooter)"/>
+                      <circle cx="100" cy="48" r="6" fill="url(#gFooter)" />
+                      <rect x="42" y="34" width="6" height="6" rx="1" opacity="0.12" fill="var(--accent1)" />
+                      <rect x="152" y="158" width="6" height="6" rx="1" opacity="0.12" fill="var(--accent2)" />
+                    </svg>
+                    </a>
+                   
+                   <a href="index-en.html" class="no-underline group">
+                    <div class="text-2xl md:text-3xl font-bold tracking-wide text-[#e6eef8]">
+                        İsa <strong style="color:var(--accent1)">ERTEM</strong>
+                    </div>
+                   </a> 
+                    
+                </div>
+
+                
+                <ul class="flex flex-wrap justify-center gap-8 text-gray-400 font-medium text-sm uppercase tracking-wider">
+                    <li><a href="about.html" class="hover:text-[var(--accent1)] transition-colors">About</a></li>
+                    <li><a href="index-en.html#projects" class="hover:text-[var(--accent1)] transition-colors">Projects</a></li>
+                    <li><a href="contact.html" class="hover:text-[var(--accent1)] transition-colors">Contact</a></li>
+                </ul>
+
+                
+                <div class="flex gap-5">
+                    <a href="mailto:isaertem27@gmail.com" title="E-posta Gönder" class="w-10 h-10 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-[var(--accent1)] hover:border-[var(--accent1)] hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] transition-all duration-300 transform hover:-translate-y-1">
+                        <i class="fas fa-envelope text-lg"></i>
+                    </a>
+                    <a href="https://github.com/isaertem" target="_blank" title="GitHub" class="w-10 h-10 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-[var(--accent1)] hover:border-[var(--accent1)] hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] transition-all duration-300 transform hover:-translate-y-1">
+                        <i class="fab fa-github text-lg"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/in/isaertem/" target="_blank" title="LinkedIn" class="w-10 h-10 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-[var(--accent1)] hover:border-[var(--accent1)] hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] transition-all duration-300 transform hover:-translate-y-1">
+                        <i class="fab fa-linkedin-in text-lg"></i>
+                    </a>
+                    <a href="https://www.instagram.com/isa_ertem1283/" target="_blank" title="Instagram" class="w-10 h-10 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400 hover:text-[var(--accent1)] hover:border-[var(--accent1)] hover:shadow-[0_0_15px_rgba(34,211,238,0.3)] transition-all duration-300 transform hover:-translate-y-1">
+                        <i class="fab fa-instagram text-lg"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-600 text-sm">
+                <p>© 2025 İsa Ertem. All rights reserved.</p>
+                <div class="mt-4 md:mt-0 flex items-center space-x-2">
+                    <span>Designed & Coded with</span>
+                    <i class="fas fa-heart text-red-500 animate-pulse"></i>
+                    <span>by İsa</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+         
+    
+    
+    <button id="chat-btn" class="fixed bottom-8 right-8 z-50 w-14 h-14 bg-gradient-to-r from-[var(--accent1)] to-[var(--accent2)] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform duration-300 group">
+        <i class="fas fa-comment-dots text-2xl group-hover:animate-pulse"></i>
+        <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-gray-900 rounded-full animate-bounce"></span>
+    </button>
+
+    
+    <div id="chat-window" class="fixed bottom-24 right-8 z-50 w-80 sm:w-96 bg-gray-900/95 backdrop-blur-xl border border-gray-700 rounded-2xl shadow-2xl scale-0 opacity-0 origin-bottom-right">
+        
+        
+        <div class="bg-gradient-to-r from-gray-800 to-gray-900 p-4 border-b border-gray-700 flex justify-between items-center relative rounded-t-2xl">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border border-[var(--accent1)]">
+                        <svg class="w-full h-full p-1" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                          <defs>
+                            <linearGradient id="gBot" x1="0" x2="1" y1="0" y2="1">
+                              <stop offset="0" stop-color="var(--accent1)" stop-opacity="1" />
+                              <stop offset="1" stop-color="var(--accent2)" stop-opacity="1" />
+                            </linearGradient>
+                          </defs>
+                          <circle cx="100" cy="100" r="82" fill="url(#gBot)" opacity="0.12" />
+                          <circle cx="100" cy="100" r="88" fill="none" stroke="url(#gBot)" stroke-width="10" stroke-linecap="round" />
+                          <path d="M48 72 L76 100 L48 128" fill="none" stroke="url(#gBot)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+                          <path d="M152 72 L124 100 L152 128" fill="none" stroke="url(#gBot)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+                          <rect x="92" y="64" width="16" height="72" rx="4" fill="url(#gBot)"/>
+                          <circle cx="100" cy="48" r="8" fill="url(#gBot)" />
+                        </svg>
+                    </div>
+                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-gray-800 rounded-full"></span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-white text-sm">Isa's Assistant</h4>
+                    <p class="text-xs text-gray-400">Online</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button id="chat-settings-btn" class="text-gray-400 hover:text-white transition-colors" title="Ayarlar">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button id="close-chat" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            
+            <div id="chat-settings" class="hidden absolute top-14 right-4 bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-xl w-48 animate-fade-in z-[60]">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-300">Voice Mode</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="voice-toggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[var(--accent1)]"></div>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        
+        <div id="chat-messages" class="p-4 h-80 overflow-y-auto flex flex-col gap-3 bg-gray-900/50 scrollbar-thin">
+            <div class="chat-message chat-bot">
+                Hello! I'm Isa's digital assistant. 👋<br />
+                How can I help you?
+            </div>
+            <div class="flex flex-wrap gap-2 mt-2" id="chat-options">
+                <button onclick="sendOption('Projects')" class="text-xs bg-gray-800 hover:bg-[var(--accent1)] hover:text-white text-[var(--accent1)] border border-[var(--accent1)] px-3 py-1.5 rounded-full transition-all">Projects 📂</button>
+                <button onclick="sendOption('Contact')" class="text-xs bg-gray-800 hover:bg-[var(--accent1)] hover:text-white text-[var(--accent1)] border border-[var(--accent1)] px-3 py-1.5 rounded-full transition-all">Contact 📞</button>
+                <button onclick="sendOption('Download CV')" class="text-xs bg-gray-800 hover:bg-[var(--accent1)] hover:text-white text-[var(--accent1)] border border-[var(--accent1)] px-3 py-1.5 rounded-full transition-all">Download CV 📄</button>
+            </div>
+        </div>
+
+        
+        <div class="p-4 border-t border-gray-700 bg-gray-800/50 rounded-b-2xl">
+            <form id="chat-form" class="flex gap-2" onsubmit="handleChatSubmit(event)">
+                <input type="text" id="chat-input" placeholder="Write a message..." class="flex-1 bg-gray-900 border border-gray-600 text-white text-sm rounded-full px-4 py-2 focus:border-[var(--accent1)] focus:outline-none focus:ring-1 focus:ring-[var(--accent1)] transition-all">
+                <button type="submit" class="w-10 h-10 bg-[var(--accent1)] text-white rounded-full flex items-center justify-center hover:bg-cyan-600 transition-colors transform hover:scale-105">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+
+    
+    <div id="scroll-to-top" class="fixed bottom-8 left-8 z-40 transition-all duration-500 transform opacity-0 translate-y-10 pointer-events-none">
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="p-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-lg transition-all hover:-translate-y-1 group border border-cyan-400/30 flex items-center justify-center">
+            <i class="fas fa-arrow-up animate-bounce-slow group-hover:animate-none"></i>
+        </button>
+    </div>
+    <script src="js/chatbot-en.js"></script>
+
+    
+   <script src="js/index-en.js"></script>
+</body>
+</html>

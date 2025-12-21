@@ -1,0 +1,90 @@
+
+        :root {
+            --bg: #0f1724; 
+            --accent1: #00d4ff;
+            --accent2: #7c5cff;
+            --muted: #94a3b8;
+            --glass: rgba(255,255,255,0.04);
+        }
+
+
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #111827; } 
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent1); }
+        
+
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+        
+        .no-scroll { overflow: hidden; }
+
+        .glass {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stroke-anim {
+            stroke-dasharray: 400;
+            stroke-dashoffset: 400;
+            animation: dash 1.6s ease forwards;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+
+        .footer-stroke {
+            stroke-dasharray: 400;
+            stroke-dashoffset: 400;
+        }
+        
+        .animate-now .footer-stroke {
+            animation: dash 1.6s ease forwards;
+        }
+
+        .nav-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 12px;
+            background: transparent;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        .nav-card:hover {
+            background: transparent;
+            border-color: transparent;
+        }
+        .nav-logoBox {
+            width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .nav-brand h1 {
+            margin: 0;
+            color: #e6eef8;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+        }
+        .nav-brand .subtitle {
+            margin: 2px 0 0;
+            color: var(--muted);
+            font-size: 0.7rem;
+            display: none; 
+        }
+        @media (min-width: 768px) {
+            .nav-logoBox { width: 56px; }
+            .nav-brand h1 { font-size: 1.25rem; }
+            .nav-brand .subtitle { display: block; }
+        }
