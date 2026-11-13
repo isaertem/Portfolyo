@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>Ağ Güvenliği ve Kriptoloji - İnteraktif Soru Bankası v3</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent: #38bdf8;
+            --accent-purple: #a855f7;
+            --accent-emerald: #10b981;
+            --success: #22c55e;
+            --success-bg: rgba(34, 197, 94, 0.16);
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.16);
+            --warning: #f59e0b;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.55;
+            padding-bottom: 60px;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 14px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+        }
+
+        header h1 {
+            font-size: clamp(1.1rem, 3.5vw, 1.45rem);
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        header p {
+            font-size: clamp(0.75rem, 2.5vw, 0.88rem);
+            color: var(--text-secondary);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .stat-badge {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .stat-badge.correct { color: var(--success); border-color: var(--success); }
+        .stat-badge.wrong { color: var(--danger); border-color: var(--danger); }
+        .stat-badge.score { color: var(--accent); border-color: var(--accent); }
+
+        .container {
+            max-width: 1080px;
+            margin: 18px auto;
+            padding: 0 12px;
+        }
+
+        /* Main Mode Selector (Bilgi vs İşlem vs Tümü) */
+        .mode-selector-title {
+            text-align: center;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mode-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .mode-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .mode-card.active {
+            background: rgba(56, 189, 248, 0.14);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+        }
+
+        .mode-icon {
+            font-size: 1.5rem;
+        }
+
+        .mode-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .mode-desc {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+        }
+
+        /* Reference Panel - Fits Screen 100% Without Scrolling */
+        .ref-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+
+        .ref-header {
+            padding: 12px 16px;
+            background: rgba(56, 189, 248, 0.1);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--accent);
+            user-select: none;
+        }
+
+        .ref-body {
+            padding: 14px;
+            display: block;
+        }
+
+        .ref-body.hidden {
+            display: none;
+        }
+
+        /* Screen-fitting 29-letter Alphabet Grid */
+        .alpha-grid {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 5px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 900px) {
+            .alpha-grid {
+                grid-template-columns: repeat(10, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .alpha-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 4px;
+            }
+            .mode-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .mode-card {
+                flex-direction: row;
+                justify-content: flex-start;
+                text-align: left;
+                padding: 10px 14px;
+                gap: 12px;
+            }
+        }
+
+        .alpha-cell {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 2px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .alpha-char {
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: var(--accent);
+            line-height: 1.1;
+        }
+
+        .alpha-num {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #facc15;
+            margin: 1px 0;
+        }
+
+        .alpha-mono {
+            font-size: 0.68rem;
+            color: #94a3b8;
+            background: rgba(255,255,255,0.04);
+            width: 100%;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding-top: 1px;
+        }
+
+        .ref-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .ref-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            text-align: center;
+        }
+
+        .ref-table th, .ref-table td {
+            border: 1px solid var(--border);
+            padding: 5px 3px;
+        }
+
+        .ref-table th {
+            background: #0f172a;
+            color: var(--accent);
+            font-size: 0.75rem;
+        }
+
+        /* Subcategory Filter Bar */
+        .filter-bar {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .filter-btn {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 7px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--accent);
+            color: #0f172a;
+            border-color: var(--accent);
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 8px 13px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary { background: var(--accent); color: #0f172a; }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        /* Question Card */
+        .q-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .q-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .q-num {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .q-cat {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent);
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .q-text {
+            font-size: 0.95rem;
+            margin-bottom: 14px;
+            word-break: break-word;
+        }
+
+        .q-text code {
+            background: #0f172a;
+            color: #facc15;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.98rem;
+            letter-spacing: 0.5px;
+        }
+
+        .char-hint {
+            display: block;
+            margin-top: 8px;
+            padding: 7px 10px;
+            background: rgba(15, 23, 42, 0.75);
+            border-left: 3px solid var(--warning);
+            border-radius: 4px;
+            color: #cbd5e1;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            line-height: 1.45;
+        }
+
+        .options-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 640px) {
+            .options-list { grid-template-columns: 1fr; }
+        }
+
+        .opt-btn {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .opt-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        .opt-letter {
+            background: var(--bg-secondary);
+            color: var(--accent);
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .opt-btn.correct {
+            background: var(--success-bg);
+            border-color: var(--success);
+            color: #bbf7d0;
+        }
+
+        .opt-btn.correct .opt-letter {
+            background: var(--success);
+            color: #0f172a;
+        }
+
+        .opt-btn.wrong {
+            background: var(--danger-bg);
+            border-color: var(--danger);
+            color: #fecaca;
+        }
+
+        .opt-btn.wrong .opt-letter {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .sol-toggle {
+            background: transparent;
+            border: 1px dashed var(--border);
+            color: var(--text-secondary);
+            padding: 6px 11px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            margin-top: 2px;
+        }
+
+        .sol-toggle:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .explanation-box {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            background: #0f172a;
+            border-left: 4px solid var(--accent);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            word-break: break-word;
+        }
+
+        .explanation-box.visible {
+            display: block;
+        }
+
+        /* Floating Playfair Sticky Pop-up */
+        .pf-floating-popup {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 999;
+            background: rgba(15, 23, 42, 0.96);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--accent);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.3);
+            width: 340px;
+            max-width: calc(100vw - 24px);
+            transition: transform 0.25s ease, opacity 0.25s ease;
+            overflow: hidden;
+            display: none;
+        }
+
+        .pf-floating-popup.active {
+            display: block;
+            animation: popIn 0.25s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .pf-popup-header {
+            background: linear-gradient(90deg, #0284c7, #1e1b4b);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .pf-popup-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pf-popup-btn {
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .pf-popup-body {
+            padding: 10px;
+        }
+
+        .pf-popup-body.minimized {
+            display: none;
+        }
+
+        .pf-popup-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .pf-popup-table th {
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 0.68rem;
+            padding: 3px 2px;
+            border: 1px solid var(--border);
+        }
+
+        .pf-popup-table td {
+            border: 1px solid var(--border);
+            padding: 5px 2px;
+            font-weight: 700;
+            color: #f8fafc;
+            background: #0f172a;
+        }
+
+        .pf-popup-table td.row-lbl {
+            background: #1e293b;
+            color: #facc15;
+            font-size: 0.7rem;
+            font-weight: 600;
+            width: 24px;
+        }
+
+        .pf-popup-rules {
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 600px) {
+            .pf-floating-popup {
+                bottom: 10px;
+                right: 12px;
+                left: 12px;
+                width: auto;
+            }
+            body.pf-popup-open {
+                padding-bottom: 220px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🔐 Ağ Güvenliği ve Kriptoloji Soru Bankası</h1>
+    <p>PDF Sıralı Konular • 6 Karakterli Şifrelemeler • Mobil ve Masaüstü Tam Uyumlu</p>
+    <div class="stats-bar">
+        <span class="stat-badge" id="stat-total">Gösterilen: 80</span>
+        <span class="stat-badge correct" id="stat-correct">Doğru: 0</span>
+        <span class="stat-badge wrong" id="stat-wrong">Yanlış: 0</span>
+        <span class="stat-badge score" id="stat-score">Başarı: %0</span>
+    </div>
+</header>
+
+<div class="container">
+    <!-- Top-Level Mode Selection (Bilgi vs İşlem vs Tümü) -->
+    <div class="mode-selector-title">👇 Çalışmak İstediğin Bölümü Seç:</div>
+    <div class="mode-grid">
+        <div class="mode-card active" id="mode-all" onclick="setMode('all')">
+            <div class="mode-icon">🚀</div>
+            <div>
+                <div class="mode-title">Tüm Sorular (Sıralı)</div>
+                <div class="mode-desc">Baştan Sona PDF Sırasıyla (80 Soru)</div>
+            </div>
+        </div>
+        <div class="mode-card" id="mode-bilgi" onclick="setMode('bilgi')">
+            <div class="mode-icon">📚</div>
+            <div>
+                <div class="mode-title">Bilgi (Sözel) Soruları</div>
+                <div class="mode-desc">OSI X.800, Ataklar & Kriptoloji (20 Soru)</div>
+            </div>
+        </div>
+        <div class="mode-card" id="mode-islem" onclick="setMode('islem')">
+            <div class="mode-icon">🧮</div>
+            <div>
+                <div class="mode-title">İşlem (Şifreleme) Soruları</div>
+                <div class="mode-desc">Sezar'dan Hill Şifrelemeye (60 Soru)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen-Fitting Reference Tables -->
+    <div class="ref-panel">
+        <div class="ref-header" onclick="toggleRef()">
+            <span>📊 Ekrana Tam Sığan Alfabe (Mod 29), Monoalfabetik & Playfair Tablosu</span>
+            <span id="ref-arrow">▼ Gizle / Göster</span>
+        </div>
+        <div class="ref-body" id="ref-body">
+            <p style="margin-bottom:8px; font-size:0.83rem; font-weight:600; color:#facc15;">
+                1) Türk Alfabesi İndeksleri (0-28) ve Monoalfabetik Anahtar Karşılıkları (k):
+            </p>
+            <div class="alpha-grid">
+                <div class="alpha-cell"><div class="alpha-char">A</div><div class="alpha-num">0</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:D(4)</div></div>
+<div class="alpha-cell"><div class="alpha-char">B</div><div class="alpha-num">1</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:G(7)</div></div>
+<div class="alpha-cell"><div class="alpha-char">C</div><div class="alpha-num">2</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:H(9)</div></div>
+<div class="alpha-cell"><div class="alpha-char">Ç</div><div class="alpha-num">3</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:Ğ(8)</div></div>
+<div class="alpha-cell"><div class="alpha-char">D</div><div class="alpha-num">4</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:F(6)</div></div>
+<div class="alpha-cell"><div class="alpha-char">E</div><div class="alpha-num">5</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:Ç(3)</div></div>
+<div class="alpha-cell"><div class="alpha-char">F</div><div class="alpha-num">6</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:C(2)</div></div>
+<div class="alpha-cell"><div class="alpha-char">G</div><div class="alpha-num">7</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:Ş(22)</div></div>
+<div class="alpha-cell"><div class="alpha-char">Ğ</div><div class="alpha-num">8</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:A(0)</div></div>
+<div class="alpha-cell"><div class="alpha-char">H</div><div class="alpha-num">9</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:E(5)</div></div>
+<div class="alpha-cell"><div class="alpha-char">I</div><div class="alpha-num">10</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:L(14)</div></div>
+<div class="alpha-cell"><div class="alpha-char">İ</div><div class="alpha-num">11</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:O(17)</div></div>
+<div class="alpha-cell"><div class="alpha-char">J</div><div class="alpha-num">12</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:P(19)</div></div>
+<div class="alpha-cell"><div class="alpha-char">K</div><div class="alpha-num">13</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:Ö(18)</div></div>
+<div class="alpha-cell"><div class="alpha-char">L</div><div class="alpha-num">14</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:N(16)</div></div>
+<div class="alpha-cell"><div class="alpha-char">M</div><div class="alpha-num">15</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:K(13)</div></div>
+<div class="alpha-cell"><div class="alpha-char">N</div><div class="alpha-num">16</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:J(12)</div></div>
+<div class="alpha-cell"><div class="alpha-char">O</div><div class="alpha-num">17</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:İ(11)</div></div>
+<div class="alpha-cell"><div class="alpha-char">Ö</div><div class="alpha-num">18</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:M(15)</div></div>
+<div class="alpha-cell"><div class="alpha-char">P</div><div class="alpha-num">19</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:U(24)</div></div>
+<div class="alpha-cell"><div class="alpha-char">R</div><div class="alpha-num">20</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:Y(27)</div></div>
+<div class="alpha-cell"><div class="alpha-char">S</div><div class="alpha-num">21</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:Z(28)</div></div>
+<div class="alpha-cell"><div class="alpha-char">Ş</div><div class="alpha-num">22</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:I(10)</div></div>
+<div class="alpha-cell"><div class="alpha-char">T</div><div class="alpha-num">23</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:T(23)</div></div>
+<div class="alpha-cell"><div class="alpha-char">U</div><div class="alpha-num">24</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:B(1)</div></div>
+<div class="alpha-cell"><div class="alpha-char">Ü</div><div class="alpha-num">25</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:S(21)</div></div>
+<div class="alpha-cell"><div class="alpha-char">V</div><div class="alpha-num">26</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:R(20)</div></div>
+<div class="alpha-cell"><div class="alpha-char">Y</div><div class="alpha-num">27</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:Ü(25)</div></div>
+<div class="alpha-cell"><div class="alpha-char">Z</div><div class="alpha-num">28</div><div class="alpha-mono" title="Monoalfabetik karşılığı">k:V(26)</div></div>
+            </div>
+
+            <div class="ref-grid-2">
+                <div>
+                    <p style="margin-bottom:6px; font-size:0.83rem; font-weight:600; color:#facc15;">2) Playfair Şifreleme Matrisi (4×7):</p>
+                    <table class="ref-table">
+                        <tr><th>Sütun 1</th><th>Sütun 2</th><th>Sütun 3</th><th>Sütun 4</th><th>Sütun 5</th><th>Sütun 6</th><th>Sütun 7</th></tr>
+                        <tr><td><b>D</b></td><td><b>G</b></td><td><b>H</b></td><td><b>Ğ</b></td><td><b>F</b></td><td><b>Ç</b></td><td><b>C</b></td></tr>
+                        <tr><td><b>B</b></td><td><b>A</b></td><td><b>E</b></td><td><b>L</b></td><td><b>O</b></td><td><b>P</b></td><td><b>Ö</b></td></tr>
+                        <tr><td><b>N</b></td><td><b>K</b></td><td><b>J</b></td><td><b>I / İ</b></td><td><b>M</b></td><td><b>U</b></td><td><b>Y</b></td></tr>
+                        <tr><td><b>Z</b></td><td><b>V</b></td><td><b>T</b></td><td><b>Ş</b></td><td><b>S</b></td><td><b>R</b></td><td><b>Ü</b></td></tr>
+                    </table>
+                </div>
+                <div>
+                    <p style="margin-bottom:6px; font-size:0.83rem; font-weight:600; color:#facc15;">3) PDF Sırasıyla Şifreleme Formülleri:</p>
+                    <ul style="font-size:0.8rem; padding-left:16px; color:#cbd5e1; line-height:1.6;">
+                        <li><b>Sezar:</b> Şifreleme: <code>Y = (X + K) mod 29</code> | Çözme: <code>X = (Y - K) mod 29</code></li>
+                        <li><b>Monoalfabetik:</b> <code>y_i = E(x_i) = k_(x_i)</code> (Tablodaki k satırı)</li>
+                        <li><b>Yer Değiştirme:</b> Anahtar altına satır satır yazılır (eksikse <code>J</code> eklenir), sütunlar <code>1, 2, 3...</code> sırasıyla okunur.</li>
+                        <li><b>Vigenere:</b> Şifreleme: <code>Y_i = (X_i + K_i) mod 29</code> | Çözme: <code>X_i = (Y_i - K_i) mod 29</code></li>
+                        <li><b>Playfair:</b> İkili gruplanır. Aynı sütunda 1 alt, aynı satırda 1 sağ, farklıysa dikdörtgen köşesi alınır.</li>
+                        <li><b>Hill Şifreleme:</b> <code>C = K · P mod 29</code> (2×2 anahtar matrisi ile ikili vektör çarpımı)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subcategory Filter Buttons -->
+    <div class="filter-bar" id="filter-bar"></div>
+
+    <!-- Action Buttons -->
+    <div class="action-bar">
+        <button class="btn btn-primary" onclick="toggleAllSolutions(true)">💡 Tüm Çözümleri Göster</button>
+        <button class="btn btn-primary" onclick="toggleAllSolutions(false)">🙈 Tüm Çözümleri Gizle</button>
+        <button class="btn btn-danger" onclick="resetQuiz()">🔄 Testi Sıfırla</button>
+    </div>
+
+    
+<!-- Floating Playfair Sticky Pop-up -->
+<div class="pf-floating-popup" id="pf-floating-popup">
+    <div class="pf-popup-header" onclick="togglePfPopupBody()">
+        <span class="pf-popup-title">📌 Playfair Tablosu (Sabit Pop-up)</span>
+        <button class="pf-popup-btn" id="pf-min-btn">Küçült ▾</button>
+    </div>
+    <div class="pf-popup-body" id="pf-popup-body">
+        <table class="pf-popup-table">
+            <tr>
+                <th>#</th><th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th>S6</th><th>S7</th>
+            </tr>
+            <tr>
+                <td class="row-lbl">1</td><td>D</td><td>G</td><td>H</td><td>Ğ</td><td>F</td><td>Ç</td><td>C</td>
+            </tr>
+            <tr>
+                <td class="row-lbl">2</td><td>B</td><td>A</td><td>E</td><td>L</td><td>O</td><td>P</td><td>Ö</td>
+            </tr>
+            <tr>
+                <td class="row-lbl">3</td><td>N</td><td>K</td><td>J</td><td>I/İ</td><td>M</td><td>U</td><td>Y</td>
+            </tr>
+            <tr>
+                <td class="row-lbl">4</td><td>Z</td><td>V</td><td>T</td><td>Ş</td><td>S</td><td>R</td><td>Ü</td>
+            </tr>
+        </table>
+        <div class="pf-popup-rules">
+            <span>⬇ <b>Aynı Sütun:</b> 1 Alt</span>
+            <span>➡ <b>Aynı Satır:</b> 1 Sağ</span>
+            <span>🔲 <b>Farklı:</b> Köşe</span>
+        </div>
+    </div>
+</div>
+
+    <!-- Questions Container -->
+    <div id="questions-container"></div>
+</div>
+
+<script>
+    const questions = [
+  {
+    "id": 1,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "Uluslararası Haberleşme Birliği (ITU) tarafından yayınlanan ve 'Açık Sistemlerin Bağlantısı İçin Güvenlik Mimarisi (OSI Security Architecture)' önerilerini içeren standart belge aşağıdakilerden hangisidir?",
+    "options": [
+      "X.800",
+      "IEEE 802.11",
+      "RFC 1918",
+      "ISO 27001"
+    ],
+    "answer": 0,
+    "explanation": "Ders notlarına göre ITU tarafından yayınlanan <b>X.800</b> belgesi, Açık Sistemlerin Bağlantısı (OSI) için güvenlik mimarisi önerilerini içerir."
+  },
+  {
+    "id": 2,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "OSI güvenlik mimarisi (X.800) temel olarak hangi üç ana konuya odaklanmaktadır?",
+    "options": [
+      "Güvenlik Atağı, Güvenlik Mekanizması, Güvenlik Hizmeti",
+      "Güvenlik Duvarı, Antivirüs, Saldırı Tespit Sistemi",
+      "Simetrik Şifreleme, Asimetrik Şifreleme, Hash Fonksiyonları",
+      "Donanım Güvenliği, Yazılım Güvenliği, Fiziksel Güvenlik"
+    ],
+    "answer": 0,
+    "explanation": "OSI güvenlik mimarisi <b>Güvenlik Atağı (Security Attack)</b>, <b>Güvenlik Mekanizması (Security Mechanism)</b> ve <b>Güvenlik Hizmeti (Security Service)</b> olmak üzere üç konuya odaklanır."
+  },
+  {
+    "id": 3,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "'Güvenlik atağını algılama, önleme ve ataktan kurtarma amacıyla tasarlanmış bir işlem veya bu işlem için kullanılan bir cihaz' tanımı aşağıdakilerden hangisine aittir?",
+    "options": [
+      "Güvenlik Mekanizması",
+      "Tehdit Analizi",
+      "Güvenlik Atağı",
+      "Güvenlik Hizmeti"
+    ],
+    "answer": 0,
+    "explanation": "Güvenlik atağını algılama, önleme ve ataktan kurtarma amacıyla tasarlanan işlem veya cihazlara <b>Güvenlik Mekanizması</b> denir."
+  },
+  {
+    "id": 4,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "Ders notlarındaki tanımlara göre 'Gerçekleştirildiğinde güvenlik açığı oluşturabilecek olası bir tehlike' ile 'Bir tehditten dolayı oluşan sistem güvenliğine yapılan saldırı' kavramları sırasıyla hangileridir?",
+    "options": [
+      "Atak - Tehdit",
+      "Tehdit - Atak",
+      "Risk - Zafiyet",
+      "İhlal - Mekanizma"
+    ],
+    "answer": 1,
+    "explanation": "Olası tehlikeye <b>Tehdit (Threat)</b>, bir tehditten dolayı sistem güvenliğine yapılan eyleme ise <b>Atak (Attack)</b> denir."
+  },
+  {
+    "id": 5,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "Aşağıdakilerden hangisi iletişim kanalını dinleyerek bilgiyi okumak veya bilgi akışını incelemek şeklinde gerçekleşen bir 'Pasif Atak' türüdür?",
+    "options": [
+      "Başka birisiymiş gibi bilgi göndermek (Masquerade)",
+      "Mesajda değişiklik yaparak diğer tarafa göndermek (Modification of messages)",
+      "Servis reddi gerçekleştirmek (Denial of Service - DoS)",
+      "Mesaj içeriğinin okunması (Release of message contents) ve Trafik analizi (Traffic analysis)"
+    ],
+    "answer": 3,
+    "explanation": "Pasif ataklar veriyi değiştirmeden kanalı dinlemeyi içerir: <b>Release of message contents (Mesaj içeriğini okuma/dinleme)</b> ve <b>Traffic analysis (Trafik analizi)</b>."
+  },
+  {
+    "id": 6,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "İki iletişim cihazı arasındaki iletişimde mesajı bir taraftan alıp aynı mesajı diğer tarafa göndermek ve bu sırada mesajı okumak şeklinde yapılan aktif atağa ne ad verilir?",
+    "options": [
+      "Masquerade (Kimliğe Bürünme)",
+      "Replay (Tekrarlama)",
+      "Traffic Analysis (Trafik Analizi)",
+      "Denial of Service (DoS)"
+    ],
+    "answer": 1,
+    "explanation": "İletişimdeki mesajı bir taraftan alıp aynı mesajı diğer tarafa tekrar gönderme ve bu sırada okuma saldırısına <b>Replay</b> atağı denir."
+  },
+  {
+    "id": 7,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "Aktif atak türlerinden biri olan 'Masquerade' saldırısının tanımı aşağıdakilerden hangisidir?",
+    "options": [
+      "İletişim kanalındaki şifreli paketlerin boyutunu analiz etmek",
+      "Gereksiz ve çok sayıda mesaj ile servisi kilitlemek",
+      "Başka birisiymiş gibi bilgi göndermek",
+      "Dış XML dosyası göndererek sunucuda kod çalıştırmak"
+    ],
+    "answer": 2,
+    "explanation": "<b>Masquerade (Maskeleme / Kimliğe Bürünme)</b>, saldırganın kendisini başka bir yetkili kullanıcı veya cihazmış gibi göstererek bilgi göndermesidir."
+  },
+  {
+    "id": 8,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "Kaba kuvvet (Brute force) veya bilinen ('admin', '1234' gibi) kullanıcı adı ve şifre denemeleri yapılarak sisteme girilebilmesine yol açan güvenlik açığı hangisidir?",
+    "options": [
+      "Kırık Kimlik Doğrulama (Broken Authentication)",
+      "XML External Entities (XEE)",
+      "Hassas Veri Açığa Çıkması (Sensitive Data Exposure)",
+      "Kırık Erişim Kontrolü (Broken Access Control)"
+    ],
+    "answer": 0,
+    "explanation": "Kaba kuvvet veya varsayılan/bilinen (admin, 1234) parolalarla sisteme sızılmasına olanak tanıyan zafiyet <b>Kırık Kimlik Doğrulama (Broken Authentication)</b> olarak adlandırılır."
+  },
+  {
+    "id": 9,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "Dış XML dosyası alan sayfalarda zararlı XML dosyası gönderilerek dosya okuma, kod çalıştırma ve servis reddi saldırılarının gerçekleştirilebildiği güvenlik açığı hangisidir?",
+    "options": [
+      "Broken Authentication",
+      "XML External Entities (XEE)",
+      "Broken Access Control",
+      "Sensitive Data Exposure"
+    ],
+    "answer": 1,
+    "explanation": "Zararlı dış XML varlıkları ile dosya okuma, kod çalıştırma veya DoS yapılmasına <b>XML External Entities (XEE)</b> zafiyeti denir."
+  },
+  {
+    "id": 10,
+    "type": "bilgi",
+    "category": "1. Sözel: Ağ Güvenliği & OSI",
+    "question": "Hangi kullanıcının hangi işlemleri yapabileceği ile ilgili kurallar düzgün belirlenmediğinde, kullanıcıların izinleri olmayan fonksiyonları kullanabilmesi veya verilere ulaşıp değiştirebilmesi hangi güvenlik açığıdır?",
+    "options": [
+      "Traffic Analysis",
+      "Sensitive Data Exposure (Hassas Veri Açığa Çıkması)",
+      "Broken Access Control (Kırık Erişim Kontrolü)",
+      "Release of Message Contents"
+    ],
+    "answer": 2,
+    "explanation": "Yetkilendirme kurallarının düzgün belirlenmemesi sonucu yetkisiz işlem veya veri erişimi yapılmasına <b>Broken Access Control (Kırık Erişim Kontrolü)</b> denir."
+  },
+  {
+    "id": 11,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Şifreleme (Encryption) ve şifre çözme (Decryption) işlemleri için gönderici ve alıcı tarafından aynı gizli anahtar kullanılıyorsa bu şifreleme şekline ne ad verilir?",
+    "options": [
+      "Asimetrik (Açık Anahtarlı) Şifreleme",
+      "Simetrik (Geleneksel) Şifreleme",
+      "Özetleme (Hashing) Algoritması",
+      "Akış (Stream) Şifrelemesi"
+    ],
+    "answer": 1,
+    "explanation": "Şifreleme ve şifre çözme için aynı anahtarın kullanıldığı modele <b>Simetrik (Geleneksel) Şifreleme</b> denir."
+  },
+  {
+    "id": 12,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Kriptografik sistemler 3 bağımsız boyutta tanımlanırlar. Aşağıdakilerden hangisi bu 3 boyuttan biri DEĞİLDİR?",
+    "options": [
+      "İletişim kanalında kullanılan kablo ve donanım tipi",
+      "Kullanılan anahtar sayısı (Simetrik / Asimetrik)",
+      "Düz metnin nasıl işleme alındığı (Blok şifreleme / Akış şifreleme)",
+      "Düz metni şifreli metne dönüştürmede kullanılan yöntem tipleri (Değişiklik / Pozisyon değişikliği)"
+    ],
+    "answer": 0,
+    "explanation": "Kriptografik sistemlerin 3 boyutu: <b>1) Dönüştürme yöntem tipi (yerine koyma/yer değiştirme)</b>, <b>2) Anahtar sayısı (simetrik/asimetrik)</b> ve <b>3) Düz metnin işlenme şekli (blok/akış)</b> olarak tanımlanır."
+  },
+  {
+    "id": 13,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Kaba Kuvvet (Brute Force) saldırısında olası tüm anahtarlar denenir. Ders notlarına göre ortalama olarak kaç deneme yapıldığında doğru anahtar bilgisine ulaşılır?",
+    "options": [
+      "Toplam anahtar sayısının yarısı kadar",
+      "Toplam anahtar sayısının tamamı kadar",
+      "Toplam anahtar sayısının karekökü kadar",
+      "Alfabe uzunluğunun iki katı kadar"
+    ],
+    "answer": 0,
+    "explanation": "Kaba kuvvet (Brute Force) saldırısında istatistiksel olarak ortalama <b>anahtar sayısının yarısı kadar</b> deneme yapıldığında anahtar bilgisine ulaşılır."
+  },
+  {
+    "id": 14,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Saldırganın sınırsız vakti ve sınırsız işlem gücü olsa bile, elinde ne kadar düz metin-şifreli metin çifti bulunursa bulunsun kırılamayan 'Kayıtsız Şartsız Güvenli (Unconditionally Secure)' tek şifreleme sistemi hangisidir?",
+    "options": [
+      "Playfair Şifrelemesi",
+      "Hill Şifrelemesi",
+      "Vigenere Şifrelemesi",
+      "One-Time Pad (Tek Kullanımlık Şerit)"
+    ],
+    "answer": 3,
+    "explanation": "Ders notlarında belirtildiği üzere <b>One-time Pad</b> dışında kayıtsız şartsız güvenli (sınırsız işlem gücüyle dahi çözülemeyen) bir sistem yoktur."
+  },
+  {
+    "id": 15,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Türkçe metinlerin Sezar, Vigenere ve Hill algoritmaları ile şifrelenmesinde sonuçların 0 ile 28 (A-Z) arasında kalması için hangi mod değeri kullanılır?",
+    "options": [
+      "mod 32",
+      "mod 29",
+      "mod 28",
+      "mod 26"
+    ],
+    "answer": 1,
+    "explanation": "Türk alfabesinde 29 harf (0'dan 28'e kadar indeksli) bulunduğu için Türkçe metinlerin şifrelenmesinde <b>mod 29</b> kullanılır."
+  },
+  {
+    "id": 16,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Dersimizdeki Yer Değiştirme (Transposition) şifrelemesi kurallarına göre, düz metin bittiğinde harf sayısı anahtar uzunluğunun tam katı değilse sonuna hangi dolgu harfi eklenir?",
+    "options": [
+      "X harfi",
+      "A harfi",
+      "J harfi",
+      "Z harfi"
+    ],
+    "answer": 2,
+    "explanation": "Ders notlarında açıkça belirtildiği üzere: 'Kitabımızdaki örnekte x y z eklenmiştir ancak dersimizde <b>J</b> harfi kullanılacaktır.'"
+  },
+  {
+    "id": 17,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "'Her bir harfte anahtarı değişen bir Sezar şifreleme gibidir; düz metindeki her harf anahtarda bulunan sıradaki harf ile şifrelenir' tanımı hangi şifreleme yöntemine aittir?",
+    "options": [
+      "Monoalfabetik Şifreleme",
+      "Hill Şifreleme",
+      "Vigenere Şifreleme",
+      "Yer Değiştirme Şifrelemesi"
+    ],
+    "answer": 2,
+    "explanation": "Bu tanım <b>Vigenere Şifreleme</b> yöntemine aittir; çok alfabeli (polialfabetik) bir şifreleme olup her adımda anahtar kelimenin sıradaki harfi kadar kaydırma yapar."
+  },
+  {
+    "id": 18,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Playfair şifrelemesinde şifrelenecek ikili harf grubundaki iki harf tablonun AYNI SÜTUNUNDA yer alıyorsa (örneğin ders notlarındaki 'FM' örneği) şifreleme nasıl yapılır?",
+    "options": [
+      "İlk harfin satırı ile ikinci harfin sütununun kesişimi alınır",
+      "Harflerin yerleri ters çevrilerek olduğu gibi bırakılır",
+      "Her iki harf için de aynı sütunda kendilerinin bir alt satırında bulunan harfler alınır",
+      "Her iki harf için de aynı satırda kendilerinin bir sağ sütununda bulunan harfler alınır"
+    ],
+    "answer": 2,
+    "explanation": "Playfair şifrelemesinde iki harf aynı sütunda ise (örneğin FM → OS), her harfin yerine aynı sütunda bir <b>altında</b> bulunan harf yazılır."
+  },
+  {
+    "id": 19,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Playfair şifrelemesinde düz metindeki iki harf aynı harf olursa (örneğin ders notlarındaki 'KK' örneği) şifreli metin nasıl oluşturulur?",
+    "options": [
+      "Harfler hiç değiştirilmeden olduğu gibi bırakılarak",
+      "Tabloda o harften bir sonraki harfin iki adet yazılmasıyla (KK → JJ)",
+      "Tablonun en sonundaki Z harfi iki kez yazılarak",
+      "İki harfin arasına X harfi eklenerek"
+    ],
+    "answer": 1,
+    "explanation": "Ders notlarındaki Playfair kuralına göre: 'Düz metindeki iki harf aynı harf olabilir (KK). Bu durumda şifreli metin bir sonraki harf olan J'nin iki adet yazılması olacaktır (JJ).'"
+  },
+  {
+    "id": 20,
+    "type": "bilgi",
+    "category": "2. Sözel: Kriptoloji & Şifreleme",
+    "question": "Hill Şifreleme yönteminde 2×2 boyutundaki bir K anahtar matrisi ile düz metin şifrelenirken kullanılan temel matematiksel formül hangisidir?",
+    "options": [
+      "C = K / P mod 29 (Anahtar matrisi düz metne bölünür)",
+      "C = (K + P) mod 26 (Anahtar ile düz metin toplanıp mod 26 alınır)",
+      "C = K · P mod 29 (Anahtar matrisi ile ikişerli düz metin vektörü çarpılıp mod 29 alınır)",
+      "C = P - K mod 29 (Düz metinden anahtar çıkarılıp mod 29 alınır)"
+    ],
+    "answer": 2,
+    "explanation": "Hill şifrelemede düz metin harfleri sayısal vektörlere (P) dönüştürülür ve K anahtar matrisi ile çarpılarak mod 29 alınır: <b>C = K·P mod 29</b>."
+  },
+  {
+    "id": 21,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifreleme:</b> Düz metin <code>KRİPTO</code> (6 karakter) kelimesini <b>Anahtar K = 4</b> kullanarak mod 29'a göre şifreleyiniz.<br><small class='char-hint'>Verilen Karakter Değerleri: K=13, R=20, İ=11, P=19, T=23, O=17</small>",
+    "options": [
+      "OTMŞYR",
+      "OUMTYS",
+      "ÖUNTZS",
+      "PVOŞVR"
+    ],
+    "answer": 1,
+    "explanation": "Sezar şifreleme formülü: <code>Y = (X + K) mod 29</code><br>K(13) + 4 = 17 (mod 29) = 17 → <b>O</b><br>R(20) + 4 = 24 (mod 29) = 24 → <b>U</b><br>İ(11) + 4 = 15 (mod 29) = 15 → <b>M</b><br>P(19) + 4 = 23 (mod 29) = 23 → <b>T</b><br>T(23) + 4 = 27 (mod 29) = 27 → <b>Y</b><br>O(17) + 4 = 21 (mod 29) = 21 → <b>S</b><br><b>Sonuç (Şifreli Metin): OUMTYS</b>"
+  },
+  {
+    "id": 22,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifreleme:</b> Düz metin <code>BİLİŞM</code> (6 karakter) kelimesini <b>Anahtar K = 5</b> kullanarak mod 29'a göre şifreleyiniz.<br><small class='char-hint'>Verilen Karakter Değerleri: B=1, İ=11, L=14, İ=11, Ş=22, M=15</small>",
+    "options": [
+      "GNRNZR",
+      "FNPNYR",
+      "FMPMYP",
+      "ĞÖSMVP"
+    ],
+    "answer": 1,
+    "explanation": "Sezar şifreleme formülü: <code>Y = (X + K) mod 29</code><br>B(1) + 5 = 6 (mod 29) = 6 → <b>F</b><br>İ(11) + 5 = 16 (mod 29) = 16 → <b>N</b><br>L(14) + 5 = 19 (mod 29) = 19 → <b>P</b><br>İ(11) + 5 = 16 (mod 29) = 16 → <b>N</b><br>Ş(22) + 5 = 27 (mod 29) = 27 → <b>Y</b><br>M(15) + 5 = 20 (mod 29) = 20 → <b>R</b><br><b>Sonuç (Şifreli Metin): FNPNYR</b>"
+  },
+  {
+    "id": 23,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifreleme:</b> Düz metin <code>SİSTEM</code> (6 karakter) kelimesini <b>Anahtar K = 3</b> kullanarak mod 29'a göre şifreleyiniz.<br><small class='char-hint'>Verilen Karakter Değerleri: S=21, İ=11, S=21, T=23, E=5, M=15</small>",
+    "options": [
+      "UKUÜĞO",
+      "ULUVĞÖ",
+      "VNVÜGO",
+      "ÜLÜVHÖ"
+    ],
+    "answer": 1,
+    "explanation": "Sezar şifreleme formülü: <code>Y = (X + K) mod 29</code><br>S(21) + 3 = 24 (mod 29) = 24 → <b>U</b><br>İ(11) + 3 = 14 (mod 29) = 14 → <b>L</b><br>S(21) + 3 = 24 (mod 29) = 24 → <b>U</b><br>T(23) + 3 = 26 (mod 29) = 26 → <b>V</b><br>E(5) + 3 = 8 (mod 29) = 8 → <b>Ğ</b><br>M(15) + 3 = 18 (mod 29) = 18 → <b>Ö</b><br><b>Sonuç (Şifreli Metin): ULUVĞÖ</b>"
+  },
+  {
+    "id": 24,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifreleme:</b> Düz metin <code>MERKEZ</code> (6 karakter) kelimesini <b>Anahtar K = 7</b> kullanarak mod 29'a göre şifreleyiniz.<br><small class='char-hint'>Verilen Karakter Değerleri: M=15, E=5, R=20, K=13, E=5, Z=28</small>",
+    "options": [
+      "TJZRKF",
+      "ŞJYRJF",
+      "ULAPİE",
+      "ŞİYPJE"
+    ],
+    "answer": 1,
+    "explanation": "Sezar şifreleme formülü: <code>Y = (X + K) mod 29</code><br>M(15) + 7 = 22 (mod 29) = 22 → <b>Ş</b><br>E(5) + 7 = 12 (mod 29) = 12 → <b>J</b><br>R(20) + 7 = 27 (mod 29) = 27 → <b>Y</b><br>K(13) + 7 = 20 (mod 29) = 20 → <b>R</b><br>E(5) + 7 = 12 (mod 29) = 12 → <b>J</b><br>Z(28) + 7 = 35 (mod 29) = 6 → <b>F</b><br><b>Sonuç (Şifreli Metin): ŞJYRJF</b>"
+  },
+  {
+    "id": 25,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifreleme:</b> Düz metin <code>ŞEBEKE</code> (6 karakter) kelimesini <b>Anahtar K = 6</b> kullanarak mod 29'a göre şifreleyiniz.<br><small class='char-hint'>Verilen Karakter Değerleri: Ş=22, E=5, B=1, E=5, K=13, E=5</small>",
+    "options": [
+      "AİĞİRİ",
+      "BKHIÖI",
+      "ZİGİPİ",
+      "ZIGIPI"
+    ],
+    "answer": 2,
+    "explanation": "Sezar şifreleme formülü: <code>Y = (X + K) mod 29</code><br>Ş(22) + 6 = 28 (mod 29) = 28 → <b>Z</b><br>E(5) + 6 = 11 (mod 29) = 11 → <b>İ</b><br>B(1) + 6 = 7 (mod 29) = 7 → <b>G</b><br>E(5) + 6 = 11 (mod 29) = 11 → <b>İ</b><br>K(13) + 6 = 19 (mod 29) = 19 → <b>P</b><br>E(5) + 6 = 11 (mod 29) = 11 → <b>İ</b><br><b>Sonuç (Şifreli Metin): ZİGİPİ</b>"
+  },
+  {
+    "id": 26,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifreleme:</b> Düz metin <code>AĞLARI</code> (6 karakter) kelimesini <b>Anahtar K = 10</b> kullanarak mod 29'a göre şifreleyiniz.<br><small class='char-hint'>Verilen Karakter Değerleri: A=0, Ğ=8, L=14, A=0, R=20, I=10</small>",
+    "options": [
+      "IOUHBP",
+      "JRVHAP",
+      "İÖÜICR",
+      "IÖUIBR"
+    ],
+    "answer": 3,
+    "explanation": "Sezar şifreleme formülü: <code>Y = (X + K) mod 29</code><br>A(0) + 10 = 10 (mod 29) = 10 → <b>I</b><br>Ğ(8) + 10 = 18 (mod 29) = 18 → <b>Ö</b><br>L(14) + 10 = 24 (mod 29) = 24 → <b>U</b><br>A(0) + 10 = 10 (mod 29) = 10 → <b>I</b><br>R(20) + 10 = 30 (mod 29) = 1 → <b>B</b><br>I(10) + 10 = 20 (mod 29) = 20 → <b>R</b><br><b>Sonuç (Şifreli Metin): IÖUIBR</b>"
+  },
+  {
+    "id": 27,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifreleme:</b> Düz metin <code>SERVER</code> (6 karakter) kelimesini <b>Anahtar K = 8</b> kullanarak mod 29'a göre şifreleyiniz.<br><small class='char-hint'>Verilen Karakter Değerleri: S=21, E=5, R=20, V=26, E=5, R=20</small>",
+    "options": [
+      "CMBDJY",
+      "BKAELZ",
+      "AJZDKY",
+      "AKZEKZ"
+    ],
+    "answer": 3,
+    "explanation": "Sezar şifreleme formülü: <code>Y = (X + K) mod 29</code><br>S(21) + 8 = 29 (mod 29) = 0 → <b>A</b><br>E(5) + 8 = 13 (mod 29) = 13 → <b>K</b><br>R(20) + 8 = 28 (mod 29) = 28 → <b>Z</b><br>V(26) + 8 = 34 (mod 29) = 5 → <b>E</b><br>E(5) + 8 = 13 (mod 29) = 13 → <b>K</b><br>R(20) + 8 = 28 (mod 29) = 28 → <b>Z</b><br><b>Sonuç (Şifreli Metin): AKZEKZ</b>"
+  },
+  {
+    "id": 28,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifre Çözme:</b> Şifreli metin <code>CJÇAVJ</code> (6 karakter) ifadesini <b>Anahtar K = 12</b> kullanarak mod 29'a göre çözüp düz metni bulunuz.<br><small class='char-hint'>Verilen Karakter Değerleri: C=2, J=12, Ç=3, A=0, V=26, J=12</small>",
+    "options": [
+      "PZRNLZ",
+      "SCŞNKZ",
+      "RASOMA",
+      "PAROLA"
+    ],
+    "answer": 3,
+    "explanation": "Sezar şifre çözme formülü: <code>X = (Y - K) mod 29</code><br>C(2) - 12 = -10 (mod 29) = 19 → <b>P</b><br>J(12) - 12 = 0 (mod 29) = 0 → <b>A</b><br>Ç(3) - 12 = -9 (mod 29) = 20 → <b>R</b><br>A(0) - 12 = -12 (mod 29) = 17 → <b>O</b><br>V(26) - 12 = 14 (mod 29) = 14 → <b>L</b><br>J(12) - 12 = 0 (mod 29) = 0 → <b>A</b><br><b>Sonuç (Düz Metin): PAROLA</b>"
+  },
+  {
+    "id": 29,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifre Çözme:</b> Şifreli metin <code>GHĞPTU</code> (6 karakter) ifadesini <b>Anahtar K = 9</b> kullanarak mod 29'a göre çözüp düz metni bulunuz.<br><small class='char-hint'>Verilen Karakter Değerleri: G=7, H=9, Ğ=8, P=19, T=23, U=24</small>",
+    "options": [
+      "ZAAIMM",
+      "YAZILM",
+      "YZZHLL",
+      "ACBHKL"
+    ],
+    "answer": 1,
+    "explanation": "Sezar şifre çözme formülü: <code>X = (Y - K) mod 29</code><br>G(7) - 9 = -2 (mod 29) = 27 → <b>Y</b><br>H(9) - 9 = 0 (mod 29) = 0 → <b>A</b><br>Ğ(8) - 9 = -1 (mod 29) = 28 → <b>Z</b><br>P(19) - 9 = 10 (mod 29) = 10 → <b>I</b><br>T(23) - 9 = 14 (mod 29) = 14 → <b>L</b><br>U(24) - 9 = 15 (mod 29) = 15 → <b>M</b><br><b>Sonuç (Düz Metin): YAZILM</b>"
+  },
+  {
+    "id": 30,
+    "type": "islem",
+    "category": "3. İşlem: Sezar Şifreleme",
+    "question": "<b>Sezar Şifre Çözme:</b> Şifreli metin <code>ÖGĞNYÜ</code> (6 karakter) ifadesini <b>Anahtar K = 11</b> kullanarak mod 29'a göre çözüp düz metni bulunuz.<br><small class='char-hint'>Verilen Karakter Değerleri: Ö=18, G=7, Ğ=8, N=16, Y=27, Ü=25</small>",
+    "options": [
+      "GÜVENL",
+      "GUVDNK",
+      "ĞÜYEOL",
+      "HYZDMK"
+    ],
+    "answer": 0,
+    "explanation": "Sezar şifre çözme formülü: <code>X = (Y - K) mod 29</code><br>Ö(18) - 11 = 7 (mod 29) = 7 → <b>G</b><br>G(7) - 11 = -4 (mod 29) = 25 → <b>Ü</b><br>Ğ(8) - 11 = -3 (mod 29) = 26 → <b>V</b><br>N(16) - 11 = 5 (mod 29) = 5 → <b>E</b><br>Y(27) - 11 = 16 (mod 29) = 16 → <b>N</b><br>Ü(25) - 11 = 14 (mod 29) = 14 → <b>L</b><br><b>Sonuç (Düz Metin): GÜVENL</b>"
+  },
+  {
+    "id": 31,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifreleme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna (<i>y<sub>i</sub> = E(x<sub>i</sub>) = k<sub>x<sub>i</sub></sub></i>) göre 6 karakterli <code>MERKEZ</code> düz metninin şifreli karşılığı nedir?<br><small class='char-hint'>Düz Metin İndeksleri: M=15, E=5, R=20, K=13, E=5, Z=28<br>Anahtar Eşleşmeleri (x → k<sub>x</sub>): A(0)→D(4), B(1)→G(7), C(2)→H(9), D(4)→F(6), E(5)→Ç(3), K(13)→Ö(18), M(15)→K(13), R(20)→Y(27), Z(28)→V(26)</small>",
+    "options": [
+      "KÇYÖÇV",
+      "MEAOCÜ",
+      "KCYOÇÜ",
+      "LÇZÖDV"
+    ],
+    "answer": 0,
+    "explanation": "Monoalfabetik şifrelemede her harf anahtar dizisindeki (k) karşılığı ile değiştirilir:<br>x<sub>0</sub> = 'M' (indis 15) → k<sub>15</sub> = <b>'K'</b> (değer 13)<br>x<sub>1</sub> = 'E' (indis 5) → k<sub>5</sub> = <b>'Ç'</b> (değer 3)<br>x<sub>2</sub> = 'R' (indis 20) → k<sub>20</sub> = <b>'Y'</b> (değer 27)<br>x<sub>3</sub> = 'K' (indis 13) → k<sub>13</sub> = <b>'Ö'</b> (değer 18)<br>x<sub>4</sub> = 'E' (indis 5) → k<sub>5</sub> = <b>'Ç'</b> (değer 3)<br>x<sub>5</sub> = 'Z' (indis 28) → k<sub>28</sub> = <b>'V'</b> (değer 26)<br><b>Sonuç (Şifreli Metin): KÇYÖÇV</b>"
+  },
+  {
+    "id": 32,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifreleme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna (<i>y<sub>i</sub> = E(x<sub>i</sub>) = k<sub>x<sub>i</sub></sub></i>) göre 6 karakterli <code>BİLİŞM</code> düz metninin şifreli karşılığı nedir?<br><small class='char-hint'>Düz Metin İndeksleri: B=1, İ=11, L=14, İ=11, Ş=22, M=15<br>Anahtar Eşleşmeleri (x → k<sub>x</sub>): A(0)→D(4), B(1)→G(7), C(2)→H(9), D(4)→F(6), E(5)→Ç(3), L(14)→N(16), M(15)→K(13), İ(11)→O(17), Ş(22)→I(10)</small>",
+    "options": [
+      "GONOIK",
+      "HPÖNHJ",
+      "ĞOOOİK",
+      "GNNNIJ"
+    ],
+    "answer": 0,
+    "explanation": "Monoalfabetik şifrelemede her harf anahtar dizisindeki (k) karşılığı ile değiştirilir:<br>x<sub>0</sub> = 'B' (indis 1) → k<sub>1</sub> = <b>'G'</b> (değer 7)<br>x<sub>1</sub> = 'İ' (indis 11) → k<sub>11</sub> = <b>'O'</b> (değer 17)<br>x<sub>2</sub> = 'L' (indis 14) → k<sub>14</sub> = <b>'N'</b> (değer 16)<br>x<sub>3</sub> = 'İ' (indis 11) → k<sub>11</sub> = <b>'O'</b> (değer 17)<br>x<sub>4</sub> = 'Ş' (indis 22) → k<sub>22</sub> = <b>'I'</b> (değer 10)<br>x<sub>5</sub> = 'M' (indis 15) → k<sub>15</sub> = <b>'K'</b> (değer 13)<br><b>Sonuç (Şifreli Metin): GONOIK</b>"
+  },
+  {
+    "id": 33,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifreleme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna (<i>y<sub>i</sub> = E(x<sub>i</sub>) = k<sub>x<sub>i</sub></sub></i>) göre 6 karakterli <code>SİSTEM</code> düz metninin şifreli karşılığı nedir?<br><small class='char-hint'>Düz Metin İndeksleri: S=21, İ=11, S=21, T=23, E=5, M=15<br>Anahtar Eşleşmeleri (x → k<sub>x</sub>): A(0)→D(4), B(1)→G(7), C(2)→H(9), D(4)→F(6), E(5)→Ç(3), M(15)→K(13), S(21)→Z(28), T(23)→T(23), İ(11)→O(17)</small>",
+    "options": [
+      "AOATDK",
+      "ZNZŞÇJ",
+      "ZOZTÇK",
+      "BPBŞCJ"
+    ],
+    "answer": 2,
+    "explanation": "Monoalfabetik şifrelemede her harf anahtar dizisindeki (k) karşılığı ile değiştirilir:<br>x<sub>0</sub> = 'S' (indis 21) → k<sub>21</sub> = <b>'Z'</b> (değer 28)<br>x<sub>1</sub> = 'İ' (indis 11) → k<sub>11</sub> = <b>'O'</b> (değer 17)<br>x<sub>2</sub> = 'S' (indis 21) → k<sub>21</sub> = <b>'Z'</b> (değer 28)<br>x<sub>3</sub> = 'T' (indis 23) → k<sub>23</sub> = <b>'T'</b> (değer 23)<br>x<sub>4</sub> = 'E' (indis 5) → k<sub>5</sub> = <b>'Ç'</b> (değer 3)<br>x<sub>5</sub> = 'M' (indis 15) → k<sub>15</sub> = <b>'K'</b> (değer 13)<br><b>Sonuç (Şifreli Metin): ZOZTÇK</b>"
+  },
+  {
+    "id": 34,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifreleme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna (<i>y<sub>i</sub> = E(x<sub>i</sub>) = k<sub>x<sub>i</sub></sub></i>) göre 6 karakterli <code>KRİPTO</code> düz metninin şifreli karşılığı nedir?<br><small class='char-hint'>Düz Metin İndeksleri: K=13, R=20, İ=11, P=19, T=23, O=17<br>Anahtar Eşleşmeleri (x → k<sub>x</sub>): A(0)→D(4), B(1)→G(7), C(2)→H(9), D(4)→F(6), E(5)→Ç(3), K(13)→Ö(18), O(17)→İ(11), P(19)→U(24), R(20)→Y(27), T(23)→T(23), İ(11)→O(17)</small>",
+    "options": [
+      "ÖYOUTİ",
+      "PYÖUUİ",
+      "ÖVOTTI",
+      "RAPTŞI"
+    ],
+    "answer": 0,
+    "explanation": "Monoalfabetik şifrelemede her harf anahtar dizisindeki (k) karşılığı ile değiştirilir:<br>x<sub>0</sub> = 'K' (indis 13) → k<sub>13</sub> = <b>'Ö'</b> (değer 18)<br>x<sub>1</sub> = 'R' (indis 20) → k<sub>20</sub> = <b>'Y'</b> (değer 27)<br>x<sub>2</sub> = 'İ' (indis 11) → k<sub>11</sub> = <b>'O'</b> (değer 17)<br>x<sub>3</sub> = 'P' (indis 19) → k<sub>19</sub> = <b>'U'</b> (değer 24)<br>x<sub>4</sub> = 'T' (indis 23) → k<sub>23</sub> = <b>'T'</b> (değer 23)<br>x<sub>5</sub> = 'O' (indis 17) → k<sub>17</sub> = <b>'İ'</b> (değer 11)<br><b>Sonuç (Şifreli Metin): ÖYOUTİ</b>"
+  },
+  {
+    "id": 35,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifreleme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna (<i>y<sub>i</sub> = E(x<sub>i</sub>) = k<sub>x<sub>i</sub></sub></i>) göre 6 karakterli <code>PAROLA</code> düz metninin şifreli karşılığı nedir?<br><small class='char-hint'>Düz Metin İndeksleri: P=19, A=0, R=20, O=17, L=14, A=0<br>Anahtar Eşleşmeleri (x → k<sub>x</sub>): A(0)→D(4), B(1)→G(7), C(2)→H(9), D(4)→F(6), E(5)→Ç(3), L(14)→N(16), O(17)→İ(11), P(19)→U(24), R(20)→Y(27)</small>",
+    "options": [
+      "VFAIMÇ",
+      "ÜDZİOD",
+      "UÇYINÇ",
+      "UDYİND"
+    ],
+    "answer": 3,
+    "explanation": "Monoalfabetik şifrelemede her harf anahtar dizisindeki (k) karşılığı ile değiştirilir:<br>x<sub>0</sub> = 'P' (indis 19) → k<sub>19</sub> = <b>'U'</b> (değer 24)<br>x<sub>1</sub> = 'A' (indis 0) → k<sub>0</sub> = <b>'D'</b> (değer 4)<br>x<sub>2</sub> = 'R' (indis 20) → k<sub>20</sub> = <b>'Y'</b> (değer 27)<br>x<sub>3</sub> = 'O' (indis 17) → k<sub>17</sub> = <b>'İ'</b> (değer 11)<br>x<sub>4</sub> = 'L' (indis 14) → k<sub>14</sub> = <b>'N'</b> (değer 16)<br>x<sub>5</sub> = 'A' (indis 0) → k<sub>0</sub> = <b>'D'</b> (değer 4)<br><b>Sonuç (Şifreli Metin): UDYİND</b>"
+  },
+  {
+    "id": 36,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifreleme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna (<i>y<sub>i</sub> = E(x<sub>i</sub>) = k<sub>x<sub>i</sub></sub></i>) göre 6 karakterli <code>AĞLARI</code> düz metninin şifreli karşılığı nedir?<br><small class='char-hint'>Düz Metin İndeksleri: A=0, Ğ=8, L=14, A=0, R=20, I=10<br>Anahtar Eşleşmeleri (x → k<sub>x</sub>): A(0)→D(4), B(1)→G(7), C(2)→H(9), D(4)→F(6), E(5)→Ç(3), I(10)→L(14), L(14)→N(16), R(20)→Y(27), Ğ(8)→A(0)</small>",
+    "options": [
+      "DANDYL",
+      "EAODZL",
+      "FCÖÇVK",
+      "DZNÇYK"
+    ],
+    "answer": 0,
+    "explanation": "Monoalfabetik şifrelemede her harf anahtar dizisindeki (k) karşılığı ile değiştirilir:<br>x<sub>0</sub> = 'A' (indis 0) → k<sub>0</sub> = <b>'D'</b> (değer 4)<br>x<sub>1</sub> = 'Ğ' (indis 8) → k<sub>8</sub> = <b>'A'</b> (değer 0)<br>x<sub>2</sub> = 'L' (indis 14) → k<sub>14</sub> = <b>'N'</b> (değer 16)<br>x<sub>3</sub> = 'A' (indis 0) → k<sub>0</sub> = <b>'D'</b> (değer 4)<br>x<sub>4</sub> = 'R' (indis 20) → k<sub>20</sub> = <b>'Y'</b> (değer 27)<br>x<sub>5</sub> = 'I' (indis 10) → k<sub>10</sub> = <b>'L'</b> (değer 14)<br><b>Sonuç (Şifreli Metin): DANDYL</b>"
+  },
+  {
+    "id": 37,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifreleme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna (<i>y<sub>i</sub> = E(x<sub>i</sub>) = k<sub>x<sub>i</sub></sub></i>) göre 6 karakterli <code>SERVER</code> düz metninin şifreli karşılığı nedir?<br><small class='char-hint'>Düz Metin İndeksleri: S=21, E=5, R=20, V=26, E=5, R=20<br>Anahtar Eşleşmeleri (x → k<sub>x</sub>): A(0)→D(4), B(1)→G(7), C(2)→H(9), D(4)→F(6), E(5)→Ç(3), R(20)→Y(27), S(21)→Z(28), V(26)→R(20)</small>",
+    "options": [
+      "ZCYPÇV",
+      "BEAPCV",
+      "AÇZRDY",
+      "ZÇYRÇY"
+    ],
+    "answer": 3,
+    "explanation": "Monoalfabetik şifrelemede her harf anahtar dizisindeki (k) karşılığı ile değiştirilir:<br>x<sub>0</sub> = 'S' (indis 21) → k<sub>21</sub> = <b>'Z'</b> (değer 28)<br>x<sub>1</sub> = 'E' (indis 5) → k<sub>5</sub> = <b>'Ç'</b> (değer 3)<br>x<sub>2</sub> = 'R' (indis 20) → k<sub>20</sub> = <b>'Y'</b> (değer 27)<br>x<sub>3</sub> = 'V' (indis 26) → k<sub>26</sub> = <b>'R'</b> (değer 20)<br>x<sub>4</sub> = 'E' (indis 5) → k<sub>5</sub> = <b>'Ç'</b> (değer 3)<br>x<sub>5</sub> = 'R' (indis 20) → k<sub>20</sub> = <b>'Y'</b> (değer 27)<br><b>Sonuç (Şifreli Metin): ZÇYRÇY</b>"
+  },
+  {
+    "id": 38,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifre Çözme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna göre 6 karakterli <code>ÜDVLNK</code> şifreli metninin çözülmüş (düz metin) karşılığı nedir?<br><small class='char-hint'>Şifreli Metin Karakter Değerleri: Ü=25, D=4, V=26, L=14, N=16, K=13<br>Tablo Eşleşmeleri (Düz x → Şifreli k<sub>x</sub>): A(0)→D(4), E(5)→Ç(3), I(10)→L(14), K(13)→Ö(18), L(14)→N(16), M(15)→K(13), Y(27)→Ü(25), Z(28)→V(26)</small>",
+    "options": [
+      "YZZHLL",
+      "YAZILM",
+      "ZAAIMM",
+      "ACBHKL"
+    ],
+    "answer": 1,
+    "explanation": "Monoalfabetik şifre çözmede şifreli harfin (k) hangi düz metin indeksine (x) ait olduğu bulunur:<br>y<sub>0</sub> = 'Ü' (değer 25) → Tabloda 'Ü' değerine karşılık gelen düz metin harfi: <b>'Y'</b> (indis 27)<br>y<sub>1</sub> = 'D' (değer 4) → Tabloda 'D' değerine karşılık gelen düz metin harfi: <b>'A'</b> (indis 0)<br>y<sub>2</sub> = 'V' (değer 26) → Tabloda 'V' değerine karşılık gelen düz metin harfi: <b>'Z'</b> (indis 28)<br>y<sub>3</sub> = 'L' (değer 14) → Tabloda 'L' değerine karşılık gelen düz metin harfi: <b>'I'</b> (indis 10)<br>y<sub>4</sub> = 'N' (değer 16) → Tabloda 'N' değerine karşılık gelen düz metin harfi: <b>'L'</b> (indis 14)<br>y<sub>5</sub> = 'K' (değer 13) → Tabloda 'K' değerine karşılık gelen düz metin harfi: <b>'M'</b> (indis 15)<br><b>Sonuç (Düz Metin): YAZILM</b>"
+  },
+  {
+    "id": 39,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifre Çözme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna göre 6 karakterli <code>ŞSRÇJN</code> şifreli metninin çözülmüş (düz metin) karşılığı nedir?<br><small class='char-hint'>Şifreli Metin Karakter Değerleri: Ş=22, S=21, R=20, Ç=3, J=12, N=16<br>Tablo Eşleşmeleri (Düz x → Şifreli k<sub>x</sub>): A(0)→D(4), E(5)→Ç(3), G(7)→Ş(22), K(13)→Ö(18), L(14)→N(16), M(15)→K(13), N(16)→J(12), V(26)→R(20), Ü(25)→S(21)</small>",
+    "options": [
+      "HYZDMK",
+      "GUVDNK",
+      "ĞÜYEOL",
+      "GÜVENL"
+    ],
+    "answer": 3,
+    "explanation": "Monoalfabetik şifre çözmede şifreli harfin (k) hangi düz metin indeksine (x) ait olduğu bulunur:<br>y<sub>0</sub> = 'Ş' (değer 22) → Tabloda 'Ş' değerine karşılık gelen düz metin harfi: <b>'G'</b> (indis 7)<br>y<sub>1</sub> = 'S' (değer 21) → Tabloda 'S' değerine karşılık gelen düz metin harfi: <b>'Ü'</b> (indis 25)<br>y<sub>2</sub> = 'R' (değer 20) → Tabloda 'R' değerine karşılık gelen düz metin harfi: <b>'V'</b> (indis 26)<br>y<sub>3</sub> = 'Ç' (değer 3) → Tabloda 'Ç' değerine karşılık gelen düz metin harfi: <b>'E'</b> (indis 5)<br>y<sub>4</sub> = 'J' (değer 12) → Tabloda 'J' değerine karşılık gelen düz metin harfi: <b>'N'</b> (indis 16)<br>y<sub>5</sub> = 'N' (değer 16) → Tabloda 'N' değerine karşılık gelen düz metin harfi: <b>'L'</b> (indis 14)<br><b>Sonuç (Düz Metin): GÜVENL</b>"
+  },
+  {
+    "id": 40,
+    "type": "islem",
+    "category": "4. İşlem: Monoalfabetik",
+    "question": "<b>Monoalfabetik Şifre Çözme:</b> Ders notlarındaki Monoalfabetik anahtar tablosuna göre 6 karakterli <code>IÇGÇÖÇ</code> şifreli metninin çözülmüş (düz metin) karşılığı nedir?<br><small class='char-hint'>Şifreli Metin Karakter Değerleri: I=10, Ç=3, G=7, Ç=3, Ö=18, Ç=3<br>Tablo Eşleşmeleri (Düz x → Şifreli k<sub>x</sub>): A(0)→D(4), B(1)→G(7), E(5)→Ç(3), K(13)→Ö(18), L(14)→N(16), M(15)→K(13), Ş(22)→I(10)</small>",
+    "options": [
+      "ŞDBDKD",
+      "UGÇDJD",
+      "TECELE",
+      "ŞEBEKE"
+    ],
+    "answer": 3,
+    "explanation": "Monoalfabetik şifre çözmede şifreli harfin (k) hangi düz metin indeksine (x) ait olduğu bulunur:<br>y<sub>0</sub> = 'I' (değer 10) → Tabloda 'I' değerine karşılık gelen düz metin harfi: <b>'Ş'</b> (indis 22)<br>y<sub>1</sub> = 'Ç' (değer 3) → Tabloda 'Ç' değerine karşılık gelen düz metin harfi: <b>'E'</b> (indis 5)<br>y<sub>2</sub> = 'G' (değer 7) → Tabloda 'G' değerine karşılık gelen düz metin harfi: <b>'B'</b> (indis 1)<br>y<sub>3</sub> = 'Ç' (değer 3) → Tabloda 'Ç' değerine karşılık gelen düz metin harfi: <b>'E'</b> (indis 5)<br>y<sub>4</sub> = 'Ö' (değer 18) → Tabloda 'Ö' değerine karşılık gelen düz metin harfi: <b>'K'</b> (indis 13)<br>y<sub>5</sub> = 'Ç' (değer 3) → Tabloda 'Ç' değerine karşılık gelen düz metin harfi: <b>'E'</b> (indis 5)<br><b>Sonuç (Düz Metin): ŞEBEKE</b>"
+  },
+  {
+    "id": 41,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifrelemesi:</b> Düz metin <code>KÜTAHY</code> (6 karakter) ifadesini <b>Anahtar = [2 1 3]</b> kullanarak şifreleyiniz ve 6 karakterli şifreli metni bulunuz.<br><small class='char-hint'>Anahtar Sütun Sırası: 2 1 3 | Toplam Sütun Sayısı: 3 | Dolgu Harfi Kuralı: J</small>",
+    "options": [
+      "HÜAKYT",
+      "KAÜHTY",
+      "ÜHKATY",
+      "TYKAÜH"
+    ],
+    "answer": 2,
+    "explanation": "Düz metin anahtarın (2 1 3) altına satır satır yazılır (Eksik yerlere 'J' eklenir → <code>KÜTAHY</code>):<br>Satır 1: <code>K  Ü  T</code><br>Satır 2: <code>A  H  Y</code><br>Sütunlar 1'den 3'e kadar sırayla yukarıdan aşağıya okunur:<br>Anahtar <b>1</b> (2. sütun): <code>ÜH</code><br>Anahtar <b>2</b> (1. sütun): <code>KA</code><br>Anahtar <b>3</b> (3. sütun): <code>TY</code><br><b>Sonuç (Şifreli Metin): ÜHKATY</b>"
+  },
+  {
+    "id": 42,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifrelemesi:</b> Düz metin <code>TAVŞAN</code> (6 karakter) ifadesini <b>Anahtar = [3 1 2]</b> kullanarak şifreleyiniz ve 6 karakterli şifreli metni bulunuz.<br><small class='char-hint'>Anahtar Sütun Sırası: 3 1 2 | Toplam Sütun Sayısı: 3 | Dolgu Harfi Kuralı: J</small>",
+    "options": [
+      "TŞVNAA",
+      "VNAATŞ",
+      "AAVNTŞ",
+      "AANVŞT"
+    ],
+    "answer": 2,
+    "explanation": "Düz metin anahtarın (3 1 2) altına satır satır yazılır (Eksik yerlere 'J' eklenir → <code>TAVŞAN</code>):<br>Satır 1: <code>T  A  V</code><br>Satır 2: <code>Ş  A  N</code><br>Sütunlar 1'den 3'e kadar sırayla yukarıdan aşağıya okunur:<br>Anahtar <b>1</b> (2. sütun): <code>AA</code><br>Anahtar <b>2</b> (3. sütun): <code>VN</code><br>Anahtar <b>3</b> (1. sütun): <code>TŞ</code><br><b>Sonuç (Şifreli Metin): AAVNTŞ</b>"
+  },
+  {
+    "id": 43,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifrelemesi:</b> Düz metin <code>DPÜMYO</code> (6 karakter) ifadesini <b>Anahtar = [2 3 1]</b> kullanarak şifreleyiniz ve 6 karakterli şifreli metni bulunuz.<br><small class='char-hint'>Anahtar Sütun Sırası: 2 3 1 | Toplam Sütun Sayısı: 3 | Dolgu Harfi Kuralı: J</small>",
+    "options": [
+      "ÜODMPY",
+      "DMÜOPY",
+      "OÜMDYP",
+      "PYDMÜO"
+    ],
+    "answer": 0,
+    "explanation": "Düz metin anahtarın (2 3 1) altına satır satır yazılır (Eksik yerlere 'J' eklenir → <code>DPÜMYO</code>):<br>Satır 1: <code>D  P  Ü</code><br>Satır 2: <code>M  Y  O</code><br>Sütunlar 1'den 3'e kadar sırayla yukarıdan aşağıya okunur:<br>Anahtar <b>1</b> (3. sütun): <code>ÜO</code><br>Anahtar <b>2</b> (1. sütun): <code>DM</code><br>Anahtar <b>3</b> (2. sütun): <code>PY</code><br><b>Sonuç (Şifreli Metin): ÜODMPY</b>"
+  },
+  {
+    "id": 44,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifrelemesi:</b> Düz metin <code>AĞLAR</code> (Eksik kalan hücreler ders kuralı gereği <b>J</b> harfi ile tamamlanarak 6 karaktere çıkarılır) ifadesini <b>Anahtar = [3 1 2]</b> kullanarak şifreleyiniz ve 6 karakterli şifreli metni bulunuz.<br><small class='char-hint'>Anahtar Sütun Sırası: 3 1 2 | Toplam Sütun Sayısı: 3 | Dolgu Harfi Kuralı: J</small>",
+    "options": [
+      "LJĞRAA",
+      "RĞJLAA",
+      "ĞRLJAA",
+      "AALJĞR"
+    ],
+    "answer": 2,
+    "explanation": "Düz metin anahtarın (3 1 2) altına satır satır yazılır (Eksik yerlere 'J' eklenir → <code>AĞLARJ</code>):<br>Satır 1: <code>A  Ğ  L</code><br>Satır 2: <code>A  R  J</code><br>Sütunlar 1'den 3'e kadar sırayla yukarıdan aşağıya okunur:<br>Anahtar <b>1</b> (2. sütun): <code>ĞR</code><br>Anahtar <b>2</b> (3. sütun): <code>LJ</code><br>Anahtar <b>3</b> (1. sütun): <code>AA</code><br><b>Sonuç (Şifreli Metin): ĞRLJAA</b>"
+  },
+  {
+    "id": 45,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifrelemesi:</b> Düz metin <code>KODU</code> (Eksik kalan hücreler ders kuralı gereği <b>J</b> harfi ile tamamlanarak 6 karaktere çıkarılır) ifadesini <b>Anahtar = [2 1 3]</b> kullanarak şifreleyiniz ve 6 karakterli şifreli metni bulunuz.<br><small class='char-hint'>Anahtar Sütun Sırası: 2 1 3 | Toplam Sütun Sayısı: 3 | Dolgu Harfi Kuralı: J</small>",
+    "options": [
+      "OJKUDJ",
+      "KUOJDJ",
+      "JOUKJD",
+      "DJKUOJ"
+    ],
+    "answer": 0,
+    "explanation": "Düz metin anahtarın (2 1 3) altına satır satır yazılır (Eksik yerlere 'J' eklenir → <code>KODUJJ</code>):<br>Satır 1: <code>K  O  D</code><br>Satır 2: <code>U  J  J</code><br>Sütunlar 1'den 3'e kadar sırayla yukarıdan aşağıya okunur:<br>Anahtar <b>1</b> (2. sütun): <code>OJ</code><br>Anahtar <b>2</b> (1. sütun): <code>KU</code><br>Anahtar <b>3</b> (3. sütun): <code>DJ</code><br><b>Sonuç (Şifreli Metin): OJKUDJ</b>"
+  },
+  {
+    "id": 46,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifrelemesi:</b> Düz metin <code>KRİPTO</code> (6 karakter) ifadesini <b>Anahtar = [3 2 1]</b> kullanarak şifreleyiniz ve 6 karakterli şifreli metni bulunuz.<br><small class='char-hint'>Anahtar Sütun Sırası: 3 2 1 | Toplam Sütun Sayısı: 3 | Dolgu Harfi Kuralı: J</small>",
+    "options": [
+      "KPRTİO",
+      "RTİOKP",
+      "OİTRPK",
+      "İORTKP"
+    ],
+    "answer": 3,
+    "explanation": "Düz metin anahtarın (3 2 1) altına satır satır yazılır (Eksik yerlere 'J' eklenir → <code>KRİPTO</code>):<br>Satır 1: <code>K  R  İ</code><br>Satır 2: <code>P  T  O</code><br>Sütunlar 1'den 3'e kadar sırayla yukarıdan aşağıya okunur:<br>Anahtar <b>1</b> (3. sütun): <code>İO</code><br>Anahtar <b>2</b> (2. sütun): <code>RT</code><br>Anahtar <b>3</b> (1. sütun): <code>KP</code><br><b>Sonuç (Şifreli Metin): İORTKP</b>"
+  },
+  {
+    "id": 47,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifrelemesi:</b> Düz metin <code>SİSTEM</code> (6 karakter) ifadesini <b>Anahtar = [2 1]</b> kullanarak şifreleyiniz ve 6 karakterli şifreli metni bulunuz.<br><small class='char-hint'>Anahtar Sütun Sırası: 2 1 | Toplam Sütun Sayısı: 2 | Dolgu Harfi Kuralı: J</small>",
+    "options": [
+      "MSİTSE",
+      "TİSMES",
+      "SEMSİT",
+      "İTMSSE"
+    ],
+    "answer": 3,
+    "explanation": "Düz metin anahtarın (2 1) altına satır satır yazılır (Eksik yerlere 'J' eklenir → <code>SİSTEM</code>):<br>Satır 1: <code>S  İ</code><br>Satır 2: <code>S  T</code><br>Satır 3: <code>E  M</code><br>Sütunlar 1'den 2'e kadar sırayla yukarıdan aşağıya okunur:<br>Anahtar <b>1</b> (2. sütun): <code>İTM</code><br>Anahtar <b>2</b> (1. sütun): <code>SSE</code><br><b>Sonuç (Şifreli Metin): İTMSSE</b>"
+  },
+  {
+    "id": 48,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifre Çözme:</b> <b>Anahtar = [3 1 2]</b> kullanılarak yer değiştirme yöntemiyle şifrelenmiş 6 karakterli <code>EERZMK</code> şifreli metninin çözülmüş (düz metin) hali nedir?<br><small class='char-hint'>Anahtar Sütun Sırası: 3 1 2 | Matris Boyutu: 2 Satır x 3 Sütun (Her sütunda 2 harf)</small>",
+    "options": [
+      "EMKRZE",
+      "MERKEZ",
+      "RKMEEZ",
+      "EZRKME"
+    ],
+    "answer": 1,
+    "explanation": "6 karakterli şifreli metin <code>EERZMK</code> ikişerli olarak sırasıyla 1., 2. ve 3. anahtar sütunlarına yerleştirilir:<br>Anahtar <b>1</b> (2. sütun): <code>EE</code><br>Anahtar <b>2</b> (3. sütun): <code>RZ</code><br>Anahtar <b>3</b> (1. sütun): <code>MK</code><br>Matris satır satır soldan sağa okunduğunda:<br>Satır 1: <code>M  E  R</code><br>Satır 2: <code>K  E  Z</code><br><b>Sonuç (Düz Metin): MERKEZ</b>"
+  },
+  {
+    "id": 49,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifre Çözme:</b> <b>Anahtar = [2 3 1]</b> kullanılarak yer değiştirme yöntemiyle şifrelenmiş 6 karakterli <code>LMBİİŞ</code> şifreli metninin çözülmüş (düz metin) hali nedir?<br><small class='char-hint'>Anahtar Sütun Sırası: 2 3 1 | Matris Boyutu: 2 Satır x 3 Sütun (Her sütunda 2 harf)</small>",
+    "options": [
+      "İBİLMŞ",
+      "LİBİŞM",
+      "ŞMLİBİ",
+      "BİLİŞM"
+    ],
+    "answer": 3,
+    "explanation": "6 karakterli şifreli metin <code>LMBİİŞ</code> ikişerli olarak sırasıyla 1., 2. ve 3. anahtar sütunlarına yerleştirilir:<br>Anahtar <b>1</b> (3. sütun): <code>LM</code><br>Anahtar <b>2</b> (1. sütun): <code>Bİ</code><br>Anahtar <b>3</b> (2. sütun): <code>İŞ</code><br>Matris satır satır soldan sağa okunduğunda:<br>Satır 1: <code>B  İ  L</code><br>Satır 2: <code>İ  Ş  M</code><br><b>Sonuç (Düz Metin): BİLİŞM</b>"
+  },
+  {
+    "id": 50,
+    "type": "islem",
+    "category": "5. İşlem: Yer Değiştirme",
+    "question": "<b>Yer Değiştirme Şifre Çözme:</b> <b>Anahtar = [2 1 3]</b> kullanılarak yer değiştirme yöntemiyle şifrelenmiş 6 karakterli <code>ÜNGEVL</code> şifreli metninin çözülmüş (düz metin) hali nedir?<br><small class='char-hint'>Anahtar Sütun Sırası: 2 1 3 | Matris Boyutu: 2 Satır x 3 Sütun (Her sütunda 2 harf)</small>",
+    "options": [
+      "NLVEGÜ",
+      "VEGÜNL",
+      "ÜGEVLN",
+      "GÜVENL"
+    ],
+    "answer": 3,
+    "explanation": "6 karakterli şifreli metin <code>ÜNGEVL</code> ikişerli olarak sırasıyla 1., 2. ve 3. anahtar sütunlarına yerleştirilir:<br>Anahtar <b>1</b> (2. sütun): <code>ÜN</code><br>Anahtar <b>2</b> (1. sütun): <code>GE</code><br>Anahtar <b>3</b> (3. sütun): <code>VL</code><br>Matris satır satır soldan sağa okunduğunda:<br>Satır 1: <code>G  Ü  V</code><br>Satır 2: <code>E  N  L</code><br><b>Sonuç (Düz Metin): GÜVENL</b>"
+  },
+  {
+    "id": 51,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifreleme:</b> 6 karakterli <code>TAVŞAN</code> düz metnini, <code>DPÜ</code> anahtarını (tekrarlı: <code>DPÜDPÜ</code>) kullanarak mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Sayısal Değerleri: T=23, A=0, V=26, Ş=22, A=0, N=16<br>Anahtar Sayısal Değerleri: D=4, P=19, Ü=25</small>",
+    "options": [
+      "ASUÜÖİ",
+      "YPŞVPJ",
+      "ZPTVRJ",
+      "YÖŞÜPİ"
+    ],
+    "answer": 1,
+    "explanation": "Vigenere şifrelemede her harf sıradaki anahtar harfi ile toplanır (mod 29):<br>1. Harf: Düz <b>T</b>(23) + Anahtar <b>D</b>(4) = 27 (mod 29) = 27 → <b>Y</b><br>2. Harf: Düz <b>A</b>(0) + Anahtar <b>P</b>(19) = 19 (mod 29) = 19 → <b>P</b><br>3. Harf: Düz <b>V</b>(26) + Anahtar <b>Ü</b>(25) = 51 (mod 29) = 22 → <b>Ş</b><br>4. Harf: Düz <b>Ş</b>(22) + Anahtar <b>D</b>(4) = 26 (mod 29) = 26 → <b>V</b><br>5. Harf: Düz <b>A</b>(0) + Anahtar <b>P</b>(19) = 19 (mod 29) = 19 → <b>P</b><br>6. Harf: Düz <b>N</b>(16) + Anahtar <b>Ü</b>(25) = 41 (mod 29) = 12 → <b>J</b><br><b>Sonuç (Şifreli Metin): YPŞVPJ</b>"
+  },
+  {
+    "id": 52,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifreleme:</b> 6 karakterli <code>KÜTAHY</code> düz metnini, <code>AĞB</code> anahtarını (tekrarlı: <code>AĞBAĞB</code>) kullanarak mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Sayısal Değerleri: K=13, Ü=25, T=23, A=0, H=9, Y=27<br>Anahtar Sayısal Değerleri: A=0, Ğ=8, B=1</small>",
+    "options": [
+      "MFVZNY",
+      "KÇUZOY",
+      "KDUAOZ",
+      "LDÜAÖZ"
+    ],
+    "answer": 2,
+    "explanation": "Vigenere şifrelemede her harf sıradaki anahtar harfi ile toplanır (mod 29):<br>1. Harf: Düz <b>K</b>(13) + Anahtar <b>A</b>(0) = 13 (mod 29) = 13 → <b>K</b><br>2. Harf: Düz <b>Ü</b>(25) + Anahtar <b>Ğ</b>(8) = 33 (mod 29) = 4 → <b>D</b><br>3. Harf: Düz <b>T</b>(23) + Anahtar <b>B</b>(1) = 24 (mod 29) = 24 → <b>U</b><br>4. Harf: Düz <b>A</b>(0) + Anahtar <b>A</b>(0) = 0 (mod 29) = 0 → <b>A</b><br>5. Harf: Düz <b>H</b>(9) + Anahtar <b>Ğ</b>(8) = 17 (mod 29) = 17 → <b>O</b><br>6. Harf: Düz <b>Y</b>(27) + Anahtar <b>B</b>(1) = 28 (mod 29) = 28 → <b>Z</b><br><b>Sonuç (Şifreli Metin): KDUAOZ</b>"
+  },
+  {
+    "id": 53,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifreleme:</b> 6 karakterli <code>BİLİŞM</code> düz metnini, <code>KOD</code> anahtarını (tekrarlı: <code>KODKOD</code>) kullanarak mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Sayısal Değerleri: B=1, İ=11, L=14, İ=11, Ş=22, M=15<br>Anahtar Sayısal Değerleri: K=13, O=17, D=4</small>",
+    "options": [
+      "MZPUİP",
+      "NBRTHÖ",
+      "LYÖTIÖ",
+      "LZÖUIP"
+    ],
+    "answer": 3,
+    "explanation": "Vigenere şifrelemede her harf sıradaki anahtar harfi ile toplanır (mod 29):<br>1. Harf: Düz <b>B</b>(1) + Anahtar <b>K</b>(13) = 14 (mod 29) = 14 → <b>L</b><br>2. Harf: Düz <b>İ</b>(11) + Anahtar <b>O</b>(17) = 28 (mod 29) = 28 → <b>Z</b><br>3. Harf: Düz <b>L</b>(14) + Anahtar <b>D</b>(4) = 18 (mod 29) = 18 → <b>Ö</b><br>4. Harf: Düz <b>İ</b>(11) + Anahtar <b>K</b>(13) = 24 (mod 29) = 24 → <b>U</b><br>5. Harf: Düz <b>Ş</b>(22) + Anahtar <b>O</b>(17) = 39 (mod 29) = 10 → <b>I</b><br>6. Harf: Düz <b>M</b>(15) + Anahtar <b>D</b>(4) = 19 (mod 29) = 19 → <b>P</b><br><b>Sonuç (Şifreli Metin): LZÖUIP</b>"
+  },
+  {
+    "id": 54,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifreleme:</b> 6 karakterli <code>SİSTEM</code> düz metnini, <code>GÜV</code> anahtarını (tekrarlı: <code>GÜVGÜV</code>) kullanarak mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Sayısal Değerleri: S=21, İ=11, S=21, T=23, E=5, M=15<br>Anahtar Sayısal Değerleri: G=7, Ü=25, V=26</small>",
+    "options": [
+      "ZFÖABİ",
+      "ZGÖBBJ",
+      "BHRAAİ",
+      "AGPBCJ"
+    ],
+    "answer": 1,
+    "explanation": "Vigenere şifrelemede her harf sıradaki anahtar harfi ile toplanır (mod 29):<br>1. Harf: Düz <b>S</b>(21) + Anahtar <b>G</b>(7) = 28 (mod 29) = 28 → <b>Z</b><br>2. Harf: Düz <b>İ</b>(11) + Anahtar <b>Ü</b>(25) = 36 (mod 29) = 7 → <b>G</b><br>3. Harf: Düz <b>S</b>(21) + Anahtar <b>V</b>(26) = 47 (mod 29) = 18 → <b>Ö</b><br>4. Harf: Düz <b>T</b>(23) + Anahtar <b>G</b>(7) = 30 (mod 29) = 1 → <b>B</b><br>5. Harf: Düz <b>E</b>(5) + Anahtar <b>Ü</b>(25) = 30 (mod 29) = 1 → <b>B</b><br>6. Harf: Düz <b>M</b>(15) + Anahtar <b>V</b>(26) = 41 (mod 29) = 12 → <b>J</b><br><b>Sonuç (Şifreli Metin): ZGÖBBJ</b>"
+  },
+  {
+    "id": 55,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifreleme:</b> 6 karakterli <code>MERKEZ</code> düz metnini, <code>AĞI</code> anahtarını (tekrarlı: <code>AĞIAĞI</code>) kullanarak mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Sayısal Değerleri: M=15, E=5, R=20, K=13, E=5, Z=28<br>Anahtar Sayısal Değerleri: A=0, Ğ=8, I=10</small>",
+    "options": [
+      "MJBJKĞ",
+      "NKCKLH",
+      "OMÇJJĞ",
+      "MKBKKH"
+    ],
+    "answer": 3,
+    "explanation": "Vigenere şifrelemede her harf sıradaki anahtar harfi ile toplanır (mod 29):<br>1. Harf: Düz <b>M</b>(15) + Anahtar <b>A</b>(0) = 15 (mod 29) = 15 → <b>M</b><br>2. Harf: Düz <b>E</b>(5) + Anahtar <b>Ğ</b>(8) = 13 (mod 29) = 13 → <b>K</b><br>3. Harf: Düz <b>R</b>(20) + Anahtar <b>I</b>(10) = 30 (mod 29) = 1 → <b>B</b><br>4. Harf: Düz <b>K</b>(13) + Anahtar <b>A</b>(0) = 13 (mod 29) = 13 → <b>K</b><br>5. Harf: Düz <b>E</b>(5) + Anahtar <b>Ğ</b>(8) = 13 (mod 29) = 13 → <b>K</b><br>6. Harf: Düz <b>Z</b>(28) + Anahtar <b>I</b>(10) = 38 (mod 29) = 9 → <b>H</b><br><b>Sonuç (Şifreli Metin): MKBKKH</b>"
+  },
+  {
+    "id": 56,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifreleme:</b> 6 karakterli <code>KRİPTO</code> düz metnini, <code>DPÜ</code> anahtarını (tekrarlı: <code>DPÜDPÜ</code>) kullanarak mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Sayısal Değerleri: K=13, R=20, İ=11, P=19, T=23, O=17<br>Anahtar Sayısal Değerleri: D=4, P=19, Ü=25</small>",
+    "options": [
+      "OIGTKK",
+      "ÖIĞTLK",
+      "PJHŞJJ",
+      "OHGŞKJ"
+    ],
+    "answer": 0,
+    "explanation": "Vigenere şifrelemede her harf sıradaki anahtar harfi ile toplanır (mod 29):<br>1. Harf: Düz <b>K</b>(13) + Anahtar <b>D</b>(4) = 17 (mod 29) = 17 → <b>O</b><br>2. Harf: Düz <b>R</b>(20) + Anahtar <b>P</b>(19) = 39 (mod 29) = 10 → <b>I</b><br>3. Harf: Düz <b>İ</b>(11) + Anahtar <b>Ü</b>(25) = 36 (mod 29) = 7 → <b>G</b><br>4. Harf: Düz <b>P</b>(19) + Anahtar <b>D</b>(4) = 23 (mod 29) = 23 → <b>T</b><br>5. Harf: Düz <b>T</b>(23) + Anahtar <b>P</b>(19) = 42 (mod 29) = 13 → <b>K</b><br>6. Harf: Düz <b>O</b>(17) + Anahtar <b>Ü</b>(25) = 42 (mod 29) = 13 → <b>K</b><br><b>Sonuç (Şifreli Metin): OIGTKK</b>"
+  },
+  {
+    "id": 57,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifreleme:</b> 6 karakterli <code>PAROLA</code> düz metnini, <code>SIR</code> anahtarını (tekrarlı: <code>SIRSIR</code>) kullanarak mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Sayısal Değerleri: P=19, A=0, R=20, O=17, L=14, A=0<br>Anahtar Sayısal Değerleri: S=21, I=10, R=20</small>",
+    "options": [
+      "JIJHÜR",
+      "İHİĞUP",
+      "İIİHUR",
+      "KJKĞTP"
+    ],
+    "answer": 2,
+    "explanation": "Vigenere şifrelemede her harf sıradaki anahtar harfi ile toplanır (mod 29):<br>1. Harf: Düz <b>P</b>(19) + Anahtar <b>S</b>(21) = 40 (mod 29) = 11 → <b>İ</b><br>2. Harf: Düz <b>A</b>(0) + Anahtar <b>I</b>(10) = 10 (mod 29) = 10 → <b>I</b><br>3. Harf: Düz <b>R</b>(20) + Anahtar <b>R</b>(20) = 40 (mod 29) = 11 → <b>İ</b><br>4. Harf: Düz <b>O</b>(17) + Anahtar <b>S</b>(21) = 38 (mod 29) = 9 → <b>H</b><br>5. Harf: Düz <b>L</b>(14) + Anahtar <b>I</b>(10) = 24 (mod 29) = 24 → <b>U</b><br>6. Harf: Düz <b>A</b>(0) + Anahtar <b>R</b>(20) = 20 (mod 29) = 20 → <b>R</b><br><b>Sonuç (Şifreli Metin): İIİHUR</b>"
+  },
+  {
+    "id": 58,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifre Çözme:</b> 6 karakterli <code>YPŞVPJ</code> şifreli metnini, <code>DPÜ</code> anahtarını (tekrarlı: <code>DPÜDPÜ</code>) kullanarak mod 29'da çözünüz.<br><small class='char-hint'>Şifreli Metin Sayısal Değerleri: Y=27, P=19, Ş=22, V=26, P=19, J=12<br>Anahtar Sayısal Değerleri: D=4, P=19, Ü=25</small>",
+    "options": [
+      "TAVŞAN",
+      "UAYŞBN",
+      "TZVSAM",
+      "ÜCZSZM"
+    ],
+    "answer": 0,
+    "explanation": "Vigenere şifre çözmede şifreli harften anahtar harfi çıkarılır (mod 29):<br>1. Harf: Şifreli <b>Y</b>(27) - Anahtar <b>D</b>(4) = 23 (mod 29) = 23 → <b>T</b><br>2. Harf: Şifreli <b>P</b>(19) - Anahtar <b>P</b>(19) = 0 (mod 29) = 0 → <b>A</b><br>3. Harf: Şifreli <b>Ş</b>(22) - Anahtar <b>Ü</b>(25) = -3 (mod 29) = 26 → <b>V</b><br>4. Harf: Şifreli <b>V</b>(26) - Anahtar <b>D</b>(4) = 22 (mod 29) = 22 → <b>Ş</b><br>5. Harf: Şifreli <b>P</b>(19) - Anahtar <b>P</b>(19) = 0 (mod 29) = 0 → <b>A</b><br>6. Harf: Şifreli <b>J</b>(12) - Anahtar <b>Ü</b>(25) = -13 (mod 29) = 16 → <b>N</b><br><b>Sonuç (Düz Metin): TAVŞAN</b>"
+  },
+  {
+    "id": 59,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifre Çözme:</b> 6 karakterli <code>ĞILKIL</code> şifreli metnini, <code>NET</code> anahtarını (tekrarlı: <code>NETNET</code>) kullanarak mod 29'da çözünüz.<br><small class='char-hint'>Şifreli Metin Sayısal Değerleri: Ğ=8, I=10, L=14, K=13, I=10, L=14<br>Anahtar Sayısal Değerleri: N=16, E=5, T=23</small>",
+    "options": [
+      "SDRÜEP",
+      "ŞESVFR",
+      "TGŞÜDP",
+      "SERVER"
+    ],
+    "answer": 3,
+    "explanation": "Vigenere şifre çözmede şifreli harften anahtar harfi çıkarılır (mod 29):<br>1. Harf: Şifreli <b>Ğ</b>(8) - Anahtar <b>N</b>(16) = -8 (mod 29) = 21 → <b>S</b><br>2. Harf: Şifreli <b>I</b>(10) - Anahtar <b>E</b>(5) = 5 (mod 29) = 5 → <b>E</b><br>3. Harf: Şifreli <b>L</b>(14) - Anahtar <b>T</b>(23) = -9 (mod 29) = 20 → <b>R</b><br>4. Harf: Şifreli <b>K</b>(13) - Anahtar <b>N</b>(16) = -3 (mod 29) = 26 → <b>V</b><br>5. Harf: Şifreli <b>I</b>(10) - Anahtar <b>E</b>(5) = 5 (mod 29) = 5 → <b>E</b><br>6. Harf: Şifreli <b>L</b>(14) - Anahtar <b>T</b>(23) = -9 (mod 29) = 20 → <b>R</b><br><b>Sonuç (Düz Metin): SERVER</b>"
+  },
+  {
+    "id": 60,
+    "type": "islem",
+    "category": "6. İşlem: Vigenere Şifreleme",
+    "question": "<b>Vigenere Şifre Çözme:</b> 6 karakterli <code>UEPGPF</code> şifreli metnini, <code>VER</code> anahtarını (tekrarlı: <code>VERVER</code>) kullanarak mod 29'da çözünüz.<br><small class='char-hint'>Şifreli Metin Sayısal Değerleri: U=24, E=5, P=19, G=7, P=19, F=6<br>Anahtar Sayısal Değerleri: V=26, E=5, R=20</small>",
+    "options": [
+      "YZZHLL",
+      "ZAAIMM",
+      "ACBHKL",
+      "YAZILM"
+    ],
+    "answer": 3,
+    "explanation": "Vigenere şifre çözmede şifreli harften anahtar harfi çıkarılır (mod 29):<br>1. Harf: Şifreli <b>U</b>(24) - Anahtar <b>V</b>(26) = -2 (mod 29) = 27 → <b>Y</b><br>2. Harf: Şifreli <b>E</b>(5) - Anahtar <b>E</b>(5) = 0 (mod 29) = 0 → <b>A</b><br>3. Harf: Şifreli <b>P</b>(19) - Anahtar <b>R</b>(20) = -1 (mod 29) = 28 → <b>Z</b><br>4. Harf: Şifreli <b>G</b>(7) - Anahtar <b>V</b>(26) = -19 (mod 29) = 10 → <b>I</b><br>5. Harf: Şifreli <b>P</b>(19) - Anahtar <b>E</b>(5) = 14 (mod 29) = 14 → <b>L</b><br>6. Harf: Şifreli <b>F</b>(6) - Anahtar <b>R</b>(20) = -14 (mod 29) = 15 → <b>M</b><br><b>Sonuç (Düz Metin): YAZILM</b>"
+  },
+  {
+    "id": 61,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>FMARET</code> (İkili gruplar: <code>FM - AR - ET</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): F(Satır:1, Sütun:5), M(Satır:3, Sütun:5), A(Satır:2, Sütun:2), R(Satır:4, Sütun:6), E(Satır:2, Sütun:3), T(Satır:4, Sütun:3)</small>",
+    "options": [
+      "ORPÜJĞ",
+      "PTSÜİĞ",
+      "ÖSRVKH",
+      "OSPVJH"
+    ],
+    "answer": 3,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>FM</b> [F:(1,5), M:(3,5)] → Aynı sütun (Sütun 5) → Alttaki harfler alınır → <b>OS</b><br><b>AR</b> [A:(2,2), R:(4,6)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>PV</b><br><b>ET</b> [E:(2,3), T:(4,3)] → Aynı sütun (Sütun 3) → Alttaki harfler alınır → <b>JH</b><br><b>Sonuç (Şifreli Metin): OSPVJH</b>"
+  },
+  {
+    "id": 62,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>MFRAKG</code> (İkili gruplar: <code>MF - RA - KG</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): M(Satır:3, Sütun:5), F(Satır:1, Sütun:5), R(Satır:4, Sütun:6), A(Satır:2, Sütun:2), K(Satır:3, Sütun:2), G(Satır:1, Sütun:2)</small>",
+    "options": [
+      "SOVPVA",
+      "TPZÖÜZ",
+      "SNVÖVZ",
+      "ŞOYPYA"
+    ],
+    "answer": 0,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>MF</b> [M:(3,5), F:(1,5)] → Aynı sütun (Sütun 5) → Alttaki harfler alınır → <b>SO</b><br><b>RA</b> [R:(4,6), A:(2,2)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>VP</b><br><b>KG</b> [K:(3,2), G:(1,2)] → Aynı sütun (Sütun 2) → Alttaki harfler alınır → <b>VA</b><br><b>Sonuç (Şifreli Metin): SOVPVA</b>"
+  },
+  {
+    "id": 63,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>KALEMÖ</code> (İkili gruplar: <code>KA - LE - MÖ</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): K(Satır:3, Sütun:2), A(Satır:2, Sütun:2), L(Satır:2, Sütun:4), E(Satır:2, Sütun:3), M(Satır:3, Sütun:5), Ö(Satır:2, Sütun:7)</small>",
+    "options": [
+      "YKÖLZO",
+      "VJOKYN",
+      "VKOLYO",
+      "ZMPKVN"
+    ],
+    "answer": 2,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>KA</b> [K:(3,2), A:(2,2)] → Aynı sütun (Sütun 2) → Alttaki harfler alınır → <b>VK</b><br><b>LE</b> [L:(2,4), E:(2,3)] → Aynı satır (Satır 2) → Sağdaki harfler alınır → <b>OL</b><br><b>MÖ</b> [M:(3,5), Ö:(2,7)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>YO</b><br><b>Sonuç (Şifreli Metin): VKOLYO</b>"
+  },
+  {
+    "id": 64,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>MERKEZ</code> (İkili gruplar: <code>ME - RK - EZ</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): M(Satır:3, Sütun:5), E(Satır:2, Sütun:3), R(Satır:4, Sütun:6), K(Satır:3, Sütun:2), E(Satır:2, Sütun:3), Z(Satır:4, Sütun:1)</small>",
+    "options": [
+      "LPZTAŞ",
+      "KOYUCT",
+      "JNVTBŞ",
+      "JOVUBT"
+    ],
+    "answer": 3,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>ME</b> [M:(3,5), E:(2,3)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>JO</b><br><b>RK</b> [R:(4,6), K:(3,2)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>VU</b><br><b>EZ</b> [E:(2,3), Z:(4,1)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>BT</b><br><b>Sonuç (Şifreli Metin): JOVUBT</b>"
+  },
+  {
+    "id": 65,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>SİSTEM</code> (İkili gruplar: <code>Sİ - ST - EM</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): S(Satır:4, Sütun:5), İ(Satır:3, Sütun:4), S(Satır:4, Sütun:5), T(Satır:4, Sütun:3), E(Satır:2, Sütun:3), M(Satır:3, Sütun:5)</small>",
+    "options": [
+      "UOŞSNİ",
+      "ŞLRSOİ",
+      "TMSŞÖJ",
+      "ŞMRŞOJ"
+    ],
+    "answer": 3,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>Sİ</b> [S:(4,5), İ:(3,4)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>ŞM</b><br><b>ST</b> [S:(4,5), T:(4,3)] → Aynı satır (Satır 4) → Sağdaki harfler alınır → <b>RŞ</b><br><b>EM</b> [E:(2,3), M:(3,5)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>OJ</b><br><b>Sonuç (Şifreli Metin): ŞMRŞOJ</b>"
+  },
+  {
+    "id": 66,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>PAROLA</code> (İkili gruplar: <code>PA - RO - LA</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): P(Satır:2, Sütun:6), A(Satır:2, Sütun:2), R(Satır:4, Sütun:6), O(Satır:2, Sütun:5), L(Satır:2, Sütun:4), A(Satır:2, Sütun:2)</small>",
+    "options": [
+      "PEŞPÖE",
+      "ÖESPOE",
+      "RGTÖND",
+      "ÖDSÖOD"
+    ],
+    "answer": 1,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>PA</b> [P:(2,6), A:(2,2)] → Aynı satır (Satır 2) → Sağdaki harfler alınır → <b>ÖE</b><br><b>RO</b> [R:(4,6), O:(2,5)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>SP</b><br><b>LA</b> [L:(2,4), A:(2,2)] → Aynı satır (Satır 2) → Sağdaki harfler alınır → <b>OE</b><br><b>Sonuç (Şifreli Metin): ÖESPOE</b>"
+  },
+  {
+    "id": 67,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>KRİPTO</code> (İkili gruplar: <code>KR - İP - TO</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): K(Satır:3, Sütun:2), R(Satır:4, Sütun:6), İ(Satır:3, Sütun:4), P(Satır:2, Sütun:6), T(Satır:4, Sütun:3), O(Satır:2, Sütun:5)</small>",
+    "options": [
+      "VZVKRD",
+      "ÜVÜLŞE",
+      "UVULSE",
+      "UÜUKSD"
+    ],
+    "answer": 2,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>KR</b> [K:(3,2), R:(4,6)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>UV</b><br><b>İP</b> [İ:(3,4), P:(2,6)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>UL</b><br><b>TO</b> [T:(4,3), O:(2,5)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>SE</b><br><b>Sonuç (Şifreli Metin): UVULSE</b>"
+  },
+  {
+    "id": 68,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>BİLİŞM</code> (İkili gruplar: <code>Bİ - Lİ - ŞM</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): B(Satır:2, Sütun:1), İ(Satır:3, Sütun:4), L(Satır:2, Sütun:4), İ(Satır:3, Sütun:4), Ş(Satır:4, Sütun:4), M(Satır:3, Sütun:5)</small>",
+    "options": [
+      "NÖJSRH",
+      "LNIŞSI",
+      "LMISSH",
+      "MNİŞŞI"
+    ],
+    "answer": 1,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>Bİ</b> [B:(2,1), İ:(3,4)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>LN</b><br><b>Lİ</b> [L:(2,4), İ:(3,4)] → Aynı sütun (Sütun 4) → Alttaki harfler alınır → <b>IŞ</b><br><b>ŞM</b> [Ş:(4,4), M:(3,5)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>SI</b><br><b>Sonuç (Şifreli Metin): LNIŞSI</b>"
+  },
+  {
+    "id": 69,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>GÜVENL</code> (İkili gruplar: <code>GÜ - VE - NL</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): G(Satır:1, Sütun:2), Ü(Satır:4, Sütun:7), V(Satır:4, Sütun:2), E(Satır:2, Sütun:3), N(Satır:3, Sütun:1), L(Satır:2, Sütun:4)</small>",
+    "options": [
+      "CVTAIB",
+      "ÇVUAİB",
+      "CÜTZIA",
+      "DZÜZHA"
+    ],
+    "answer": 0,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>GÜ</b> [G:(1,2), Ü:(4,7)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>CV</b><br><b>VE</b> [V:(4,2), E:(2,3)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>TA</b><br><b>NL</b> [N:(3,1), L:(2,4)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>IB</b><br><b>Sonuç (Şifreli Metin): CVTAIB</b>"
+  },
+  {
+    "id": 70,
+    "type": "islem",
+    "category": "7. İşlem: Playfair Şifreleme",
+    "question": "<b>Playfair Şifreleme:</b> Ders notlarındaki Playfair matrisini kullanarak 6 karakterli <code>ŞEBEKE</code> (İkili gruplar: <code>ŞE - BE - KE</code>) düz metnini şifreleyiniz.<br><small class='char-hint'>Tablo Konumları (Satır, Sütun): Ş(Satır:4, Sütun:4), E(Satır:2, Sütun:3), B(Satır:2, Sütun:1), E(Satır:2, Sütun:3), K(Satır:3, Sütun:2), E(Satır:2, Sütun:3)</small>",
+    "options": [
+      "TLALJA",
+      "ULBLKA",
+      "TKAKJZ",
+      "ÜNCKİZ"
+    ],
+    "answer": 0,
+    "explanation": "Playfair matrisinde ikişer harf gruplanarak (Aynı sütunda bir alt satır, aynı satırda bir sağ sütun, farklı satır/sütunda kendi satırında diğerinin sütunu) şifrelenir:<br><b>ŞE</b> [Ş:(4,4), E:(2,3)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>TL</b><br><b>BE</b> [B:(2,1), E:(2,3)] → Aynı satır (Satır 2) → Sağdaki harfler alınır → <b>AL</b><br><b>KE</b> [K:(3,2), E:(2,3)] → Farklı satır ve sütun (Dikdörtgen kuralı) → Kendi satırında, diğer harfin sütunundaki harf alınır → <b>JA</b><br><b>Sonuç (Şifreli Metin): TLALJA</b>"
+  },
+  {
+    "id": 71,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>TAVŞAN</code> düz metnini, Anahtar Matrisi <b>K = [[4, 8], [13, 22]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: T=23, A=0, V=26, Ş=22, A=0, N=16<br>Yardımcı Alfabe Karşılıkları: D=4, E=5, H=9, I=10, J=12, P=19</small>",
+    "options": [
+      "FHRIKD",
+      "EHPIJD",
+      "EĞPHJÇ",
+      "GİSHİÇ"
+    ],
+    "answer": 1,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>TA</b> = [23, 0]<sup>T</sup> → c<sub>1</sub> = (4×23 + 8×0) = 92 ≡ <b>5 (E)</b> (mod 29), c<sub>2</sub> = (13×23 + 22×0) = 299 ≡ <b>9 (H)</b> (mod 29)<br><b>VŞ</b> = [26, 22]<sup>T</sup> → c<sub>3</sub> = (4×26 + 8×22) = 280 ≡ <b>19 (P)</b> (mod 29), c<sub>4</sub> = (13×26 + 22×22) = 822 ≡ <b>10 (I)</b> (mod 29)<br><b>AN</b> = [0, 16]<sup>T</sup> → c<sub>5</sub> = (4×0 + 8×16) = 128 ≡ <b>12 (J)</b> (mod 29), c<sub>6</sub> = (13×0 + 22×16) = 352 ≡ <b>4 (D)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): EHPIJD</b>"
+  },
+  {
+    "id": 72,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>ANLILI</code> düz metnini, Anahtar Matrisi <b>K = [[4, 8], [13, 22]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: A=0, N=16, L=14, I=10, L=14, I=10<br>Yardımcı Alfabe Karşılıkları: D=4, J=12, R=20, Ü=25</small>",
+    "options": [
+      "JDRÜRÜ",
+      "KDSÜSÜ",
+      "JÇRURU",
+      "LFŞUPU"
+    ],
+    "answer": 0,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>AN</b> = [0, 16]<sup>T</sup> → c<sub>1</sub> = (4×0 + 8×16) = 128 ≡ <b>12 (J)</b> (mod 29), c<sub>2</sub> = (13×0 + 22×16) = 352 ≡ <b>4 (D)</b> (mod 29)<br><b>LI</b> = [14, 10]<sup>T</sup> → c<sub>3</sub> = (4×14 + 8×10) = 136 ≡ <b>20 (R)</b> (mod 29), c<sub>4</sub> = (13×14 + 22×10) = 402 ≡ <b>25 (Ü)</b> (mod 29)<br><b>LI</b> = [14, 10]<sup>T</sup> → c<sub>5</sub> = (4×14 + 8×10) = 136 ≡ <b>20 (R)</b> (mod 29), c<sub>6</sub> = (13×14 + 22×10) = 402 ≡ <b>25 (Ü)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): JDRÜRÜ</b>"
+  },
+  {
+    "id": 73,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>MERKEZ</code> düz metnini, Anahtar Matrisi <b>K = [[2, 3], [1, 4]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: M=15, E=5, R=20, K=13, E=5, Z=28<br>Yardımcı Alfabe Karşılıkları: B=1, F=6, G=7, L=14, N=16, S=21</small>",
+    "options": [
+      "NFSLGB",
+      "OFŞLĞB",
+      "NESKGA",
+      "ÖĞTKFA"
+    ],
+    "answer": 0,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>ME</b> = [15, 5]<sup>T</sup> → c<sub>1</sub> = (2×15 + 3×5) = 45 ≡ <b>16 (N)</b> (mod 29), c<sub>2</sub> = (1×15 + 4×5) = 35 ≡ <b>6 (F)</b> (mod 29)<br><b>RK</b> = [20, 13]<sup>T</sup> → c<sub>3</sub> = (2×20 + 3×13) = 79 ≡ <b>21 (S)</b> (mod 29), c<sub>4</sub> = (1×20 + 4×13) = 72 ≡ <b>14 (L)</b> (mod 29)<br><b>EZ</b> = [5, 28]<sup>T</sup> → c<sub>5</sub> = (2×5 + 3×28) = 94 ≡ <b>7 (G)</b> (mod 29), c<sub>6</sub> = (1×5 + 4×28) = 117 ≡ <b>1 (B)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): NFSLGB</b>"
+  },
+  {
+    "id": 74,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>BİLİŞM</code> düz metnini, Anahtar Matrisi <b>K = [[3, 2], [1, 5]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: B=1, İ=11, L=14, İ=11, Ş=22, M=15<br>Yardımcı Alfabe Karşılıkları: F=6, H=9, I=10, Y=27, Ü=25, İ=11</small>",
+    "options": [
+      "ÜYFİHI",
+      "VYGİII",
+      "YAĞIĞH",
+      "ÜVFIHH"
+    ],
+    "answer": 0,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>Bİ</b> = [1, 11]<sup>T</sup> → c<sub>1</sub> = (3×1 + 2×11) = 25 ≡ <b>25 (Ü)</b> (mod 29), c<sub>2</sub> = (1×1 + 5×11) = 56 ≡ <b>27 (Y)</b> (mod 29)<br><b>Lİ</b> = [14, 11]<sup>T</sup> → c<sub>3</sub> = (3×14 + 2×11) = 64 ≡ <b>6 (F)</b> (mod 29), c<sub>4</sub> = (1×14 + 5×11) = 69 ≡ <b>11 (İ)</b> (mod 29)<br><b>ŞM</b> = [22, 15]<sup>T</sup> → c<sub>5</sub> = (3×22 + 2×15) = 96 ≡ <b>9 (H)</b> (mod 29), c<sub>6</sub> = (1×22 + 5×15) = 97 ≡ <b>10 (I)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): ÜYFİHI</b>"
+  },
+  {
+    "id": 75,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>KRİPTO</code> düz metnini, Anahtar Matrisi <b>K = [[4, 8], [13, 22]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: K=13, R=20, İ=11, P=19, T=23, O=17<br>Yardımcı Alfabe Karşılıkları: A=0, F=6, H=9, I=10, Ü=25, Ş=22</small>",
+    "options": [
+      "HZŞHÜE",
+      "IATIVF",
+      "İCUHUE",
+      "HAŞIÜF"
+    ],
+    "answer": 3,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>KR</b> = [13, 20]<sup>T</sup> → c<sub>1</sub> = (4×13 + 8×20) = 212 ≡ <b>9 (H)</b> (mod 29), c<sub>2</sub> = (13×13 + 22×20) = 609 ≡ <b>0 (A)</b> (mod 29)<br><b>İP</b> = [11, 19]<sup>T</sup> → c<sub>3</sub> = (4×11 + 8×19) = 196 ≡ <b>22 (Ş)</b> (mod 29), c<sub>4</sub> = (13×11 + 22×19) = 561 ≡ <b>10 (I)</b> (mod 29)<br><b>TO</b> = [23, 17]<sup>T</sup> → c<sub>5</sub> = (4×23 + 8×17) = 228 ≡ <b>25 (Ü)</b> (mod 29), c<sub>6</sub> = (13×23 + 22×17) = 673 ≡ <b>6 (F)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): HAŞIÜF</b>"
+  },
+  {
+    "id": 76,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>SİSTEM</code> düz metnini, Anahtar Matrisi <b>K = [[2, 1], [3, 4]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: S=21, İ=11, S=21, T=23, E=5, M=15<br>Yardımcı Alfabe Karşılıkları: G=7, I=10, O=17, R=20, U=24, Ü=25</small>",
+    "options": [
+      "VŞHHUN",
+      "URGIÜO",
+      "ÜRĞIVO",
+      "UPGHÜN"
+    ],
+    "answer": 1,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>Sİ</b> = [21, 11]<sup>T</sup> → c<sub>1</sub> = (2×21 + 1×11) = 53 ≡ <b>24 (U)</b> (mod 29), c<sub>2</sub> = (3×21 + 4×11) = 107 ≡ <b>20 (R)</b> (mod 29)<br><b>ST</b> = [21, 23]<sup>T</sup> → c<sub>3</sub> = (2×21 + 1×23) = 65 ≡ <b>7 (G)</b> (mod 29), c<sub>4</sub> = (3×21 + 4×23) = 155 ≡ <b>10 (I)</b> (mod 29)<br><b>EM</b> = [5, 15]<sup>T</sup> → c<sub>5</sub> = (2×5 + 1×15) = 25 ≡ <b>25 (Ü)</b> (mod 29), c<sub>6</sub> = (3×5 + 4×15) = 75 ≡ <b>17 (O)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): URGIÜO</b>"
+  },
+  {
+    "id": 77,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>PAROLA</code> düz metnini, Anahtar Matrisi <b>K = [[1, 2], [3, 5]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: P=19, A=0, R=20, O=17, L=14, A=0<br>Yardımcı Alfabe Karşılıkları: A=0, K=13, L=14, P=19, Z=28, Ü=25</small>",
+    "options": [
+      "PYÜZLJ",
+      "RZVAMK",
+      "PZÜALK",
+      "SBYZKJ"
+    ],
+    "answer": 2,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>PA</b> = [19, 0]<sup>T</sup> → c<sub>1</sub> = (1×19 + 2×0) = 19 ≡ <b>19 (P)</b> (mod 29), c<sub>2</sub> = (3×19 + 5×0) = 57 ≡ <b>28 (Z)</b> (mod 29)<br><b>RO</b> = [20, 17]<sup>T</sup> → c<sub>3</sub> = (1×20 + 2×17) = 54 ≡ <b>25 (Ü)</b> (mod 29), c<sub>4</sub> = (3×20 + 5×17) = 145 ≡ <b>0 (A)</b> (mod 29)<br><b>LA</b> = [14, 0]<sup>T</sup> → c<sub>5</sub> = (1×14 + 2×0) = 14 ≡ <b>14 (L)</b> (mod 29), c<sub>6</sub> = (3×14 + 5×0) = 42 ≡ <b>13 (K)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): PZÜALK</b>"
+  },
+  {
+    "id": 78,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>AĞLARI</code> düz metnini, Anahtar Matrisi <b>K = [[3, 1], [2, 3]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: A=0, Ğ=8, L=14, A=0, R=20, I=10<br>Yardımcı Alfabe Karşılıkları: J=12, K=13, U=24, Z=28, Ğ=8</small>",
+    "options": [
+      "IVMYİİ",
+      "HULZKJ",
+      "ĞUKZJJ",
+      "ĞTKYJİ"
+    ],
+    "answer": 2,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>AĞ</b> = [0, 8]<sup>T</sup> → c<sub>1</sub> = (3×0 + 1×8) = 8 ≡ <b>8 (Ğ)</b> (mod 29), c<sub>2</sub> = (2×0 + 3×8) = 24 ≡ <b>24 (U)</b> (mod 29)<br><b>LA</b> = [14, 0]<sup>T</sup> → c<sub>3</sub> = (3×14 + 1×0) = 42 ≡ <b>13 (K)</b> (mod 29), c<sub>4</sub> = (2×14 + 3×0) = 28 ≡ <b>28 (Z)</b> (mod 29)<br><b>RI</b> = [20, 10]<sup>T</sup> → c<sub>5</sub> = (3×20 + 1×10) = 70 ≡ <b>12 (J)</b> (mod 29), c<sub>6</sub> = (2×20 + 3×10) = 70 ≡ <b>12 (J)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): ĞUKZJJ</b>"
+  },
+  {
+    "id": 79,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>GÜVENL</code> düz metnini, Anahtar Matrisi <b>K = [[2, 4], [5, 3]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: G=7, Ü=25, V=26, E=5, N=16, L=14<br>Yardımcı Alfabe Karşılıkları: A=0, B=1, F=6, L=14, T=23, Y=27</small>",
+    "options": [
+      "AÜNZAE",
+      "YTLABF",
+      "YŞLZBE",
+      "ZTMACF"
+    ],
+    "answer": 1,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>GÜ</b> = [7, 25]<sup>T</sup> → c<sub>1</sub> = (2×7 + 4×25) = 114 ≡ <b>27 (Y)</b> (mod 29), c<sub>2</sub> = (5×7 + 3×25) = 110 ≡ <b>23 (T)</b> (mod 29)<br><b>VE</b> = [26, 5]<sup>T</sup> → c<sub>3</sub> = (2×26 + 4×5) = 72 ≡ <b>14 (L)</b> (mod 29), c<sub>4</sub> = (5×26 + 3×5) = 145 ≡ <b>0 (A)</b> (mod 29)<br><b>NL</b> = [16, 14]<sup>T</sup> → c<sub>5</sub> = (2×16 + 4×14) = 88 ≡ <b>1 (B)</b> (mod 29), c<sub>6</sub> = (5×16 + 3×14) = 122 ≡ <b>6 (F)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): YTLABF</b>"
+  },
+  {
+    "id": 80,
+    "type": "islem",
+    "category": "8. İşlem: Hill Şifreleme",
+    "question": "<b>Hill Şifreleme (C = K·P mod 29):</b> 6 karakterli <code>YAZILM</code> düz metnini, Anahtar Matrisi <b>K = [[4, 1], [2, 5]]</b> ile ikişerli bloklar halinde mod 29'da şifreleyiniz.<br><small class='char-hint'>Düz Metin Değerleri: Y=27, A=0, Z=28, I=10, L=14, M=15<br>Yardımcı Alfabe Karşılıkları: F=6, K=13, N=16, P=19, S=21, Ü=25</small>",
+    "options": [
+      "TYĞÖJM",
+      "SÜFPKN",
+      "ŞÜGPLN",
+      "SUFÖKM"
+    ],
+    "answer": 1,
+    "explanation": "Hill şifrelemede düz metin ikili sütun vektörlerine ayrılıp K matrisi ile çarpılır (mod 29):<br><b>YA</b> = [27, 0]<sup>T</sup> → c<sub>1</sub> = (4×27 + 1×0) = 108 ≡ <b>21 (S)</b> (mod 29), c<sub>2</sub> = (2×27 + 5×0) = 54 ≡ <b>25 (Ü)</b> (mod 29)<br><b>ZI</b> = [28, 10]<sup>T</sup> → c<sub>3</sub> = (4×28 + 1×10) = 122 ≡ <b>6 (F)</b> (mod 29), c<sub>4</sub> = (2×28 + 5×10) = 106 ≡ <b>19 (P)</b> (mod 29)<br><b>LM</b> = [14, 15]<sup>T</sup> → c<sub>5</sub> = (4×14 + 1×15) = 71 ≡ <b>13 (K)</b> (mod 29), c<sub>6</sub> = (2×14 + 5×15) = 103 ≡ <b>16 (N)</b> (mod 29)<br><b>Sonuç (Şifreli Metin): SÜFPKN</b>"
+  }
+];
+    let userAnswers = {};
+    let currentMode = 'all'; // 'all', 'bilgi', 'islem'
+    let currentCategory = 'Tümü';
+    const letters = ['A', 'B', 'C', 'D'];
+
+    function setMode(mode) {
+        currentMode = mode;
+        currentCategory = 'Tümü';
+        document.querySelectorAll('.mode-card').forEach(el => el.classList.remove('active'));
+        document.getElementById('mode-' + mode).classList.add('active');
+        initFilters();
+        renderQuestions();
+    }
+
+    function getModeQuestions() {
+        if (currentMode === 'all') return questions;
+        return questions.filter(q => q.type === currentMode);
+    }
+
+    function initFilters() {
+        const modeQs = getModeQuestions();
+        const categories = ['Tümü', ...new Set(modeQs.map(q => q.category))];
+        const bar = document.getElementById('filter-bar');
+        bar.innerHTML = '';
+        categories.forEach(cat => {
+            const count = cat === 'Tümü' ? modeQs.length : modeQs.filter(q => q.category === cat).length;
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn' + (cat === currentCategory ? ' active' : '');
+            btn.textContent = `${cat} (${count})`;
+            btn.onclick = () => {
+                currentCategory = cat;
+                initFilters();
+                renderQuestions();
+            };
+            bar.appendChild(btn);
+        });
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('questions-container');
+        container.innerHTML = '';
+        const modeQs = getModeQuestions();
+        const filtered = currentCategory === 'Tümü'
+            ? modeQs
+            : modeQs.filter(q => q.category === currentCategory);
+
+        document.getElementById('stat-total').textContent = `Gösterilen: ${filtered.length}`;
+
+        filtered.forEach(q => {
+            const card = document.createElement('div');
+            card.className = 'q-card';
+            card.dataset.category = q.category;
+            card.dataset.id = q.id;
+            const answered = userAnswers[q.id] !== undefined;
+            const selectedIdx = userAnswers[q.id];
+
+            let optsHtml = '';
+            q.options.forEach((opt, idx) => {
+                let cls = 'opt-btn';
+                if (answered) {
+                    if (idx === q.answer) cls += ' correct';
+                    else if (idx === selectedIdx && selectedIdx !== q.answer) cls += ' wrong';
+                }
+                optsHtml += `
+                    <button class="${cls}" ${answered ? 'disabled' : ''} onclick="selectOption(${q.id}, ${idx})">
+                        <span class="opt-letter">${letters[idx]}</span>
+                        <span>${opt}</span>
+                    </button>
+                `;
+            });
+
+            card.innerHTML = `
+                <div class="q-meta">
+                    <span class="q-num">Soru #${q.id}</span>
+                    <span class="q-cat">${q.category}</span>
+                </div>
+                <div class="q-text">${q.question}</div>
+                <div class="options-list">${optsHtml}</div>
+                <button class="sol-toggle" onclick="toggleSolution(${q.id})">📖 Çözümü Göster / Gizle</button>
+                <div class="explanation-box ${answered ? 'visible' : ''}" id="sol-${q.id}">
+                    ${q.explanation}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        setupPlayfairObserver();
+    }
+
+    let pfObserver = null;
+    function setupPlayfairObserver() {
+        const popup = document.getElementById('pf-floating-popup');
+        if (pfObserver) {
+            pfObserver.disconnect();
+            pfObserver = null;
+        }
+
+        // If user explicitly selected Playfair category, keep popup always open
+        if (currentCategory === '7. İşlem: Playfair Şifreleme') {
+            popup.classList.add('active');
+            document.body.classList.add('pf-popup-open');
+            return;
+        }
+
+        // If user selected another specific category (not Playfair and not Tümü), hide popup
+        if (currentCategory !== 'Tümü') {
+            popup.classList.remove('active');
+            document.body.classList.remove('pf-popup-open');
+            return;
+        }
+
+        // When in 'Tümü', automatically show the floating popup whenever Playfair questions are visible on screen!
+        const pfCards = document.querySelectorAll('.q-card[data-category="7. İşlem: Playfair Şifreleme"], .q-card[data-id="18"], .q-card[data-id="19"]');
+        if (pfCards.length === 0) {
+            popup.classList.remove('active');
+            document.body.classList.remove('pf-popup-open');
+            return;
+        }
+
+        const visiblePfCards = new Set();
+        pfObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const id = entry.target.dataset.id;
+                if (entry.isIntersecting) {
+                    visiblePfCards.add(id);
+                } else {
+                    visiblePfCards.delete(id);
+                }
+            });
+            if (visiblePfCards.size > 0) {
+                popup.classList.add('active');
+                document.body.classList.add('pf-popup-open');
+            } else {
+                popup.classList.remove('active');
+                document.body.classList.remove('pf-popup-open');
+            }
+        }, { threshold: 0.15 });
+
+        pfCards.forEach(c => pfObserver.observe(c));
+    }
+
+    function togglePfPopupBody() {
+        const body = document.getElementById('pf-popup-body');
+        const btn = document.getElementById('pf-min-btn');
+        body.classList.toggle('minimized');
+        if (body.classList.contains('minimized')) {
+            btn.textContent = 'Büyüt ▴';
+        } else {
+            btn.textContent = 'Küçült ▾';
+        }
+    }
+
+    function selectOption(qId, optIdx) {
+        if (userAnswers[qId] !== undefined) return;
+        userAnswers[qId] = optIdx;
+        updateStats();
+        renderQuestions();
+    }
+
+    function toggleSolution(qId) {
+        const el = document.getElementById('sol-' + qId);
+        if (el) el.classList.toggle('visible');
+    }
+
+    function toggleAllSolutions(show) {
+        document.querySelectorAll('.explanation-box').forEach(el => {
+            if (show) el.classList.add('visible');
+            else el.classList.remove('visible');
+        });
+    }
+
+    function updateStats() {
+        let correct = 0;
+        let wrong = 0;
+        Object.keys(userAnswers).forEach(qId => {
+            const q = questions.find(item => item.id === parseInt(qId));
+            if (userAnswers[qId] === q.answer) correct++;
+            else wrong++;
+        });
+        const totalAnswered = correct + wrong;
+        const pct = totalAnswered > 0 ? Math.round((correct / totalAnswered) * 100) : 0;
+        document.getElementById('stat-correct').textContent = `Doğru: ${correct}`;
+        document.getElementById('stat-wrong').textContent = `Yanlış: ${wrong}`;
+        document.getElementById('stat-score').textContent = `Başarı: %${pct} (${totalAnswered}/${questions.length})`;
+    }
+
+    function resetQuiz() {
+        userAnswers = {};
+        updateStats();
+        renderQuestions();
+    }
+
+    function toggleRef() {
+        document.getElementById('ref-body').classList.toggle('hidden');
+    }
+
+    initFilters();
+    renderQuestions();
+</script>
+</body>
+</html>

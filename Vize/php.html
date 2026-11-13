@@ -1,0 +1,2806 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PHP İnteraktif Soru Bankası & Sınav Modu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        pre, code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .option-btn {
+            transition: all 0.15s ease-in-out;
+        }
+        .option-btn:active {
+            transform: scale(0.99);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- Üst Sabit Bar (Sticky Header) -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-lg">
+        <div class="max-w-6xl mx-auto px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2">
+            <!-- Sol: Logo & Başlık -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/20 font-mono font-bold text-white text-sm">
+                    &lt;?php
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-tight">PHP Çalışma & Sınav</h1>
+                    <p class="text-[11px] text-slate-400 hidden sm:block">Notlar (55) + Sınav Listesi Özel & Ekstra (50) = 105 Soru</p>
+                </div>
+            </div>
+
+            <!-- Orta: Mod Seçimi (Çalışma vs Sınav vs Konu Özeti) -->
+            <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button id="btnModeStudy" onclick="switchMode('study')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-indigo-600 text-white shadow">
+                    📚 Çalışma
+                </button>
+                <button id="btnModeExam" onclick="switchMode('exam')" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white">
+                    ⏱️ Sınav Modu
+                </button>
+                <button id="btnCheatSheet" onclick="toggleCheatSheet()" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-emerald-400 hover:text-emerald-300">
+                    📝 Konu Özeti
+                </button>
+            </div>
+
+            <!-- Sağ: Zamanlayıcı (Sınavda) & Soru Haritası Butonu -->
+            <div class="flex items-center gap-2">
+                <!-- Sınav Sayacı -->
+                <div id="examTimerBox" class="hidden items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-mono font-semibold">
+                    <svg class="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="timerDisplay">30:00</span>
+                </div>
+
+                <!-- Soru Gezgini Açma Butonu -->
+                <button onclick="toggleDrawer()" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium border border-slate-700 transition">
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                    <span>Sorular</span>
+                    <span id="headerProgressBadge" class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded-md text-[11px] font-mono">0/105</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- İlerleme Çubuğu -->
+        <div class="w-full bg-slate-950 h-1">
+            <div id="progressBar" class="bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-500 h-1 transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </header>
+
+    <!-- Kontrol ve Filtre Paneli -->
+    <section class="bg-slate-900/60 border-b border-slate-800/80">
+        <div class="max-w-6xl mx-auto px-3 sm:px-6 py-3 flex flex-col gap-3">
+            
+            <!-- Üst Satır: Kaynak, Konu, Soru Tipi ve Görünüm Filtreleri -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                <!-- Kaynak Filtresi -->
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Soru Kaynağı</label>
+                    <select id="filterSource" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="all">Tüm Sorular (105 Soru)</option>
+                        <option value="Sınav Listesi Özel">🔥 Sınav Konu Listesi (Not Defteri Özel)</option>
+                        <option value="Notlardan">📸 Sadece Notlardaki Sorular (55 Soru)</option>
+                        <option value="Yeni Üretilen">✨ Ekstra Hazırlık Soruları (50 Soru)</option>
+                        <option value="flagged">🚩 İşaretlediğim Sorular</option>
+                    </select>
+                </div>
+
+                <!-- Soru Tarzı Filtresi (Kod Çıktısı vs Ne İşe Yarar) -->
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Soru Tarzı (Çıktı / Kavram)</label>
+                    <select id="filterType" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="all">Tüm Soru Tipleri</option>
+                        <option value="code">💻 Kodun Çıktısı Nedir? Soruları</option>
+                        <option value="concept">📖 Ne İşe Yarar? / Kavram Soruları</option>
+                    </select>
+                </div>
+
+                <!-- Konu Filtresi -->
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Konu Başlığı</label>
+                    <select id="filterTopic" onchange="applyFilters()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                        <option value="all">Tüm Konular</option>
+                        <option value="Değişkenler & Referanslar">Değişkenler, $$a & Referanslar (&$b)</option>
+                        <option value="Operatörler & Koşullar">Mod (%), Bölme, Operatörler, If & Switch</option>
+                        <option value="Döngüler, Diziler & Fonksiyonlar">Foreach, do-while, Diziler & Fonksiyonlar</option>
+                        <option value="Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)">Hazır Fonksiyonlar (strtotime, str_repeat, var_dump)</option>
+                        <option value="OOP (Nesne Yönelimli Programlama)">OOP (Sınıf, Kalıtım, Magic, Interface)</option>
+                        <option value="PDO & Form İşlemleri">PDO Veritabanı, Form & Tarih</option>
+                        <option value="Temel PHP & Sunucu">Temel PHP & Sunucu</option>
+                    </select>
+                </div>
+
+                <!-- Görünüm Modu (Tek Tek / Liste) -->
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-400 mb-1">Görünüm Şekli</label>
+                    <div class="grid grid-cols-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                        <button id="btnViewSingle" onclick="setViewMode('single')" class="py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-white shadow">
+                            🗂️ Tek Tek Çöz
+                        </button>
+                        <button id="btnViewList" onclick="setViewMode('list')" class="py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white">
+                            📜 Liste Görünümü
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sınav Süresi Ayarı (Sadece Sınav Modunda Aktif) veya Hızlı İstatistik -->
+                <div id="studyStatsPanel" class="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                    <div class="text-center">
+                        <div class="text-[10px] text-slate-400">Doğru</div>
+                        <div id="statCorrect" class="text-sm font-bold text-emerald-400">0</div>
+                    </div>
+                    <div class="h-6 w-px bg-slate-800"></div>
+                    <div class="text-center">
+                        <div class="text-[10px] text-slate-400">Yanlış</div>
+                        <div id="statWrong" class="text-sm font-bold text-rose-400">0</div>
+                    </div>
+                    <div class="h-6 w-px bg-slate-800"></div>
+                    <div class="text-center">
+                        <div class="text-[10px] text-slate-400">Boş</div>
+                        <div id="statEmpty" class="text-sm font-bold text-slate-300">105</div>
+                    </div>
+                    <div class="h-6 w-px bg-slate-800"></div>
+                    <div class="text-center">
+                        <div class="text-[10px] text-slate-400">Başarı</div>
+                        <div id="statPercent" class="text-sm font-bold text-indigo-400">%0</div>
+                    </div>
+                </div>
+
+                <!-- Sınav Modu Kontrolleri -->
+                <div id="examConfigPanel" class="hidden items-center justify-between gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                    <select id="examDurationSelect" onchange="resetExamTimer()" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200">
+                        <option value="15">15 Dakika</option>
+                        <option value="30" selected>30 Dakika</option>
+                        <option value="45">45 Dakika</option>
+                        <option value="0">Süresiz</option>
+                    </select>
+                    <button onclick="finishExam()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow transition">
+                        🏁 Sınavı Bitir
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alt Satır: Aksiyon Butonları (Cevapları Göster/Gizle, Seçimleri Sıfırla, Karıştır) -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/60">
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Çalışma Modunda Tüm Cevapları Göster / Gizle -->
+                    <button id="btnToggleAllAnswers" onclick="toggleShowAllAnswers()" class="flex items-center gap-1.5 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition">
+                        <span id="iconToggleAnswers">👁️</span>
+                        <span id="textToggleAnswers">Tüm Cevapları Göster</span>
+                    </button>
+
+                    <!-- İşaretlenen Cevapları / Seçimleri Kaldır -->
+                    <button onclick="clearAllSelections()" class="flex items-center gap-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition">
+                        🗑️ Cevaplarımı / Seçimleri Sıfırla
+                    </button>
+
+                    <!-- Soruları Karıştır -->
+                    <button onclick="shuffleQuestions()" class="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-medium transition">
+                        🔀 Soruları Karıştır
+                    </button>
+
+                    <!-- Hızlı Konu Özeti Butonu -->
+                    <button onclick="toggleCheatSheet()" class="flex items-center gap-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition">
+                        📋 Sınav Konu Özeti (Not Defteri)
+                    </button>
+                </div>
+
+                <!-- Arama Kutusu -->
+                <div class="relative w-full sm:w-64">
+                    <input id="searchInput" oninput="applyFilters()" type="text" placeholder="Ara (strtotime, str_repeat, switch, $$a)..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                    <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Sınav Konu Özeti (Hızlı Tekrar) Paneli - Not Defterindeki 14 Konunun Tamamı -->
+    <section id="cheatSheetModal" class="hidden max-w-6xl mx-auto w-full px-3 sm:px-6 pt-5">
+        <div class="bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 sm:p-6 shadow-2xl">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
+                <div>
+                    <span class="inline-block bg-emerald-500/20 text-emerald-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full mb-1">NOT DEFTERİNDEKİ SINAV KONULARI</span>
+                    <h2 class="text-lg sm:text-xl font-extrabold text-white">PHP Sınav Hızlı Tekrar & Kod Çıktısı Rehberi</h2>
+                    <p class="text-xs text-slate-400">Değişkenler ne işe yarar, operatörler, döngüler ve hazır fonksiyonların çıktıları</p>
+                </div>
+                <button onclick="toggleCheatSheet()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3.5 py-2 rounded-xl border border-slate-700">
+                    ✕ Özeti Kapat
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
+                <!-- 1. Değişkenler & Değişken Değişkenler -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-indigo-400 text-sm mb-1.5">1. Değişkenler & Değişken Değişkenler ($$a)</h3>
+                    <p class="text-slate-300 mb-2"><b>Ne işe yarar?</b> Verileri (sayı, metin, dizi) bellekte geçici olarak saklamaya ve program içinde tekrar kullanmaya yarar. <code class="text-emerald-300">$</code> ile başlar, rakamla başlayamaz.</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>$a = "renk";
+$$a = "Mavi"; // $renk = "Mavi" olur
+echo $renk;   // Çıktı: Mavi
+
+$x = 5; $y = &$x; // Referans atama
+$y = 20; echo $x; // Çıktı: 20</code></pre>
+                </div>
+
+                <!-- 2. Mod Alma (%) ve Bölme İşlemi (/) -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-indigo-400 text-sm mb-1.5">2. Mod Alma (%) ve Bölme (/) Çıktısı</h3>
+                    <p class="text-slate-300 mb-2"><b>/ (Bölme):</b> Tam bölünmezse ondalıklı (float) sonuç verir. <b>intdiv(a,b)</b> sadece tam kısmı verir.<br><b>% (Mod):</b> Bölümden kalanı verir (Çift/tek sayı kontrolünde kullanılır).</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>echo 10 / 4;        // Çıktı: 2.5
+echo 10 % 3;        // Çıktı: 1 (Kalan)
+echo intdiv(10, 3); // Çıktı: 3 (Tam kısım)
+echo 10 + 6 / 2;    // Çıktı: 13 (Önce bölme!)</code></pre>
+                </div>
+
+                <!-- 3. Operatörler -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-indigo-400 text-sm mb-1.5">3. Operatörler (. , == , === , ++ , ??)</h3>
+                    <p class="text-slate-300 mb-2"><b>. (Nokta):</b> String birleştirir. <b>+</b> sayısal toplar.<br><b>==</b> sadece değere bakar, <b>===</b> hem değer hem veri tipine bakar.</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>$a = "5"; $b = 10;
+echo $a + $b; // Çıktı: 15
+echo $a . $b; // Çıktı: 510
+$x = 5;
+echo $x++;    // Ekrana 5 yazar, x=6 olur
+echo ++$x;    // x=7 olur, ekrana 7 yazar</code></pre>
+                </div>
+
+                <!-- 4. If & Switch-Case (Break Tuzağı!) -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-indigo-400 text-sm mb-1.5">4. If & Switch-Case Kodu (Çıktı Tuzağı)</h3>
+                    <p class="text-slate-300 mb-2"><b>Switch-case'de <code class="text-rose-400">break;</code> unutulursa</b> eşleşen case'den sonraki case'ler de break görene kadar koşulsuz çalışır (Fall-through)!</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>$gun = 2;
+switch($gun) {
+  case 1: echo "A"; break;
+  case 2: echo "B"; // break YOK!
+  case 3: echo "C"; break;
+  default: echo "D";
+} // Çıktı: BC</code></pre>
+                </div>
+
+                <!-- 5. Foreach & do-while Döngüsü -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-indigo-400 text-sm mb-1.5">5. Foreach ve do-while Döngüleri</h3>
+                    <p class="text-slate-300 mb-2"><b>foreach:</b> Dizileri gezer. <b>do-while:</b> Koşul sonda kontrol edildiği için koşul <code class="text-rose-400">false</code> olsa bile <b>en az 1 kez</b> çalışır!</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>$x = 10;
+do {
+  echo $x; // Koşul yanlış ama 1 kez çalışır!
+} while ($x < 5); // Çıktı: 10
+
+$d = ["a"=>1, "b"=>2];
+foreach($d as $k=>$v) echo "$k:$v "; // a:1 b:2</code></pre>
+                </div>
+
+                <!-- 6. Fonksiyonlar & Diziler (Array) -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-indigo-400 text-sm mb-1.5">6. Fonksiyonlar (Çıktı) & Diziler</h3>
+                    <p class="text-slate-300 mb-2">Fonksiyonlarda varsayılan parametre verilebilir. <code class="text-emerald-300">return</code> sonucu döndürür ve fonksiyonu o satırda bitirir. Dizilerde indeks <b>0</b>'dan başlar.</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>function hesap($a, $b = 3) {
+  return $a * $b;
+}
+echo hesap(4);    // Çıktı: 12 ($b=3 alır)
+echo hesap(4, 5); // Çıktı: 20 ($b=5 olur)</code></pre>
+                </div>
+
+                <!-- 7. strtotime() ve date() -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-amber-400 text-sm mb-1.5">7. strtotime() Ne İşe Yarar & Çıktısı</h3>
+                    <p class="text-slate-300 mb-2">İngilizce metin halindeki tarihi veya zaman ifadelerini (<code class="text-emerald-300">"+1 day"</code>, <code class="text-emerald-300">"+2 weeks"</code>, <code class="text-emerald-300">"2026-05-10"</code>) <b>Unix Timestamp (saniye)</b> değerine çevirir.</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>$t = strtotime("2026-05-10 +5 days");
+echo date("d.m.Y", $t);
+// Çıktı: 15.05.2026</code></pre>
+                </div>
+
+                <!-- 8. str_repeat() ve Hazır String Fonksiyonları -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-amber-400 text-sm mb-1.5">8. str_repeat() & Hazır Fonksiyonlar</h3>
+                    <p class="text-slate-300 mb-2"><b>str_repeat(metin, tekrar_sayisi):</b> Verilen metni belirtilen sayı kadar yan yana tekrarlar. (0 verilirse boş string döner).</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>echo str_repeat("PHP-", 3);
+// Çıktı: PHP-PHP-PHP-
+
+echo strlen("Kütahya"); // Harf/Byte sayısı
+echo substr("Merhaba", 0, 3); // Çıktı: Mer</code></pre>
+                </div>
+
+                <!-- 9. var_dump() -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5">
+                    <h3 class="font-bold text-amber-400 text-sm mb-1.5">9. var_dump() Ne İşe Yarar & Çıktısı</h3>
+                    <p class="text-slate-300 mb-2">Bir değişkenin veya ifadenin <b>veri tipini, uzunluğunu ve değerini</b> detaylıca ekrana basar. Hata ayıklamada (debug) kullanılır.</p>
+                    <pre class="bg-slate-900 p-2 rounded-lg text-emerald-300 overflow-x-auto"><code>var_dump(25);       // int(25)
+var_dump("PHP");    // string(3) "PHP"
+var_dump(5 == "5"); // bool(true)
+var_dump(5 ==="5"); // bool(false)</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sınav Sonuç Ekranı (Sınav Bitince Görünür) -->
+    <section id="examResultModal" class="hidden max-w-4xl mx-auto w-full px-3 sm:px-6 pt-6">
+        <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-indigo-500/40 rounded-2xl p-5 sm:p-6 shadow-2xl">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                    <span class="inline-block bg-indigo-500/20 text-indigo-300 text-xs font-bold px-2.5 py-1 rounded-full mb-1">SINAV TAMAMLANDI</span>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-white">Sınav Sonuç Raporu</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="startNewExam()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow transition">
+                        🔄 Yeni Sınav Başlat
+                    </button>
+                    <button onclick="switchMode('study')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl border border-slate-700 transition">
+                        📚 Çalışma Moduna Dön
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sonuç Kartları -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-5">
+                <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-xl text-center">
+                    <div class="text-xs text-slate-400">Puanınız (100)</div>
+                    <div id="resScore" class="text-2xl sm:text-3xl font-extrabold text-indigo-400 mt-1">0</div>
+                </div>
+                <div class="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-xl text-center">
+                    <div class="text-xs text-emerald-300">Doğru Sayısı</div>
+                    <div id="resCorrect" class="text-2xl sm:text-3xl font-extrabold text-emerald-400 mt-1">0</div>
+                </div>
+                <div class="bg-rose-950/30 border border-rose-500/30 p-4 rounded-xl text-center">
+                    <div class="text-xs text-rose-300">Yanlış Sayısı</div>
+                    <div id="resWrong" class="text-2xl sm:text-3xl font-extrabold text-rose-400 mt-1">0</div>
+                </div>
+                <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-xl text-center">
+                    <div class="text-xs text-slate-400">Boş Bırakılan</div>
+                    <div id="resEmpty" class="text-2xl sm:text-3xl font-extrabold text-slate-300 mt-1">0</div>
+                </div>
+            </div>
+
+            <!-- Sonuç Filtre Butonları -->
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-xs text-slate-400 mr-1">Soruları İncele:</span>
+                <button onclick="filterExamReview('all')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-1.5 rounded-lg border border-slate-700">Tümünü Göster</button>
+                <button onclick="filterExamReview('wrong')" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs px-3 py-1.5 rounded-lg border border-rose-500/30">Sadece Yanlışlarım</button>
+                <button onclick="filterExamReview('empty')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs px-3 py-1.5 rounded-lg border border-amber-500/30">Sadece Boş Bıraktıklarım</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 py-5">
+        <!-- Soruların Render Edileceği Alan -->
+        <div id="questionsContainer" class="space-y-6"></div>
+
+        <!-- Tek Tek Görünüm İçin Alt Gezinme Çubuğu -->
+        <div id="singleNavControls" class="mt-6 flex items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-3 rounded-2xl shadow-lg">
+            <button id="btnPrevQ" onclick="prevQuestion()" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:pointer-events-none text-slate-200 font-semibold px-5 py-3 rounded-xl text-sm transition">
+                ← Önceki Soru
+            </button>
+            <div id="singlePageIndicator" class="text-xs sm:text-sm font-mono text-slate-400 font-semibold">
+                1 / 75
+            </div>
+            <button id="btnNextQ" onclick="nextQuestion()" class="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:pointer-events-none text-white font-semibold px-5 py-3 rounded-xl text-sm shadow-md shadow-indigo-600/20 transition">
+                Sonraki Soru →
+            </button>
+        </div>
+    </main>
+
+    <!-- Soru Haritası Çekmecesi (Drawer Modal) -->
+    <div id="questionDrawer" class="fixed inset-0 z-50 hidden">
+        <div onclick="toggleDrawer()" class="absolute inset-0 bg-black/70 backdrop-blur-xs"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-slate-900 border-l border-slate-800 flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div>
+                    <h3 class="font-bold text-white text-base">Soru Gezgini</h3>
+                    <p class="text-xs text-slate-400">İstediğiniz soruya doğrudan atlayın</p>
+                </div>
+                <button onclick="toggleDrawer()" class="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white">
+                    ✕
+                </button>
+            </div>
+            <!-- Renk Açıklamaları -->
+            <div class="px-4 py-2.5 bg-slate-950 border-b border-slate-800 flex flex-wrap gap-3 text-[11px] text-slate-400">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Doğru</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> Yanlış</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span> İşaretli (Sınav)</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> 🚩 Gözden Geçir</span>
+            </div>
+            <!-- Numara Izgarası -->
+            <div id="drawerGrid" class="p-4 overflow-y-auto grid grid-cols-5 sm:grid-cols-6 gap-2 flex-1 content-start"></div>
+        </div>
+    </div>
+
+    <!-- Bildirim Toast -->
+    <div id="toastBox" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden bg-slate-800 border border-slate-700 text-white px-4 py-2.5 rounded-xl shadow-2xl text-xs sm:text-sm font-medium flex items-center gap-2">
+        <span id="toastText"></span>
+    </div>
+
+    <script>
+        // ============================================================================
+        // TÜM SORU BANKASI (55 Notlardan Birebir + 20 Yeni Özgün Soru = 75 Soru)
+        // ============================================================================
+        const initialQuestions = [
+            // --- BÖLÜM 1: Web_Programlama_PHP_40_Soru_Bankasi.docx (Görsellerdeki Sorular) ---
+            {
+                id: 1,
+                source: "Notlardan",
+                docRef: "Soru Bankası #1",
+                topic: "Temel PHP & Sunucu",
+                question: "PHP kodu barındıran bir web sayfasının çalışabilmesi için aşağıdakilerden hangisine ihtiyaç vardır?",
+                code: null,
+                options: [
+                    "Sadece Web Tarayıcısı",
+                    "Web Sunucusu ve PHP Yorumlayıcısı",
+                    "Sadece Metin Editörü",
+                    "Python Yorumlayıcısı",
+                    "SQL Sunucusu"
+                ],
+                answer: 1,
+                explanation: "PHP sunucu taraflı (server-side) bir programlama dilidir. Kodların yorumlanıp HTML çıktısına dönüştürülebilmesi için Apache/Nginx gibi bir Web Sunucusu ve PHP Yorumlayıcısına ihtiyaç vardır."
+            },
+            {
+                id: 2,
+                source: "Notlardan",
+                docRef: "Soru Bankası #2",
+                topic: "Temel PHP & Sunucu",
+                question: "XAMPP paket yazılımında yerel sunucunun kök dizini (dosyaların çalıştırıldığı klasör) aşağıdakilerden hangisidir?",
+                code: null,
+                options: [
+                    "C:\\xampp\\php",
+                    "C:\\xampp\\mysql",
+                    "C:\\xampp\\htdocs",
+                    "C:\\xampp\\apache",
+                    "C:\\xampp\\tmp"
+                ],
+                answer: 2,
+                explanation: "XAMPP kurulumunda projelerin yerleştirildiği ve tarayıcıdan http://localhost/ ile erişilen varsayılan kök dizin (DocumentRoot) C:\\xampp\\htdocs klasörüdür."
+            },
+            {
+                id: 3,
+                source: "Notlardan",
+                docRef: "Soru Bankası #3",
+                topic: "Temel PHP & Sunucu",
+                question: "Tarayıcı adres çubuğuna http://localhost/proje/ yazıldığında, klasörde dosya adı belirtilmediyse varsayılan olarak ilk çalışan dosya hangisidir?",
+                code: null,
+                options: [
+                    "main.php",
+                    "home.php",
+                    "test.php",
+                    "index.php",
+                    "default.php"
+                ],
+                answer: 3,
+                explanation: "Apache ve diğer web sunucuları, bir dizine istek atıldığında dosya adı yazılmamışsa DirectoryIndex ayarı gereği varsayılan olarak index.php (veya index.html) dosyasını çalıştırır."
+            },
+            {
+                id: 4,
+                source: "Notlardan",
+                docRef: "Soru Bankası #4",
+                topic: "Temel PHP & Sunucu",
+                question: "Sunucu konfigürasyonu ve yüklü PHP modülleri hakkında detaylı bilgi veren hazır PHP fonksiyonu hangisidir?",
+                code: null,
+                options: [
+                    "phpinfo()",
+                    "phpserver()",
+                    "get_php()",
+                    "system_info()",
+                    "php_version()"
+                ],
+                answer: 0,
+                explanation: "phpinfo() fonksiyonu PHP sürümü, php.ini yapılandırma ayarları, yüklü eklentiler (PDO, cURL, mbstring vb.) ve ortam bilgilerini tablo halinde ekrana basar."
+            },
+            {
+                id: 5,
+                source: "Notlardan",
+                docRef: "Soru Bankası #5",
+                topic: "Temel PHP & Sunucu",
+                question: "Apache sunucusunun varsayılan olarak kullandığı port numarası aşağıdakilerden hangisidir?",
+                code: null,
+                options: [
+                    "21",
+                    "80",
+                    "3306",
+                    "8080",
+                    "443"
+                ],
+                answer: 1,
+                explanation: "Standart HTTP yayınları için Apache web sunucusunun varsayılan portu 80'dir. (443 HTTPS, 3306 MySQL, 21 ise FTP portudur)."
+            },
+            {
+                id: 6,
+                source: "Notlardan",
+                docRef: "Soru Bankası #6",
+                topic: "Temel PHP & Sunucu",
+                question: "PHP kod blokları hangi etiketler arasına yazılır?",
+                code: null,
+                options: [
+                    "<script> ... <\/script>",
+                    "<?php ... ?>",
+                    "<php> ... </php>",
+                    "<style> ... </style>",
+                    "<!-- ... -->"
+                ],
+                answer: 1,
+                explanation: "PHP kodları standart olarak <?php ile başlar ve ?> etiketi ile kapatılır."
+            },
+            {
+                id: 7,
+                source: "Notlardan",
+                docRef: "Soru Bankası #7",
+                topic: "Temel PHP & Sunucu",
+                question: "Yerel sunucu ortamında \"Localhost\" ifadesinin IP adresi karşılığı aşağıdakilerden hangisidir?",
+                code: null,
+                options: [
+                    "192.168.1.1",
+                    "10.0.0.1",
+                    "127.0.0.1",
+                    "255.255.255.0",
+                    "8.8.8.8"
+                ],
+                answer: 2,
+                explanation: "127.0.0.1 yerel geri döngü (loopback) IP adresidir ve bilgisayarın kendisini (localhost) ifade eder."
+            },
+            {
+                id: 8,
+                source: "Notlardan",
+                docRef: "Soru Bankası #8",
+                topic: "Temel PHP & Sunucu",
+                question: "Aşağıdaki editörlerden hangisi PHP geliştirme ortamı olarak yaygın kullanılan bir IDE/Metin editörüdür?",
+                code: null,
+                options: [
+                    "MS Word",
+                    "Visual Studio Code",
+                    "Adobe Photoshop",
+                    "MS Excel",
+                    "Notepad++ (Sadece HTML için)"
+                ],
+                answer: 1,
+                explanation: "Visual Studio Code (VS Code), PHP Intelephense gibi eklentileriyle PHP geliştirmede en yaygın kullanılan modern kod editörüdür."
+            },
+            {
+                id: 9,
+                source: "Notlardan",
+                docRef: "Soru Bankası #9",
+                topic: "Değişkenler & Referanslar",
+                question: "PHP'de değişken tanımlarken değişken adının başında hangi simge bulunmalıdır?",
+                code: null,
+                options: [
+                    "#",
+                    "@",
+                    "$",
+                    "&",
+                    "%"
+                ],
+                answer: 2,
+                explanation: "PHP'de tüm değişken isimleri $ (dolar) işareti ile başlar. Örn: $isim = 'Ahmet';"
+            },
+            {
+                id: 10,
+                source: "Notlardan",
+                docRef: "Soru Bankası #10",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdaki değişken isimlerinden hangisi PHP kurallarına UYGUNDUR?",
+                code: null,
+                options: [
+                    "$1sayi",
+                    "$sayi 1",
+                    "$_sayi1",
+                    "$sayi-1",
+                    "$sayi?"
+                ],
+                answer: 2,
+                explanation: "PHP'de değişken adları $ işaretinden sonra harf veya alt çizgi (_) ile başlamalıdır. Rakamla başlayamaz ($1sayi yanlış), boşluk, tire (-) veya soru işareti içeremez."
+            },
+            {
+                id: 11,
+                source: "Notlardan",
+                docRef: "Soru Bankası #11",
+                topic: "Temel PHP & Sunucu",
+                question: "echo ile print arasındaki temel fark aşağıdakilerden hangisidir?",
+                code: null,
+                options: [
+                    "echo daha yavaştır.",
+                    "print geriye 1 değerini döndürür, echo ise değer döndürmez.",
+                    "echo metin yazdıramaz.",
+                    "print sadece sayıları yazdırır.",
+                    "İkisi arasında hiçbir teknik fark yoktur."
+                ],
+                answer: 1,
+                explanation: "print yapısı çalıştıktan sonra geriye her zaman 1 (integer) döndürür, bu yüzden ifadeler içinde kullanılabilir. echo ise geriye değer döndürmez ve az farkla daha hızlıdır."
+            },
+            {
+                id: 12,
+                source: "Notlardan",
+                docRef: "Soru Bankası #12",
+                topic: "Temel PHP & Sunucu",
+                question: "Bir değişkenin hem veri tipini hem de içeriğini detaylı incelemek için hangi fonksiyon kullanılır?",
+                code: null,
+                options: [
+                    "print_r()",
+                    "echo",
+                    "var_dump()",
+                    "gettype()",
+                    "serialize()"
+                ],
+                answer: 2,
+                explanation: "var_dump() fonksiyonu bir değişkenin hem türünü (int, string, array vb.), hem boyutunu hem de değerini detaylıca ekrana basar."
+            },
+            {
+                id: 13,
+                source: "Notlardan",
+                docRef: "Soru Bankası #14",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `$a = "10";\n$b = 5;\necho $a + $b;`,
+                options: [
+                    "105",
+                    "15",
+                    "Hata verir",
+                    "\"105\"",
+                    "NULL"
+                ],
+                answer: 1,
+                explanation: "PHP'de + operatörü aritmetik toplama yapar. String olan \"10\" değerini otomatik sayıya çevirir ve 10 + 5 = 15 sonucunu ekrana yazar."
+            },
+            {
+                id: 14,
+                source: "Notlardan",
+                docRef: "Soru Bankası #15",
+                topic: "Operatörler & Koşullar",
+                question: "PHP'de iki metni (string) birleştirmek için hangi operatör kullanılır?",
+                code: null,
+                options: [
+                    "+",
+                    "&",
+                    ". (Nokta)",
+                    ", (Virgül)",
+                    "*"
+                ],
+                answer: 2,
+                explanation: "PHP'de metinleri (string) yan yana birleştirmek için . (nokta) operatörü kullanılır. Örn: \"Merhaba \" . \"Dünya\""
+            },
+            {
+                id: 15,
+                source: "Notlardan",
+                docRef: "Soru Bankası #16",
+                topic: "Operatörler & Koşullar",
+                question: "== ile === operatörleri arasındaki fark nedir?",
+                code: null,
+                options: [
+                    "Fark yoktur.",
+                    "== tür kontrolü yapar, === yapmaz.",
+                    "=== hem değere hem de veri tipine bakar, == sadece değere bakar.",
+                    "== sadece string ifadelerde kullanılır.",
+                    "=== atama operatörüdür."
+                ],
+                answer: 2,
+                explanation: "== operatörü sadece değerlerin eşitliğini kontrol ederken (5 == \"5\" true olur), === (denklik) operatörü hem değerin hem de veri tipinin aynı olmasını şart koşar (5 === \"5\" false olur)."
+            },
+            {
+                id: 16,
+                source: "Notlardan",
+                docRef: "Soru Bankası #17",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki işlemin çıktısı nedir?",
+                code: `$a = 10;\n$b = 3;\necho $a % $b;`,
+                options: [
+                    "3",
+                    "3.33",
+                    "1",
+                    "0",
+                    "30"
+                ],
+                answer: 2,
+                explanation: "% (mod alma) operatörü, birinci sayının ikinci sayıya bölümünden kalanı verir. 10'un 3'e bölümünden kalan 1'dir."
+            },
+            {
+                id: 17,
+                source: "Notlardan",
+                docRef: "Soru Bankası #18",
+                topic: "Operatörler & Koşullar",
+                question: "if-elseif-else yapısının çalışma mantığı ile ilgili aşağıdakilerden hangisi DOĞRUDUR?",
+                code: null,
+                options: [
+                    "Tüm koşullar sırayla çalıştırılır.",
+                    "Doğru (true) olan ilk koşul çalıştığında diğer koşullara bakılmadan yapıdan çıkılır.",
+                    "En sondaki else her zaman çalışır.",
+                    "Koşullardan yanlış olanlar çalıştırılır.",
+                    "elseif bloğu en başta yazılmalıdır."
+                ],
+                answer: 1,
+                explanation: "if-elseif-else bloklarında koşullar yukarıdan aşağıya doğru denetlenir. True değerini veren ilk blok çalıştırılır ve zincirin geri kalanına bakılmaz."
+            },
+            {
+                id: 18,
+                source: "Notlardan",
+                docRef: "Soru Bankası #19",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki yapı hangi kontrol yapısının kısa (Ternary) kullanımıdır?",
+                code: `$sonuc = ($not >= 50) ? "Geçti" : "Kaldı";`,
+                options: [
+                    "switch-case",
+                    "while",
+                    "if-else",
+                    "foreach",
+                    "try-catch"
+                ],
+                answer: 2,
+                explanation: "? : (Ternary / Üçlü operatör), basit if-else koşul ifadelerini tek satırda yazmak için kullanılır."
+            },
+            {
+                id: 19,
+                source: "Notlardan",
+                docRef: "Soru Bankası #20",
+                topic: "Operatörler & Koşullar",
+                question: "PHP 7 ile gelen ve aşağıdaki şekilde kullanılan operatörün adı nedir?",
+                code: `$kullanici = $_GET['user'] ?? 'Misafir';`,
+                options: [
+                    "Ternary Operatörü",
+                    "Null Coalescing Operatörü",
+                    "Spaceship Operatörü",
+                    "Mantıksal VE Operatörü"
+                ],
+                answer: 1,
+                explanation: "?? operatörü Null Coalescing (Null Birleştirme) operatörüdür. Solundaki ifade tanımlıysa ve null değilse onu, aksi takdirde sağındaki varsayılan değeri döndürür."
+            },
+            {
+                id: 20,
+                source: "Notlardan",
+                docRef: "Soru Bankası #22",
+                topic: "Operatörler & Koşullar",
+                question: "switch-case yapısında tanımlanan hiçbir case durumuna uymadığında çalışan varsayılan blok hangisidir?",
+                code: null,
+                options: [
+                    "else",
+                    "default",
+                    "catch",
+                    "finally",
+                    "other"
+                ],
+                answer: 1,
+                explanation: "switch-case yapısında aranan değer hiçbir case ile eşleşmezse default: bloğu çalışır."
+            },
+            {
+                id: 21,
+                source: "Notlardan",
+                docRef: "Soru Bankası #23",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki ifadelerden hangisi mantıksal VE (AND) işlemini temsil eder?",
+                code: null,
+                options: [
+                    "||",
+                    "!",
+                    "&&",
+                    "^",
+                    "<>"
+                ],
+                answer: 2,
+                explanation: "&& mantıksal VE (AND) operatörüdür. Her iki taraf da true olduğunda true üretir. (|| VEYA, ! DEĞİL operatörüdür)."
+            },
+            {
+                id: 22,
+                source: "Notlardan",
+                docRef: "Soru Bankası #24",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki kodun çıktısı ne olur?",
+                code: `$a = 5;\n$b = "5";\nif ($a !== $b) {\n    echo "A";\n} else {\n    echo "B";\n}`,
+                options: [
+                    "A",
+                    "B",
+                    "Hata",
+                    "5",
+                    "Ekran boş kalır"
+                ],
+                answer: 0,
+                explanation: "!== operatörü 'denk değilse' demektir. $a (integer 5) ile $b (string \"5\") veri tipleri farklı olduğu için birbirine denk değildir; koşul true döner ve ekrana A yazar."
+            },
+            {
+                id: 23,
+                source: "Notlardan",
+                docRef: "Soru Bankası #25",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Koşul false olsa bile en az bir kez mutlaka çalışan döngü yapısı hangisidir?",
+                code: null,
+                options: [
+                    "for",
+                    "while",
+                    "do-while",
+                    "foreach",
+                    "if"
+                ],
+                answer: 2,
+                explanation: "do-while döngüsünde önce do bloğu içindeki kodlar çalıştırılır, ardından while koşuluna bakılır. Bu nedenle koşul baştan yanlış olsa bile 1 kez çalışması garantidir."
+            },
+            {
+                id: 24,
+                source: "Notlardan",
+                docRef: "Soru Bankası #26",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki for döngüsü kaç kez tekrar eder?",
+                code: `for ($i = 0; $i < 10; $i += 2) {\n    // işlemler\n}`,
+                options: [
+                    "10",
+                    "5",
+                    "4",
+                    "6",
+                    "Sonsuz"
+                ],
+                answer: 1,
+                explanation: "$i değişkeni sırasıyla 0, 2, 4, 6 ve 8 değerlerini alarak toplam 5 kez döngüye girer. $i = 10 olduğunda $i < 10 koşulu bozulur."
+            },
+            {
+                id: 25,
+                source: "Notlardan",
+                docRef: "Soru Bankası #31",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki döngünün ekran çıktısı nedir?",
+                code: `for ($i = 1; $i <= 3; $i++) {\n    echo $i;\n}`,
+                options: [
+                    "12",
+                    "123",
+                    "0123",
+                    "321",
+                    "1234"
+                ],
+                answer: 1,
+                explanation: "Döngü 1'den başlayıp 3'e kadar (3 dahil) birer artarak $i değerini yan yana yazdırır: 123."
+            },
+            {
+                id: 26,
+                source: "Notlardan",
+                docRef: "Soru Bankası #32",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki foreach yapısında $eleman değişkeni her adımda sırayla neyi alır?",
+                code: `$dizi = ["A", "B", "C"];\nforeach ($dizi as $eleman) {\n    // ...\n}`,
+                options: [
+                    "Dizi indekslerini (0, 1, 2)",
+                    "Dizideki eleman değerlerini (\"A\", \"B\", \"C\")",
+                    "Dizinin toplam eleman sayısını",
+                    "Sadece \"A\" değerini",
+                    "NULL değerini"
+                ],
+                answer: 1,
+                explanation: "foreach ($dizi as $eleman) sözdiziminde $eleman değişkeni her adımda dizinin sıradaki eleman değerini (\"A\", \"B\", \"C\") alır."
+            },
+            {
+                id: 27,
+                source: "Notlardan",
+                docRef: "Soru Bankası #33",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "PHP'de yeni bir fonksiyon tanımlamak için hangi anahtar kelime kullanılır?",
+                code: null,
+                options: [
+                    "def",
+                    "func",
+                    "function",
+                    "create",
+                    "method"
+                ],
+                answer: 2,
+                explanation: "PHP'de fonksiyon tanımlamak için 'function' anahtar kelimesi kullanılır. Örn: function topla($a, $b) { ... }"
+            },
+            {
+                id: 28,
+                source: "Notlardan",
+                docRef: "Soru Bankası #34",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Fonksiyondan elde edilen sonucu çağrıldığı yere aktarmak (döndürmek) için hangi komut kullanılır?",
+                code: null,
+                options: [
+                    "echo",
+                    "print",
+                    "return",
+                    "get",
+                    "send"
+                ],
+                answer: 2,
+                explanation: "Fonksiyon içinde hesaplanan bir değeri fonksiyonun çağrıldığı satıra geri döndürmek için 'return' komutu kullanılır."
+            },
+
+            // --- BÖLÜM 2: php çalışma soruları.docx (Görsellerdeki Sorular) ---
+            {
+                id: 29,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #1",
+                topic: "Değişkenler & Referanslar",
+                question: "PHP'de değişken tanımlama ile ilgili hangisi doğrudur?",
+                code: null,
+                options: [
+                    "Değişkenler # ile başlar",
+                    "Değişkenler $ ile başlar",
+                    "Tür belirtmek zorunludur",
+                    "Değişkenler sadece sayısal olabilir"
+                ],
+                answer: 1,
+                explanation: "PHP dinamik tipli bir dildir, tür belirtmek zorunlu değildir ve tüm değişkenler $ simgesi ile başlar."
+            },
+            {
+                id: 30,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #2",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdakilerden hangisi referans ile atama yapar?",
+                code: null,
+                options: [
+                    "$a = $b;",
+                    "$a == $b;",
+                    "$a =& $b;",
+                    "$a === $b;"
+                ],
+                answer: 2,
+                explanation: "=& (veya = &) operatörü bir değişkeni diğerine referans olarak atar; her iki değişken de bellekte aynı adresi gösterir."
+            },
+            {
+                id: 31,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #3",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "PHP'de bir sınıfın yapıcı (constructor) metodu hangisidir?",
+                code: null,
+                options: [
+                    "__start()",
+                    "__init()",
+                    "__construct()",
+                    "constructor()"
+                ],
+                answer: 2,
+                explanation: "PHP'de sınıftan yeni bir nesne (new) oluşturulduğunda otomatik çalışan yapıcı metod __construct() metodudur."
+            },
+            {
+                id: 32,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #4",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Aşağıdakilerden hangisi erişim belirleyici (access modifier) değildir?",
+                code: null,
+                options: [
+                    "public",
+                    "private",
+                    "protected",
+                    "static"
+                ],
+                answer: 3,
+                explanation: "public, private ve protected erişim belirleyicilerdir (visibility). static ise sınıf üyelerinin nesne oluşturmadan çağrılmasını sağlayan bir anahtar kelimedir."
+            },
+            {
+                id: 33,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #5",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "OOP'de 'final' anahtar kelimesinin amacı nedir?",
+                code: null,
+                options: [
+                    "Değişkeni sabit yapar",
+                    "Sınıfın kalıtımını (miras alınmasını) veya metodun ezilmesini engeller",
+                    "Sınıfı otomatik çalıştırır",
+                    "Belleği temizler"
+                ],
+                answer: 1,
+                explanation: "Başında 'final' bulunan bir sınıftan extends ile yeni bir alt sınıf türetilemez; final bir metod ise alt sınıfta override edilemez (ezilemez)."
+            },
+            {
+                id: 34,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #6",
+                topic: "PDO & Form İşlemleri",
+                question: "PHP'de PDO (PHP Data Objects) kullanmanın temel amacı nedir?",
+                code: null,
+                options: [
+                    "HTML üretmek",
+                    "Veritabanı bağlantısını standartlaştırmak",
+                    "CSS yazmak",
+                    "Session yönetmek"
+                ],
+                answer: 1,
+                explanation: "PDO, farklı veritabanı yönetim sistemlerine (MySQL, PostgreSQL, SQLite, MSSQL vb.) güvenli ve standart bir arayüzle bağlanmayı sağlar."
+            },
+            {
+                id: 35,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #7",
+                topic: "PDO & Form İşlemleri",
+                question: "Aşağıdakilerden hangisi PDO ile veri çekme metodudur?",
+                code: null,
+                options: [
+                    "run()",
+                    "fetch()",
+                    "get()",
+                    "select()"
+                ],
+                answer: 1,
+                explanation: "PDOStatement nesnesi üzerinden sonuç kümesindeki satırları çekmek için fetch() (tek satır) veya fetchAll() (tüm satırlar) metodları kullanılır."
+            },
+            {
+                id: 36,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #8",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Aşağıdaki durumlardan hangisi OOP (Nesne Yönelimli Programlama) kavramıdır?",
+                code: null,
+                options: [
+                    "Döngü",
+                    "Koşul",
+                    "Kalıtım",
+                    "Operatör"
+                ],
+                answer: 2,
+                explanation: "Kalıtım (Inheritance), Kapsülleme (Encapsulation), Çok Biçimlilik (Polymorphism) ve Soyutlama (Abstraction) temel OOP kavramlarıdır."
+            },
+            {
+                id: 37,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #9",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `$a = 5;\n$b = &$a;\n$b = 10;\n\necho $a;`,
+                options: [
+                    "5",
+                    "10",
+                    "15",
+                    "Hata verir"
+                ],
+                answer: 1,
+                explanation: "$b = &$a; satırı ile $b, $a'nın referansı olmuştur (aynı bellek hücresini paylaşırlar). $b = 10 yapıldığında $a'nın değeri de 10 olur."
+            },
+            {
+                id: 38,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #10",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `$a = 5;\n$b = $a;\n$b = 10;\n\necho $a;`,
+                options: [
+                    "5",
+                    "10",
+                    "15",
+                    "0"
+                ],
+                answer: 0,
+                explanation: "Burada & (referans) kullanılmamıştır ($b = $a değer atamasıdır). $b'nin sonradan 10 yapılması $a'yı etkilemez, $a 5 olarak kalır."
+            },
+            {
+                id: 39,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #11",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `class Test {\n    public function __construct() {\n        echo "Yapıcı çalıştı ";\n    }\n}\n\n$obj = new Test();`,
+                options: [
+                    "Ekran boş kalır",
+                    "Yapıcı çalıştı",
+                    "Hata verir",
+                    "Test"
+                ],
+                answer: 1,
+                explanation: "new Test() ile sınıftan nesne türetildiği anda __construct() metodu otomatik olarak tetiklenir ve ekrana 'Yapıcı çalıştı ' yazar."
+            },
+            {
+                id: 40,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #12",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `class A {\n    public $x = 5;\n}\n\n$obj1 = new A();\n$obj2 = $obj1;\n$obj2->x = 20;\n\necho $obj1->x;`,
+                options: [
+                    "5",
+                    "20",
+                    "Hata verir",
+                    "NULL"
+                ],
+                answer: 1,
+                explanation: "PHP'de nesneler (objects) varsayılan olarak referans tanıtıcısı (handle) ile kopyalanır. $obj2 = $obj1 yapıldığında ikisi de bellekteki aynı nesneye işaret eder. $obj2->x = 20 değişikliği $obj1->x'i de 20 yapar."
+            },
+            {
+                id: 41,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #14",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `function test($a) {\n    $a = $a + 5;\n}\n\n$x = 10;\ntest($x);\necho $x;`,
+                options: [
+                    "10",
+                    "15",
+                    "5",
+                    "Hata verir"
+                ],
+                answer: 0,
+                explanation: "Fonksiyon parametresi değer ile (pass by value) aktarılmıştır. Fonksiyon içindeki $a yerel bir değişkendir, dışarıdaki $x değişkenini değiştirmez. Çıktı 10'dur."
+            },
+            {
+                id: 42,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #16",
+                topic: "PDO & Form İşlemleri",
+                question: "Aşağıdaki PDO kodunun çıktısı nedir?",
+                code: `$pdo = new PDO("mysql:host=localhost;dbname=test","root","");\n$stmt = $pdo->query("SELECT 1");\n\necho $stmt->fetchColumn();`,
+                options: [
+                    "0",
+                    "1",
+                    "true",
+                    "Hata verir"
+                ],
+                answer: 1,
+                explanation: "SELECT 1 sorgusu 1 değerini içeren tek satır ve tek sütunluk bir sonuç döndürür. fetchColumn() ilk sütunun değerini alır ve ekrana 1 yazar."
+            },
+            {
+                id: 43,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #20",
+                topic: "Değişkenler & Referanslar",
+                question: "PHP'de aşağıdakilerden hangisi 'değişken değişken' (variable variables) kullanımına örnektir?",
+                code: null,
+                options: [
+                    "$a = 5;",
+                    "$$a = 5;",
+                    "$a == $b;",
+                    "$a => $b;"
+                ],
+                answer: 1,
+                explanation: "$$a kullanımı bir değişkenin değerini başka bir değişkenin adı olarak tanımlamaya (değişken değişken) yarar."
+            },
+            {
+                id: 44,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #21",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki kodun çıktısı sırasıyla nedir?",
+                code: `$a = "5";\n$b = 5;\n\nvar_dump($a == $b);\nvar_dump($a === $b);`,
+                options: [
+                    "true / true",
+                    "true / false",
+                    "false / true",
+                    "false / false"
+                ],
+                answer: 1,
+                explanation: "$a == $b sadece değerleri karşılaştırır ve true döner. $a === $b ise hem değer hem veri tipini karşılaştırır; biri string diğeri int olduğu için false döner."
+            },
+            {
+                id: 45,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #22",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Aşağıdakilerden hangisi PHP'de bir magic method (sihirli metod) değildir?",
+                code: null,
+                options: [
+                    "__construct()",
+                    "__destruct()",
+                    "__call()",
+                    "__start()"
+                ],
+                answer: 3,
+                explanation: "__construct(), __destruct(), __call(), __get(), __set(), __toString() PHP'nin yerleşik sihirli metodlarıdır ancak __start() adında bir magic method yoktur."
+            },
+            {
+                id: 46,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #23",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Aşağıdakilerden hangisi interface (arayüz) için doğrudur?",
+                code: null,
+                options: [
+                    "İçinde metod gövdesi olabilir",
+                    "Doğrudan new ile nesne üretilebilir",
+                    "Sadece metod imzaları içerir",
+                    "private metod olabilir"
+                ],
+                answer: 2,
+                explanation: "Interface'ler (arayüzler) kendisini implemente eden sınıfların hangi metodları içermesi gerektiğini belirten şablonlardır; gövdesiz public metod imzaları içerirler ve doğrudan nesnesi üretilemez."
+            },
+            {
+                id: 47,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #26",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `$a = 10;\n$b = &$a;\n$c = &$b;\n\n$c = 50;\necho $a;`,
+                options: [
+                    "10",
+                    "25",
+                    "50",
+                    "Hata verir"
+                ],
+                answer: 2,
+                explanation: "$b, $a'ya; $c de $b'ye referans (&) ile bağlanmıştır. Üç değişken de aynı bellek adresini gösterir. $c = 50 yapıldığında $a da 50 olur."
+            },
+            {
+                id: 48,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #36",
+                topic: "PDO & Form İşlemleri",
+                question: "Aşağıdaki PDO kullanımı için hangisi doğrudur?",
+                code: `$stmt = $pdo->query("SELECT 10");\necho $stmt->rowCount();`,
+                options: [
+                    "Her zaman doğru sonuç verir",
+                    "SELECT sorguları için güvenilir değildir",
+                    "Hata verir",
+                    "Her zaman 0 döner"
+                ],
+                answer: 1,
+                explanation: "PDO dokümantasyonuna göre rowCount() metodu DELETE, INSERT ve UPDATE sorgularında etkilenen satır sayısını verir; ancak çoğu veritabanı sürücüsünde SELECT sorgularında satır sayısını güvenilir şekilde döndürmez."
+            },
+            {
+                id: 49,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #38",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `$a = "merhaba";\n$$a = "dünya";\n\necho $merhaba;`,
+                options: [
+                    "merhaba",
+                    "dünya",
+                    "$$a",
+                    "Hata verir"
+                ],
+                answer: 1,
+                explanation: "$a'nın değeri 'merhaba'dır. $$a ifadesi $merhaba anlamına gelir ve ona 'dünya' değeri atanır. echo $merhaba; ekrana 'dünya' yazdırır."
+            },
+            {
+                id: 50,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #48",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `$a = "php";\n$$a = "ders";\n\necho $php;`,
+                options: [
+                    "php",
+                    "ders",
+                    "hata",
+                    "boş"
+                ],
+                answer: 1,
+                explanation: "$a değişkeninin içindeki metin 'php' olduğu için $$a ifadesi $php değişkenini oluşturur ve değerini 'ders' yapar."
+            },
+            {
+                id: 51,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #49",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Aşağıdaki kodun çıktısı nedir?",
+                code: `class A {\n    public static $x = 5;\n}\n\nA::$x = 15;\necho A::$x;`,
+                options: [
+                    "5",
+                    "15",
+                    "0",
+                    "Hata verir"
+                ],
+                answer: 1,
+                explanation: "static özelliklere sınıf adı ve :: (Scope Resolution Operator) ile doğrudan erişilir. A::$x değeri 15 olarak değiştirildiği için ekrana 15 basılır."
+            },
+            {
+                id: 52,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #77",
+                topic: "PDO & Form İşlemleri",
+                question: "Formdan gönderilen verilerin URL kısmında gizli tutularak (HTTP gövdesinde) gönderilmesini sağlayan metod hangisidir?",
+                code: null,
+                options: [
+                    "GET",
+                    "REQUEST",
+                    "POST",
+                    "SEND"
+                ],
+                answer: 2,
+                explanation: "POST metodu verileri URL adres çubuğunda göstermeden HTTP isteğinin gövdesinde (body) güvenli ve gizli şekilde sunucuya iletir."
+            },
+            {
+                id: 53,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #79",
+                topic: "PDO & Form İşlemleri",
+                question: "date(\"d-m-Y\") fonksiyonu çıktısında \"m\" karakteri neyi temsil eder?",
+                code: null,
+                options: [
+                    "Dakikayı",
+                    "Ayın ismini (Metin olarak)",
+                    "Ayın numarasını (01-12)",
+                    "Yılı"
+                ],
+                answer: 2,
+                explanation: "date() fonksiyonunda küçük 'm' harfi, başında sıfır olacak şekilde 01 ile 12 arasında ayın sayısal numarasını temsil eder ('d' gün, 'Y' 4 haneli yıl)."
+            },
+            {
+                id: 54,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları #81",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki kod bloğu çalıştırıldığında ekrana ne yazdırılır?",
+                code: `$a = "5";\n$b = 10;\necho $a + $b . " " . $a . $b;`,
+                options: [
+                    "15 15",
+                    "510 510",
+                    "15 510",
+                    "Hata verir"
+                ],
+                answer: 2,
+                explanation: "Önce $a + $b işlemi yapılır ve 15 bulunur. Ardından nokta (.) operatörleriyle boşluk, $a (\"5\") ve $b (10) metin olarak yan yana birleştirilir: '15 510'."
+            },
+            {
+                id: 55,
+                source: "Notlardan",
+                docRef: "Çalışma Soruları (Diziler 1 & 2)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Görsellerde yer alan aşağıdaki iki dizi kodunun ekran çıktıları sırasıyla nedir?",
+                code: `// 1. Dizi Kodu:\n$meyveler = array("Elma", "Muz", "Çilek");\necho $meyveler[1];\n\n// 2. Çok Boyutlu Dizi Kodu:\n$ogrenciler = [\n    ["Ali", 80],\n    ["Veli", 60],\n    ["Can", 90]\n];\necho " - " . $ogrenciler[1][0];`,
+                options: [
+                    "Elma - Ali",
+                    "Muz - Veli",
+                    "Muz - 60",
+                    "Çilek - Can"
+                ],
+                answer: 1,
+                explanation: "Dizilerde indeksler 0'dan başlar. $meyveler[1] dizinin 2. elemanı olan 'Muz'dur. $ogrenciler[1][0] ise 2. alt dizinin ([\"Veli\", 60]) ilk elemanı (0. indeksi) olan 'Veli'dir."
+            },
+
+            // --- BÖLÜM 3: Aynı Müfredat ve Tarzda Hazırlanan 20 Yeni Özgün Soru ---
+            {
+                id: 56,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #1",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Fonksiyon parametresinin referans (&) ile gönderildiği aşağıdaki kodun çıktısı nedir?",
+                code: `function ekle(&$x) {\n    $x = $x + 10;\n}\n\n$sayi = 5;\nekle($sayi);\necho $sayi;`,
+                options: [
+                    "5",
+                    "10",
+                    "15",
+                    "Hata verir"
+                ],
+                answer: 2,
+                explanation: "Fonksiyon tanımında &$x kullanıldığı için parametre referans olarak alınmıştır. Fonksiyon içinde $x'e 10 eklendiğinde dışarıdaki $sayi değişkeni de doğrudan 15 olur."
+            },
+            {
+                id: 57,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #2",
+                topic: "PDO & Form İşlemleri",
+                question: "PDO'da SQL Injection saldırılarını önlemek amacıyla dışarıdan gelen parametreleri güvenli şekilde sorguya bağlamak için hangi metod ikilisi kullanılır?",
+                code: null,
+                options: [
+                    "query() ve fetch()",
+                    "prepare() ve execute()",
+                    "connect() ve run()",
+                    "escape() ve select()"
+                ],
+                answer: 1,
+                explanation: "PDO'da ön hazırlıklı sorgular (Prepared Statements) için önce $pdo->prepare() ile sorgu şablonu hazırlanır, ardından $stmt->execute() ile veriler güvenli biçimde gönderilir."
+            },
+            {
+                id: 58,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #3",
+                topic: "PDO & Form İşlemleri",
+                question: "PDO ile çalıştırılan bir SELECT sorgusundan dönen TÜM satırları tek seferde dizi olarak çekmek için hangi metod kullanılır?",
+                code: null,
+                options: [
+                    "fetch()",
+                    "fetchColumn()",
+                    "fetchAll()",
+                    "getAllRows()"
+                ],
+                answer: 2,
+                explanation: "fetch() sadece sıradaki tek bir satırı çekerken, fetchAll() sonuç kümesindeki tüm kayıtları çok boyutlu bir dizi olarak döndürür."
+            },
+            {
+                id: 59,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #4",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "PHP OOP'de bir sınıfın başka bir sınıftan miras alması (kalıtım) ve bir interface'i (arayüzü) uygulaması için kullanılan anahtar kelimeler sırasıyla hangileridir?",
+                code: null,
+                options: [
+                    "inherits / uses",
+                    "extends / implements",
+                    "implements / extends",
+                    "parent / interface"
+                ],
+                answer: 1,
+                explanation: "Sınıflar arası kalıtım için 'extends' (class B extends A), bir interface'i sınıfa uygulamak için ise 'implements' (class B implements C) kullanılır."
+            },
+            {
+                id: 60,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #5",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Bir sınıfın kendi metodu içerisinden, o sınıftan üretilmiş mevcut nesnenin (non-static) özelliklerine erişmek için hangi sözde değişken kullanılır?",
+                code: `class Araba {\n    public $marka = "Togg";\n    public function goster() {\n        echo ________->marka;\n    }\n}`,
+                options: [
+                    "$self",
+                    "$this",
+                    "parent",
+                    "$object"
+                ],
+                answer: 1,
+                explanation: "Sınıf içerisinde o anki nesne örneğine (instance) ait özellik ve metodlara $this->ozellik şeklinde erişilir."
+            },
+            {
+                id: 61,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #6",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Bir nesne ile yapılan tüm işlemler bittiğinde veya betik sonlandığında nesne bellekten silinirken otomatik olarak çalışan yıkıcı (destructor) magic method hangisidir?",
+                code: null,
+                options: [
+                    "__destroy()",
+                    "__unset()",
+                    "__destruct()",
+                    "__end()"
+                ],
+                answer: 2,
+                explanation: "Yapıcı metod __construct() iken, nesne bellekten kaldırılırken otomatik çalışan yıkıcı sihirli metod __destruct() metodudur."
+            },
+            {
+                id: 62,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #7",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "OOP'de 'protected' olarak tanımlanan bir özelliğe nereden erişilebilir?",
+                code: null,
+                options: [
+                    "Programın her yerinden doğrudan erişilebilir.",
+                    "Sadece tanımlandığı sınıfın içinden erişilebilir, alt sınıflardan erişilemez.",
+                    "Tanımlandığı sınıfın içinden ve bu sınıfı miras alan (extends) alt sınıflardan erişilebilir.",
+                    "Sadece sınıf dışından erişilebilir."
+                ],
+                answer: 2,
+                explanation: "public her yerden, private yalnızca tanımlandığı sınıftan, protected ise hem tanımlandığı sınıftan hem de ondan türetilen (miras alan) alt sınıflardan erişilebilir."
+            },
+            {
+                id: 63,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #8",
+                topic: "Operatörler & Koşullar",
+                question: "PHP 7 ile gelen Spaceship (Uzay Gemisi) operatörü (<=>) kullanılan aşağıdaki kodun çıktısı nedir?",
+                code: `$x = 10;\n$y = 20;\necho $x <=> $y;`,
+                options: [
+                    "0",
+                    "1",
+                    "-1",
+                    "false"
+                ],
+                answer: 2,
+                explanation: "<=> operatörü sol taraf küçükse -1, iki taraf eşitse 0, sol taraf büyükse 1 döndürür. 10 < 20 olduğu için çıktı -1'dir."
+            },
+            {
+                id: 64,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #9",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "İlişkisel (associative) bir dizide aşağıdaki kodun ekran çıktısı nedir?",
+                code: `$kisi = ["ad" => "Zeynep", "yas" => 22];\nforeach ($kisi as $k => $v) {\n    echo $k . " ";\n}`,
+                options: [
+                    "Zeynep 22 ",
+                    "ad yas ",
+                    "0 1 ",
+                    "ad Zeynep "
+                ],
+                answer: 1,
+                explanation: "foreach ($dizi as $anahtar => $deger) yapısında $k dizinin anahtarlarını (key), $v ise değerlerini (value) alır. Ekrana sadece $k yazdırıldığı için 'ad yas ' çıkar."
+            },
+            {
+                id: 65,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #10",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Bir dizinin içinde kaç adet eleman bulunduğunu öğrenmek için kullanılan hazır PHP fonksiyonu hangisidir?",
+                code: `$sayilar = [10, 20, 30, 40];`,
+                options: [
+                    "strlen($sayilar)",
+                    "count($sayilar)",
+                    "length($sayilar)",
+                    "total($sayilar)"
+                ],
+                answer: 1,
+                explanation: "PHP'de dizilerin eleman sayısını bulmak için count() (veya sizeof()) fonksiyonu kullanılır. strlen() ise metinlerin karakter uzunluğunu verir."
+            },
+            {
+                id: 66,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #11",
+                topic: "PDO & Form İşlemleri",
+                question: "PHP'de kullanıcı oturumlarını ($_SESSION) başlatmak veya mevcut oturuma erişmek için sayfanın en başında çağrılması gereken fonksiyon hangisidir?",
+                code: null,
+                options: [
+                    "session_open()",
+                    "start_session()",
+                    "session_start()",
+                    " session_init()"
+                ],
+                answer: 2,
+                explanation: "$_SESSION süper küresel dizisini kullanabilmek için HTML çıktısı üretilmeden önce session_start() fonksiyonu çağrılmalıdır."
+            },
+            {
+                id: 67,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #12",
+                topic: "Değişkenler & Referanslar",
+                question: "Bir değişkenin tanımlı olup olmadığını ve değerinin NULL olmadığını kontrol eden fonksiyon hangisidir?",
+                code: null,
+                options: [
+                    "empty()",
+                    "isset()",
+                    "is_null()",
+                    "defined()"
+                ],
+                answer: 1,
+                explanation: "isset($degisken) fonksiyonu değişken tanımlanmışsa ve değeri NULL değilse true, aksi halde false döndürür."
+            },
+            {
+                id: 68,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #13",
+                topic: "Operatörler & Koşullar",
+                question: "Son-artırım (post-increment) ve ön-artırım (pre-increment) kullanılan aşağıdaki kodun çıktısı nedir?",
+                code: `$a = 5;\necho $a++;\necho ++$a;`,
+                options: [
+                    "56",
+                    "57",
+                    "67",
+                    "66"
+                ],
+                answer: 1,
+                explanation: "İlk satırda $a++ önce 5'i ekrana yazar, sonra $a'yı 6 yapar. İkinci satırda ++$a önce 6 olan değeri 7'ye artırır ve ekrana 7 yazar. Yan yana çıktı: 57."
+            },
+            {
+                id: 69,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #14",
+                topic: "Değişkenler & Referanslar",
+                question: "Tek tırnak (' ') ve çift tırnak (\" \") farkıyla ilgili aşağıdaki kodun çıktısı nedir?",
+                code: `$dil = "PHP";\necho 'Merhaba $dil';`,
+                options: [
+                    "Merhaba PHP",
+                    "Merhaba $dil",
+                    "Hata verir",
+                    "Merhaba"
+                ],
+                answer: 1,
+                explanation: "PHP'de çift tırnak (\" \") içindeki değişkenler yorumlanıp değerleri yazdırılırken, tek tırnak (' ') içindeki değişkenler çözümlenmez ve olduğu gibi metin olarak ('Merhaba $dil') basılır."
+            },
+            {
+                id: 70,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #15",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki döngünün ekran çıktısı nedir?",
+                code: `for ($i = 1; $i <= 5; $i++) {\n    if ($i == 2) continue;\n    if ($i == 4) break;\n    echo $i;\n}`,
+                options: [
+                    "123",
+                    "13",
+                    "134",
+                    "1234"
+                ],
+                answer: 1,
+                explanation: "$i=1 iken 1 yazar. $i=2 iken continue o adımı atlar. $i=3 iken 3 yazar. $i=4 iken break döngüyü tamamen sonlandırır. Çıktı: 13."
+            },
+            {
+                id: 71,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #16",
+                topic: "PDO & Form İşlemleri",
+                question: "Tarayıcıda 'urun.php?id=25&kategori=kitap' adresine tıklandığında PHP tarafında '25' değerini almak için hangi süper küresel değişken kullanılır?",
+                code: null,
+                options: [
+                    "$_POST['id']",
+                    "$_GET['id']",
+                    "$_SESSION['id']",
+                    "$_SERVER['id']"
+                ],
+                answer: 1,
+                explanation: "URL adres çubuğunda soru işaretinden (?) sonra gönderilen sorgu parametreleri (Query String) $_GET süper küresel dizisi ile yakalanır."
+            },
+            {
+                id: 72,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #17",
+                topic: "Değişkenler & Referanslar",
+                question: "PHP'de çalışma zamanında değeri değiştirilemeyen bir SABİT (constant) tanımlamak için aşağıdakilerden hangisi kullanılır?",
+                code: null,
+                options: [
+                    "$PI = 3.14;",
+                    "define(\"PI\", 3.14);",
+                    "constant(\"PI\", 3.14);",
+                    "static $PI = 3.14;"
+                ],
+                answer: 1,
+                explanation: "PHP'de sabitler başında $ işareti olmadan define(\"SABIT_ADI\", deger) fonksiyonuyla veya const SABIT_ADI = deger; anahtar kelimesiyle tanımlanır."
+            },
+            {
+                id: 73,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #18",
+                topic: "Değişkenler & Referanslar",
+                question: "Aşağıdaki kodun ekran çıktısı nedir?",
+                code: `$x = "y";\n$y = "z";\n$z = "Başarılar!";\n\necho $$$x;`,
+                options: [
+                    "y",
+                    "z",
+                    "Başarılar!",
+                    "Hata verir"
+                ],
+                answer: 2,
+                explanation: "$x -> 'y'dir. $$x -> $y yani 'z'dir. $$$x ise $z değişkenine karşılık gelir ve ekrana 'Başarılar!' yazdırır."
+            },
+            {
+                id: 74,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #19",
+                topic: "OOP (Nesne Yönelimli Programlama)",
+                question: "Nesnelerde referans bağını koparıp bağımsız bir kopya oluşturmak için 'clone' kullanılan aşağıdaki kodun çıktısı nedir?",
+                code: `class Kutu {\n    public $deger = 10;\n}\n\n$k1 = new Kutu();\n$k2 = clone $k1;\n$k2->deger = 99;\n\necho $k1->deger;`,
+                options: [
+                    "10",
+                    "99",
+                    "0",
+                    "Hata verir"
+                ],
+                answer: 0,
+                explanation: "Normalde $k2 = $k1 yapılsaydı ikisi aynı nesneyi gösterirdi ve sonuç 99 olurdu. Ancak 'clone' anahtar kelimesi bellekte bağımsız yeni bir kopya oluşturduğu için $k1->deger 10 olarak kalır."
+            },
+            {
+                id: 75,
+                source: "Yeni Üretilen",
+                docRef: "Ekstra Soru #20",
+                topic: "PDO & Form İşlemleri",
+                question: "PDO ile veritabanı bağlantısı kurarken oluşabilecek bağlantı hatalarını yakalamak için hangi hata yakalama bloğu kullanılır?",
+                code: null,
+                options: [
+                    "if - else",
+                    "switch - case",
+                    "try - catch (PDOException)",
+                    "do - while"
+                ],
+                answer: 2,
+                explanation: "PDO bağlantı ve sorgu hatalarını istisna (Exception) olarak fırlatır. Bu hataları güvenli şekilde yakalamak için try { ... } catch (PDOException $e) { ... } bloğu kullanılır."
+            },
+
+            // --- BÖLÜM 4: NOT DEFTERİ EKRAN GÖRÜNTÜSÜNDEKİ 14 KONUYA ÖZEL 30 YENİ SORU (76 - 105) ---
+            {
+                id: 76,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #1 (Değişkenler)",
+                topic: "Değişkenler & Referanslar",
+                question: "PHP'de 'değişkenler (variables)' temel olarak ne işe yarar ve hangi özelliğe sahiptir?",
+                code: null,
+                options: [
+                    "Sadece veritabanı tablolarını silmeye yarar.",
+                    "Program çalışırken verileri (sayı, metin, dizi vb.) bellekte geçici olarak saklamaya ve tekrar kullanmaya yarar; atanan değere göre veri tipi otomatik belirlenir.",
+                    "Tarayıcının tasarımını (CSS) değiştirmeye yarar ve sadece sabit sayı tutar.",
+                    "PHP'de değişken tanımlarken başta veri tipini (int, string) yazmak zorunludur."
+                ],
+                answer: 1,
+                explanation: "Değişkenler program içindeki verileri bellekte tutmaya, işlemeye ve taşımaya yarar. PHP dinamik tipli (loosely typed) bir dil olduğu için değişkenin tipi atanan değere göre otomatik belirlenir."
+            },
+            {
+                id: 77,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #2 (Değişken Kapsamı)",
+                topic: "Değişkenler & Referanslar",
+                question: "Bir fonksiyonun dışında tanımlanan küresel (global) bir değişkene fonksiyon içerisinden erişip değerini kullanabilmek için hangi anahtar kelime kullanılır?",
+                code: `$puan = 85;\nfunction goster() {\n    ________ $puan;\n    echo $puan;\n}\ngoster();`,
+                options: [
+                    "public",
+                    "static",
+                    "global",
+                    "extern"
+                ],
+                answer: 2,
+                explanation: "PHP'de fonksiyon dışındaki bir değişkene fonksiyon içinden doğrudan erişilemez. Erişmek için fonksiyon içinde 'global $puan;' tanımlaması yapılır (veya $GLOBALS['puan'] kullanılır)."
+            },
+            {
+                id: 78,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #3 (Static Değişken Çıktısı)",
+                topic: "Değişkenler & Referanslar",
+                question: "Fonksiyon içinde 'static' anahtar kelimesi ile tanımlanan değişkenin bulunduğu aşağıdaki kodun ekran çıktısı nedir?",
+                code: `function sayac() {\n    static $sayi = 0;\n    $sayi++;\n    echo $sayi;\n}\nsayac();\nsayac();\nsayac();`,
+                options: [
+                    "111",
+                    "123",
+                    "012",
+                    "3"
+                ],
+                answer: 1,
+                explanation: "static değişkenler fonksiyon çalışması bittiğinde bellekten silinmez, son değerini korur. Bu nedenle fonksiyon 3 kez çağrıldığında sırasıyla 1, 2 ve 3 yazdırır (123)."
+            },
+            {
+                id: 79,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #4 (Mod ve Bölme Çıktısı)",
+                topic: "Operatörler & Koşullar",
+                question: "Bölme (/) ve mod alma (%) işlemlerinin birlikte kullanıldığı aşağıdaki kodun çıktısı nedir?",
+                code: `$a = 17;\n$b = 5;\n$kalan = $a % $b;\n$bolum = ($a - $kalan) / $b;\necho $kalan . "-" . $bolum;`,
+                options: [
+                    "2-3",
+                    "3-2",
+                    "2-3.4",
+                    "5-3"
+                ],
+                answer: 0,
+                explanation: "17 % 5 (17'nin 5'e bölümünden kalan) = 2'dir ($kalan = 2). ($a - $kalan) / $b ise (17 - 2) / 5 = 15 / 5 = 3 olur. Ekrana '2-3' yazdırılır."
+            },
+            {
+                id: 80,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #5 (Bölme ve İşlem Önceliği)",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki aritmetik işlemde bölme ve mod alma operatörlerinin işlem önceliğine göre ekran çıktısı nedir?",
+                code: `$sonuc = 20 - 12 / 4 + 10 % 3;\necho $sonuc;`,
+                options: [
+                    "3",
+                    "18",
+                    "16",
+                    "17"
+                ],
+                answer: 1,
+                explanation: "Bölme (/) ve mod (%) operatörleri toplama ve çıkarmadan önce çalışır: 12 / 4 = 3 ve 10 % 3 = 1 olur. İşlem: 20 - 3 + 1 = 18."
+            },
+            {
+                id: 81,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #6 (Ondalıklı Bölme ve intdiv)",
+                topic: "Operatörler & Koşullar",
+                question: "PHP'de normal bölme operatörü (/) ile tam sayı bölmesi yapan intdiv() fonksiyonunun çıktısı aşağıdakilerden hangisinde doğru verilmiştir?",
+                code: `echo (7 / 2) . " | " . intdiv(7, 2);`,
+                options: [
+                    "3 | 3.5",
+                    "3.5 | 3",
+                    "3.5 | 4",
+                    "3 | 3"
+                ],
+                answer: 1,
+                explanation: "7 / 2 işlemi ondalıklı olarak 3.5 sonucunu üretir. intdiv(7, 2) ise ondalık kısmı atarak sadece tam sayı bölümünü yani 3 değerini döndürür."
+            },
+            {
+                id: 82,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #7 (Birleşik Atama Operatörleri)",
+                topic: "Operatörler & Koşullar",
+                question: "Operatörlerle ilgili aşağıdaki kod bloğunun ekran çıktısı nedir?",
+                code: `$x = 8;\n$x += 4;\n$x /= 3;\n$x .= " TL";\necho $x;`,
+                options: [
+                    "12 TL",
+                    "4 TL",
+                    "4",
+                    "Hata verir"
+                ],
+                answer: 1,
+                explanation: "$x = 8 -> $x += 4 ile 12 olur -> $x /= 3 ile 12/3 = 4 olur -> $x .= \" TL\" ile sonuna metin birleştirilir ve '4 TL' yazdırılır."
+            },
+            {
+                id: 83,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #8 (If-Elseif-Else Çıktısı)",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki if-elseif-else kod bloğu çalıştırıldığında ekrana ne yazdırılır?",
+                code: `$puan = 75;\nif ($puan >= 85) {\n    echo "AA";\n} elseif ($puan >= 70) {\n    echo "BB";\n} elseif ($puan >= 50) {\n    echo "CC";\n} else {\n    echo "FF";\n}`,
+                options: [
+                    "AA",
+                    "BB",
+                    "BBCC",
+                    "CC"
+                ],
+                answer: 1,
+                explanation: "$puan = 75 olduğu için ilk koşul ($puan >= 85) false döner. İkinci koşul ($puan >= 70) true döner ve ekrana sadece 'BB' yazılır; sonraki elseif bloğuna bakılmaz."
+            },
+            {
+                id: 84,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #9 (If ve Mantıksal Operatörler)",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki if koşulunun ekran çıktısı nedir?",
+                code: `$yas = 20;\n$ehliyet = false;\nif ($yas >= 18 && !$ehliyet) {\n    echo "Kursa Kayıt Olabilir";\n} else {\n    echo "Kayıt Olamaz";\n}`,
+                options: [
+                    "Kursa Kayıt Olabilir",
+                    "Kayıt Olamaz",
+                    "false",
+                    "Hata verir"
+                ],
+                answer: 0,
+                explanation: "$yas >= 18 ifadesi true'dur. $ehliyet false olduğu için !$ehliyet (değili) true olur. true && true koşulu sağlandığından 'Kursa Kayıt Olabilir' yazdırılır."
+            },
+            {
+                id: 85,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #10 (Switch-Case Çıktı Sorusu 1)",
+                topic: "Operatörler & Koşullar",
+                question: "Aşağıdaki switch-case kodunun ekran çıktısı nedir?",
+                code: `$islem = "carp";\n$a = 4; $b = 3;\nswitch ($islem) {\n    case "topla":\n        echo $a + $b;\n        break;\n    case "carp":\n        echo $a * $b;\n        break;\n    default:\n        echo 0;\n}`,
+                options: [
+                    "7",
+                    "12",
+                    "120",
+                    "0"
+                ],
+                answer: 1,
+                explanation: "$islem değişkeni \"carp\" olduğu için ilgili case bloğu çalışır, 4 * 3 = 12 ekrana yazdırılır ve break ile switch yapısından çıkılır."
+            },
+            {
+                id: 86,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #11 (Switch-Case Break Tuzağı!)",
+                topic: "Operatörler & Koşullar",
+                question: "SINAV TUZAĞI: Aşağıdaki switch-case yapısında bazı 'break' komutları yazılmamıştır. Bu kodun ekran çıktısı nedir?",
+                code: `$secim = 2;\nswitch ($secim) {\n    case 1:\n        echo "Bir-";\n        break;\n    case 2:\n        echo "İki-";\n    case 3:\n        echo "Üç-";\n        break;\n    default:\n        echo "Son";\n}`,
+                options: [
+                    "İki-",
+                    "İki-Üç-",
+                    "İki-Üç-Son",
+                    "Bir-İki-Üç-"
+                ],
+                answer: 1,
+                explanation: "$secim = 2 olduğu için case 2 çalışır ve 'İki-' yazar. Ancak case 2 sonunda break; olmadığı için altındaki case 3 de otomatik çalışır ('Üç-' yazar) ve oradaki break; ile yapıdan çıkılır. Çıktı: İki-Üç-."
+            },
+            {
+                id: 87,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #12 (Foreach Toplam Çıktısı)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki foreach döngüsü çalıştırıldığında ekrana ne yazdırılır?",
+                code: `$notlar = [10, 20, 30];\n$toplam = 0;\nforeach ($notlar as $n) {\n    $toplam += $n;\n}\necho $toplam;`,
+                options: [
+                    "102030",
+                    "60",
+                    "30",
+                    "3"
+                ],
+                answer: 1,
+                explanation: "foreach döngüsü dizideki tüm elemanları gezerek $toplam değişkenine ekler: 10 + 20 + 30 = 60."
+            },
+            {
+                id: 88,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #13 (Foreach Anahtar => Değer Çıktısı)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki foreach döngüsünün ekran çıktısı nedir?",
+                code: `$fiyatlar = ["Kalem" => 15, "Defter" => 40];\nforeach ($fiyatlar as $urun => $fiyat) {\n    echo $urun . ":" . ($fiyat + 5) . " ";\n}`,
+                options: [
+                    "Kalem:15 Defter:40 ",
+                    "Kalem:20 Defter:45 ",
+                    "0:20 1:45 ",
+                    "15 40 "
+                ],
+                answer: 1,
+                explanation: "Döngüde $urun anahtarları ('Kalem', 'Defter'), $fiyat ise değerleri (15, 40) alır. Her fiyata 5 eklendiği için çıktı 'Kalem:20 Defter:45 ' olur."
+            },
+            {
+                id: 89,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #14 (do-while Koşul False Çıktısı)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki do-while döngüsünün ekran çıktısı nedir?",
+                code: `$sayi = 100;\ndo {\n    echo $sayi;\n    $sayi++;\n} while ($sayi < 50);`,
+                options: [
+                    "Ekran boş kalır",
+                    "100",
+                    "101",
+                    "50"
+                ],
+                answer: 1,
+                explanation: "do-while döngüsünde önce do bloğu çalışır, ekrana 100 yazar ve $sayi 101 olur. Sonra while($sayi < 50) koşuluna bakılır; 101 < 50 false olduğu için döngü biter. Ekrana 100 yazılmış olur."
+            },
+            {
+                id: 90,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #15 (do-while Sayaç Çıktısı)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki do-while döngüsü çalıştığında ekrana ne yazdırılır?",
+                code: `$k = 1;\ndo {\n    echo $k * 2 . " ";\n    $k++;\n} while ($k <= 3);`,
+                options: [
+                    "1 2 3 ",
+                    "2 4 6 ",
+                    "2 4 ",
+                    "2 4 6 8 "
+                ],
+                answer: 1,
+                explanation: "$k sırasıyla 1, 2 ve 3 değerlerini alır. Her adımda 2 ile çarpılıp yazdırıldığı için ekrana '2 4 6 ' basılır."
+            },
+            {
+                id: 91,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #16 (Fonksiyonlar Varsayılan Parametre Çıktısı)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Varsayılan (default) parametreli fonksiyon içeren aşağıdaki kodun çıktısı nedir?",
+                code: `function islem($a, $b = 4) {\n    return $a * $b;\n}\necho islem(3) . "-" . islem(3, 2);`,
+                options: [
+                    "12-6",
+                    "7-5",
+                    "12-12",
+                    "Hata verir"
+                ],
+                answer: 0,
+                explanation: "İlk çağrıda islem(3) ikinci parametreyi vermediği için varsayılan $b = 4 kullanılır (3 * 4 = 12). İkinci çağrıda islem(3, 2) $b yerine 2 gönderdiği için 3 * 2 = 6 döner. Çıktı: 12-6."
+            },
+            {
+                id: 92,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #17 (Fonksiyonlar Return Davranışı)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Aşağıdaki fonksiyon çağrıldığında ekrana ne yazdırılır?",
+                code: `function kontrol($x) {\n    if ($x > 0) {\n        return "Pozitif";\n    }\n    return "Negatif veya Sıfır";\n    echo "Burası çalıştı";\n}\necho kontrol(10);`,
+                options: [
+                    "PozitifBurası çalıştı",
+                    "Pozitif",
+                    "Negatif veya Sıfır",
+                    "Burası çalıştı"
+                ],
+                answer: 1,
+                explanation: "Fonksiyon içinde 'return' komutu çalıştığı anda fonksiyon sonlanır ve değeri döndürür; return'den sonraki satırlar asla çalışmaz. 10 > 0 olduğu için ilk return çalışır ve 'Pozitif' döner."
+            },
+            {
+                id: 93,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #18 (Hazır Fonksiyonlar Ne İşe Yarar?)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "Bir metni (string) belirli bir ayırıcı karaktere göre parçalayarak DİZİYE (array) dönüştüren hazır PHP fonksiyonu hangisidir?",
+                code: `$metin = "Elma,Armut,Muz";\n$dizi = ________(",", $metin);`,
+                options: [
+                    "implode()",
+                    "explode()",
+                    "substr()",
+                    "str_replace()"
+                ],
+                answer: 1,
+                explanation: "explode() fonksiyonu bir metni belirtilen ayırıcıya (virgül, boşluk vb.) göre bölerek diziye çevirir. implode() ise tam tersine bir dizinin elemanlarını birleştirip metin yapar."
+            },
+            {
+                id: 94,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #19 (Hazır Fonksiyonlar Çıktısı)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "Hazır metin fonksiyonlarının kullanıldığı aşağıdaki kodun çıktısı nedir?",
+                code: `$kelime = "Programlama";\necho substr($kelime, 0, 7) . "-" . strlen("PHP");`,
+                options: [
+                    "Program-3",
+                    "Programl-4",
+                    "lama-3",
+                    "Program-11"
+                ],
+                answer: 0,
+                explanation: "substr(\"Programlama\", 0, 7) metnin 0. indeksinden başlayarak ilk 7 karakterini alır ('Program'). strlen(\"PHP\") ise 'PHP' metninin karakter uzunluğu olan 3'ü verir. Çıktı: Program-3."
+            },
+            {
+                id: 95,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #20 (str_replace Çıktısı)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "Aşağıdaki hazır fonksiyon kodunun ekran çıktısı nedir?",
+                code: `$cumle = "Merhaba Dünya";\necho str_replace("Dünya", "PHP", $cumle);`,
+                options: [
+                    "Merhaba Dünya",
+                    "Merhaba PHP",
+                    "PHP Dünya",
+                    "Dünya PHP"
+                ],
+                answer: 1,
+                explanation: "str_replace(aranan, yeni_deger, metin) fonksiyonu metin içindeki 'Dünya' kelimesini 'PHP' ile değiştirir ve 'Merhaba PHP' döndürür."
+            },
+            {
+                id: 96,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #21 (Diziler Eleman Ekleme ve Count)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "Dizilerle ilgili aşağıdaki kod çalıştırıldığında ekran çıktısı ne olur?",
+                code: `$diller = ["PHP", "JS"];\n$diller[] = "Python";\necho count($diller) . "-" . $diller[2];`,
+                options: [
+                    "2-JS",
+                    "3-Python",
+                    "3-JS",
+                    "2-Python"
+                ],
+                answer: 1,
+                explanation: "$diller[] = \"Python\"; satırı dizinin sonuna (2. indekse) yeni eleman ekler. Dizinin eleman sayısı count($diller) ile 3 olur ve $diller[2] 'Python' değerini verir."
+            },
+            {
+                id: 97,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #22 (İlişkisel Dizi Çıktısı)",
+                topic: "Döngüler, Diziler & Fonksiyonlar",
+                question: "İlişkisel (associative) ve çok boyutlu dizi içeren aşağıdaki kodun çıktısı nedir?",
+                code: `$ogrenci = [\n    "ad" => "Ahmet",\n    "notlar" => [70, 90]\n];\necho $ogrenci["ad"] . ":" . $ogrenci["notlar"][1];`,
+                options: [
+                    "Ahmet:70",
+                    "Ahmet:90",
+                    "0:90",
+                    "Hata verir"
+                ],
+                answer: 1,
+                explanation: "$ogrenci[\"ad\"] 'Ahmet' değerini, $ogrenci[\"notlar\"][1] ise notlar dizisinin 2. elemanı (1. indeksi) olan 90'ı verir. Çıktı: Ahmet:90."
+            },
+            {
+                id: 98,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #23 (Değişken Değişkenler $$a Çıktısı)",
+                topic: "Değişkenler & Referanslar",
+                question: "Değişken değişkenler ($$) kullanılan aşağıdaki kodun ekran çıktısı nedir?",
+                code: `$sehir = "ankara";\n$ankara = "Başkent";\necho $$sehir;`,
+                options: [
+                    "sehir",
+                    "ankara",
+                    "Başkent",
+                    "$$sehir"
+                ],
+                answer: 2,
+                explanation: "$sehir değişkeninin değeri \"ankara\"dır. $$sehir ifadesi $($sehir) yani $ankara değişkenini çağırır. $ankara'nın değeri de \"Başkent\" olduğu için ekrana Başkent yazılır."
+            },
+            {
+                id: 99,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #24 (strtotime Ne İşe Yarar?)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "PHP'de 'strtotime()' fonksiyonu ne işe yarar?",
+                code: null,
+                options: [
+                    "Sayısal bir tarihi metne çevirir.",
+                    "İngilizce metin biçimindeki bir tarih/zaman ifadesini (örn: '+1 day', '2026-10-29', 'next Monday') Unix zaman damgasına (saniye cinsinden timestamp'e) dönüştürür.",
+                    "Bir metni belirtilen sayı kadar tekrarlar.",
+                    "Kodun çalışmasını belirtilen saniye kadar durdurur."
+                ],
+                answer: 1,
+                explanation: "strtotime() (String to Time), metin olarak verilen tarihleri veya '+1 week', '+3 days' gibi göreceli zaman ifadelerini 1 Ocak 1970'ten itibaren geçen saniye sayısına (Unix Timestamp) çevirir."
+            },
+            {
+                id: 100,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #25 (strtotime ve date Çıktısı)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "strtotime() ve date() fonksiyonlarının birlikte kullanıldığı aşağıdaki kodun çıktısı nedir?",
+                code: `$tarih = strtotime("2026-04-10 +5 days");\necho date("d-m-Y", $tarih);`,
+                options: [
+                    "10-04-2026",
+                    "15-04-2026",
+                    "10-09-2026",
+                    "2026-04-15"
+                ],
+                answer: 1,
+                explanation: "strtotime(\"2026-04-10 +5 days\") ifadesi 10 Nisan 2026 tarihine 5 gün ekler (15 Nisan 2026). date(\"d-m-Y\", $tarih) ise bunu Gün-Ay-Yıl formatında '15-04-2026' olarak ekrana basar."
+            },
+            {
+                id: 101,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #26 (str_repeat Ne İşe Yarar & Çıktısı)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "str_repeat() fonksiyonunun kullanıldığı aşağıdaki kodun çıktısı nedir?",
+                code: `echo str_repeat("Ha", 3) . "!";`,
+                options: [
+                    "Ha3!",
+                    "HaHaHa!",
+                    "Ha Ha Ha!",
+                    "3Ha!"
+                ],
+                answer: 1,
+                explanation: "str_repeat(metin, tekrar_sayisi) fonksiyonu birinci parametredeki metni ikinci parametredeki sayı kadar yan yana çoğaltır: 'HaHaHa!'."
+            },
+            {
+                id: 102,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #27 (str_repeat Döngü Çıktısı)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "Döngü içinde str_repeat() kullanılan aşağıdaki kodun ekran çıktısı nedir?",
+                code: `for ($i = 1; $i <= 3; $i++) {\n    echo str_repeat("*", $i) . " ";\n}`,
+                options: [
+                    "* * * ",
+                    "* ** *** ",
+                    "*** *** *** ",
+                    "1 2 3 "
+                ],
+                answer: 1,
+                explanation: "$i=1 iken 1 yıldız (*), $i=2 iken 2 yıldız (**), $i=3 iken 3 yıldız (***) üretilir ve aralarında boşlukla '* ** *** ' yazdırılır."
+            },
+            {
+                id: 103,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #28 (var_dump Tam Ekran Çıktısı 1)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "Aşağıdaki kod çalıştırıldığında var_dump() fonksiyonunun üreteceği ekran çıktısı tam olarak hangisidir?",
+                code: `$x = 25;\nvar_dump($x);`,
+                options: [
+                    "25",
+                    "integer: 25",
+                    "int(25)",
+                    "number(25)"
+                ],
+                answer: 2,
+                explanation: "var_dump() tam sayılar (integer) için ekrana veri tipini ve parantez içinde değerini 'int(25)' formatında yazdırır."
+            },
+            {
+                id: 104,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #29 (var_dump String Çıktısı)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "Aşağıdaki kod çalıştırıldığında var_dump() fonksiyonunun çıktısı nedir?",
+                code: `$dil = "PHP";\nvar_dump($dil);`,
+                options: [
+                    "string(3) \"PHP\"",
+                    "str(3) \"PHP\"",
+                    "\"PHP\"",
+                    "string \"PHP\""
+                ],
+                answer: 0,
+                explanation: "var_dump() string ifadelerde veri tipini, byte/karakter uzunluğunu ve tırnak içinde metnin kendisini yazdırır: string(3) \"PHP\"."
+            },
+            {
+                id: 105,
+                source: "Sınav Listesi Özel",
+                docRef: "Not Defteri #30 (var_dump Mantıksal Çıktısı)",
+                topic: "Hazır Fonksiyonlar (str_repeat, strtotime, var_dump)",
+                question: "Aşağıdaki kodun ekran çıktısı nedir?",
+                code: `$sonuc = (10 % 3 == 1);\nvar_dump($sonuc);`,
+                options: [
+                    "1",
+                    "true",
+                    "bool(true)",
+                    "int(1)"
+                ],
+                answer: 2,
+                explanation: "10 % 3 işlemi 1 verir. 1 == 1 karşılaştırması true (boolean) üretir. var_dump($sonuc) ise bunu 'bool(true)' olarak ekrana basar."
+            }
+        ];
+
+        // ============================================================================
+        // UYGULAMA DURUMU (STATE)
+        // ============================================================================
+        let questions = [...initialQuestions];
+        let filteredQuestions = [...questions];
+        let userAnswers = {};      // { questionId: selectedOptionIndex }
+        let flaggedQuestions = {}; // { questionId: true/false }
+        
+        let currentMode = 'study'; // 'study' | 'exam'
+        let viewMode = 'single';   // 'single' | 'list'
+        let currentIndex = 0;      // Tek tek görünümdeki aktif soru indeksi
+        let showAllAnswers = false;// Çalışma modunda tüm cevapları göster/gizle
+        let examFinished = false;  // Sınav bitti mi?
+
+        // Sınav Sayacı
+        let timerInterval = null;
+        let remainingSeconds = 30 * 60;
+
+        // ============================================================================
+        // BAŞLATMA
+        // ============================================================================
+        window.onload = function() {
+            applyFilters();
+            updateStats();
+        };
+
+        // Klavye kısayolları (Tek tek görünümde Sağ/Sol ok tuşları)
+        window.addEventListener('keydown', function(e) {
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+            if (viewMode === 'single') {
+                if (e.key === 'ArrowRight') nextQuestion();
+                if (e.key === 'ArrowLeft') prevQuestion();
+            }
+        });
+
+        // ============================================================================
+        // MOD VE GÖRÜNÜM KONTROLLERİ
+        // ============================================================================
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnStudy = document.getElementById('btnModeStudy');
+            const btnExam = document.getElementById('btnModeExam');
+            const studyStats = document.getElementById('studyStatsPanel');
+            const examConfig = document.getElementById('examConfigPanel');
+            const timerBox = document.getElementById('examTimerBox');
+            const btnToggleAnswers = document.getElementById('btnToggleAllAnswers');
+            const examResultModal = document.getElementById('examResultModal');
+
+            if (mode === 'study') {
+                stopExamTimer();
+                examFinished = false;
+                examResultModal.classList.add('hidden');
+                btnStudy.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
+                btnExam.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white";
+                studyStats.classList.remove('hidden');
+                studyStats.classList.add('flex');
+                examConfig.classList.add('hidden');
+                examConfig.classList.remove('flex');
+                timerBox.classList.add('hidden');
+                timerBox.classList.remove('flex');
+                btnToggleAnswers.classList.remove('hidden');
+                showToast("📚 Çalışma Moduna geçildi. Anında çözüm ve açıklamalar aktif.");
+            } else {
+                // Sınav Modu
+                showAllAnswers = false;
+                examFinished = false;
+                updateToggleAnswersButtonUI();
+                examResultModal.classList.add('hidden');
+                btnExam.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-amber-600 text-white shadow";
+                btnStudy.className = "px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-400 hover:text-white";
+                studyStats.classList.add('hidden');
+                studyStats.classList.remove('flex');
+                examConfig.classList.remove('hidden');
+                examConfig.classList.add('flex');
+                timerBox.classList.remove('hidden');
+                timerBox.classList.add('flex');
+                btnToggleAnswers.classList.add('hidden');
+                resetExamTimer();
+                showToast("⏱️ Sınav Modu başladı! Sınav bitene kadar doğru cevaplar gizlendi.");
+            }
+            renderQuestions();
+            updateStats();
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            const btnSingle = document.getElementById('btnViewSingle');
+            const btnList = document.getElementById('btnViewList');
+            const navControls = document.getElementById('singleNavControls');
+
+            if (mode === 'single') {
+                btnSingle.className = "py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-white shadow";
+                btnList.className = "py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white";
+                navControls.classList.remove('hidden');
+                navControls.classList.add('flex');
+            } else {
+                btnList.className = "py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-white shadow";
+                btnSingle.className = "py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-white";
+                navControls.classList.add('hidden');
+                navControls.classList.remove('flex');
+            }
+            renderQuestions();
+        }
+
+        // ============================================================================
+        // FİLTRELEME VE KARIŞTIRMA
+        // ============================================================================
+        function toggleCheatSheet() {
+            const modal = document.getElementById('cheatSheetModal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                modal.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function applyFilters() {
+            const sourceVal = document.getElementById('filterSource').value;
+            const typeVal = document.getElementById('filterType') ? document.getElementById('filterType').value : 'all';
+            const topicVal = document.getElementById('filterTopic').value;
+            const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+
+            filteredQuestions = questions.filter(q => {
+                if (sourceVal === 'flagged' && !flaggedQuestions[q.id]) return false;
+                if (sourceVal === 'Yeni Üretilen' && (q.source !== 'Yeni Üretilen' && q.source !== 'Sınav Listesi Özel')) return false;
+                if (sourceVal !== 'all' && sourceVal !== 'flagged' && sourceVal !== 'Yeni Üretilen' && q.source !== sourceVal) return false;
+                
+                // Soru Tarzı Filtresi (Kod Çıktısı vs Kavram/Ne İşe Yarar)
+                if (typeVal === 'code' && !q.code) return false;
+                if (typeVal === 'concept' && q.code) return false;
+
+                if (topicVal !== 'all' && q.topic !== topicVal) return false;
+                if (searchVal) {
+                    const inQuestion = q.question.toLowerCase().includes(searchVal);
+                    const inCode = q.code && q.code.toLowerCase().includes(searchVal);
+                    const inOptions = q.options.some(opt => opt.toLowerCase().includes(searchVal));
+                    const inTopic = q.topic.toLowerCase().includes(searchVal);
+                    const inDocRef = q.docRef && q.docRef.toLowerCase().includes(searchVal);
+                    if (!inQuestion && !inCode && !inOptions && !inTopic && !inDocRef) return false;
+                }
+                return true;
+            });
+
+            currentIndex = 0;
+            renderQuestions();
+            updateStats();
+        }
+
+        function shuffleQuestions() {
+            for (let i = questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questions[i], questions[j]] = [questions[j], questions[i]];
+            }
+            applyFilters();
+            showToast("🔀 Sorular rastgele karıştırıldı!");
+        }
+
+        // ============================================================================
+        // CEVAPLARI GÖSTER/GİZLE & SEÇİMLERİ KALDIRMA
+        // ============================================================================
+        function toggleShowAllAnswers() {
+            if (currentMode === 'exam' && !examFinished) return;
+            showAllAnswers = !showAllAnswers;
+            updateToggleAnswersButtonUI();
+            renderQuestions();
+            showToast(showAllAnswers ? "👁️ Tüm doğru cevaplar ve çözümler açıldı." : "🙈 Cevap anahtarı gizlendi.");
+        }
+
+        function updateToggleAnswersButtonUI() {
+            const icon = document.getElementById('iconToggleAnswers');
+            const text = document.getElementById('textToggleAnswers');
+            const btn = document.getElementById('btnToggleAllAnswers');
+            if (showAllAnswers) {
+                icon.textContent = "🙈";
+                text.textContent = "Tüm Cevapları Gizle";
+                btn.className = "flex items-center gap-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-3 py-1.5 rounded-xl text-xs font-semibold transition";
+            } else {
+                icon.textContent = "👁️";
+                text.textContent = "Tüm Cevapları Göster";
+                btn.className = "flex items-center gap-1.5 bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition";
+            }
+        }
+
+        function clearAllSelections() {
+            userAnswers = {};
+            showAllAnswers = false;
+            examFinished = false;
+            document.getElementById('examResultModal').classList.add('hidden');
+            updateToggleAnswersButtonUI();
+            renderQuestions();
+            updateStats();
+            showToast("🗑️ İşaretlediğiniz tüm cevaplar kaldırıldı, sıfırdan çözebilirsiniz.");
+        }
+
+        function clearSingleAnswer(qId) {
+            delete userAnswers[qId];
+            renderQuestions();
+            updateStats();
+        }
+
+        function selectOption(qId, optIndex) {
+            if (currentMode === 'exam' && examFinished) return;
+            // Eğer aynı şıkka tekrar tıklanırsa seçimi kaldırabilsin (Boş bırakma kolaylığı)
+            if (userAnswers[qId] === optIndex) {
+                delete userAnswers[qId];
+            } else {
+                userAnswers[qId] = optIndex;
+            }
+            renderQuestions();
+            updateStats();
+        }
+
+        function toggleFlag(qId) {
+            flaggedQuestions[qId] = !flaggedQuestions[qId];
+            renderQuestions();
+        }
+
+        // ============================================================================
+        // SORU KARTLARINI RENDER ETME
+        // ============================================================================
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            const singleNav = document.getElementById('singleNavControls');
+
+            if (filteredQuestions.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-10 text-center">
+                        <div class="text-3xl mb-2">🔍</div>
+                        <h3 class="text-base font-bold text-white">Bu filtreye uygun soru bulunamadı</h3>
+                        <p class="text-xs text-slate-400 mt-1">Filtreleri veya arama metnini sıfırlayarak tüm soruları görebilirsiniz.</p>
+                        <button onclick="resetAllFilters()" class="mt-4 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-xl">Filtreleri Sıfırla</button>
+                    </div>
+                `;
+                singleNav.classList.add('hidden');
+                renderDrawer();
+                return;
+            }
+
+            if (viewMode === 'single') {
+                singleNav.classList.remove('hidden');
+                singleNav.classList.add('flex');
+                if (currentIndex >= filteredQuestions.length) currentIndex = filteredQuestions.length - 1;
+                if (currentIndex < 0) currentIndex = 0;
+
+                const q = filteredQuestions[currentIndex];
+                container.innerHTML = createQuestionCardHTML(q, currentIndex + 1, filteredQuestions.length);
+
+                document.getElementById('singlePageIndicator').textContent = `${currentIndex + 1} / ${filteredQuestions.length}`;
+                document.getElementById('btnPrevQ').disabled = (currentIndex === 0);
+                document.getElementById('btnNextQ').disabled = (currentIndex === filteredQuestions.length - 1);
+            } else {
+                singleNav.classList.add('hidden');
+                singleNav.classList.remove('flex');
+                container.innerHTML = filteredQuestions.map((q, idx) => createQuestionCardHTML(q, idx + 1, filteredQuestions.length)).join('');
+            }
+
+            renderDrawer();
+        }
+
+        function createQuestionCardHTML(q, displayNum, totalCount) {
+            const userSelected = userAnswers[q.id];
+            const isAnswered = userSelected !== undefined;
+            const isFlagged = !!flaggedQuestions[q.id];
+
+            // Cevapların ve açıklamanın görünür olup olmayacağı:
+            // Çalışma modunda: kullanıcı şık seçtiyse VEYA "Tüm Cevapları Göster" açıksa göster
+            // Sınav modunda: sadece sınav bittiyse (examFinished) göster
+            const revealAnswer = (currentMode === 'study' && (isAnswered || showAllAnswers)) || (currentMode === 'exam' && examFinished);
+
+            const letters = ["A", "B", "C", "D", "E"];
+
+            let sourceBadge = "";
+            if (q.source === "Notlardan") {
+                sourceBadge = `<span class="bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-md text-[11px] font-medium">📸 ${escapeHtml(q.docRef)}</span>`;
+            } else if (q.source === "Sınav Listesi Özel") {
+                sourceBadge = `<span class="bg-amber-500/15 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-md text-[11px] font-semibold">🔥 ${escapeHtml(q.docRef)}</span>`;
+            } else {
+                sourceBadge = `<span class="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-md text-[11px] font-medium">✨ ${escapeHtml(q.docRef)}</span>`;
+            }
+
+            const codeBlockHTML = q.code ? `
+                <div class="my-3.5 rounded-xl overflow-hidden border border-slate-800 bg-slate-950 shadow-inner">
+                    <div class="bg-slate-900/90 px-3 py-1.5 border-b border-slate-800 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                        <span>PHP Kodu</span>
+                        <span class="text-indigo-400">&lt;?php ... ?&gt;</span>
+                    </div>
+                    <pre class="p-3.5 text-xs sm:text-sm text-emerald-300 overflow-x-auto leading-relaxed"><code>${escapeHtml(q.code)}</code></pre>
+                </div>
+            ` : '';
+
+            const optionsHTML = q.options.map((optText, idx) => {
+                const isThisSelected = (userSelected === idx);
+                const isThisCorrect = (q.answer === idx);
+
+                let btnStyle = "bg-slate-950/80 hover:bg-slate-800/80 border-slate-800 text-slate-200";
+                let badgeStyle = "bg-slate-800 text-slate-300 border-slate-700";
+                let statusIcon = "";
+
+                if (!revealAnswer) {
+                    // Sınav esnasında sadece kullanıcının seçtiği şıkkı mavi göster
+                    if (isThisSelected) {
+                        btnStyle = "bg-indigo-600/20 border-indigo-500 text-white ring-1 ring-indigo-500/50";
+                        badgeStyle = "bg-indigo-600 text-white border-indigo-500";
+                        statusIcon = `<span class="text-xs font-semibold text-indigo-300">Seçildi</span>`;
+                    }
+                } else {
+                    // Cevaplar açıkken (Çalışma modu veya Sınav Sonucu)
+                    if (isThisCorrect) {
+                        btnStyle = "bg-emerald-500/15 border-emerald-500/60 text-emerald-100 ring-1 ring-emerald-500/40";
+                        badgeStyle = "bg-emerald-500 text-slate-950 font-bold border-emerald-400";
+                        statusIcon = `<span class="text-xs font-bold text-emerald-400 flex items-center gap-1">✓ Doğru Cevap</span>`;
+                    } else if (isThisSelected && !isThisCorrect) {
+                        btnStyle = "bg-rose-500/15 border-rose-500/60 text-rose-200";
+                        badgeStyle = "bg-rose-500 text-white font-bold border-rose-400";
+                        statusIcon = `<span class="text-xs font-bold text-rose-400 flex items-center gap-1">✕ Yanlış Seçim</span>`;
+                    } else {
+                        btnStyle = "bg-slate-950/50 border-slate-800/60 text-slate-400 opacity-75";
+                    }
+                }
+
+                return `
+                    <button onclick="selectOption(${q.id}, ${idx})" class="option-btn w-full text-left p-3 sm:p-3.5 rounded-xl border flex items-center justify-between gap-3 ${btnStyle}">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-7 h-7 shrink-0 rounded-lg border flex items-center justify-center text-xs font-mono font-semibold ${badgeStyle}">
+                                ${letters[idx]}
+                            </span>
+                            <span class="text-xs sm:text-sm font-medium break-words">${escapeHtml(optText)}</span>
+                        </div>
+                        <div class="shrink-0">${statusIcon}</div>
+                    </button>
+                `;
+            }).join('');
+
+            const explanationHTML = revealAnswer ? `
+                <div class="mt-4 p-3.5 sm:p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/30 text-xs sm:text-sm text-slate-200 leading-relaxed">
+                    <div class="font-bold text-indigo-300 mb-1 flex items-center gap-1.5">
+                        <span>💡 Çözüm & Açıklama (Doğru Şık: ${letters[q.answer]})</span>
+                    </div>
+                    <p class="text-slate-300">${escapeHtml(q.explanation)}</p>
+                </div>
+            ` : '';
+
+            return `
+                <article id="q-card-${q.id}" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl transition-all">
+                    <!-- Kart Üst Bilgisi -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="bg-slate-800 text-white font-mono font-bold text-xs px-2.5 py-1 rounded-lg border border-slate-700">
+                                Soru ${displayNum} / ${totalCount}
+                            </span>
+                            ${sourceBadge}
+                            <span class="bg-slate-950 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-md text-[11px]">
+                                ${escapeHtml(q.topic)}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            ${isAnswered ? `
+                                <button onclick="clearSingleAnswer(${q.id})" class="text-[11px] bg-slate-800 hover:bg-rose-500/20 text-slate-300 hover:text-rose-300 border border-slate-700 px-2.5 py-1 rounded-lg transition" title="Bu sorudaki işaretlemeyi kaldır">
+                                    Seçimi Kaldır
+                                </button>
+                            ` : ''}
+                            <button onclick="toggleFlag(${q.id})" class="text-xs px-2.5 py-1 rounded-lg border transition ${isFlagged ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 font-semibold' : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'}" title="Sonra gözden geçirmek için işaretle">
+                                🚩 ${isFlagged ? 'İşaretli' : 'İşaretle'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Soru Metni -->
+                    <h2 class="mt-4 text-sm sm:text-base font-semibold text-white leading-snug">
+                        ${escapeHtml(q.question)}
+                    </h2>
+
+                    <!-- Varsa PHP Kod Bloğu -->
+                    ${codeBlockHTML}
+
+                    <!-- Şıklar -->
+                    <div class="mt-4 space-y-2.5">
+                        ${optionsHTML}
+                    </div>
+
+                    <!-- Çözüm Açıklaması -->
+                    ${explanationHTML}
+                </article>
+            `;
+        }
+
+        // ============================================================================
+        // İLERİ / GERİ GEZİNME VE ÇEKMECE (DRAWER)
+        // ============================================================================
+        function nextQuestion() {
+            if (currentIndex < filteredQuestions.length - 1) {
+                currentIndex++;
+                renderQuestions();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestions();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function jumpToQuestion(index) {
+            currentIndex = index;
+            if (viewMode === 'single') {
+                renderQuestions();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                const q = filteredQuestions[index];
+                const el = document.getElementById(`q-card-${q.id}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            toggleDrawer(false);
+        }
+
+        function toggleDrawer(forceState) {
+            const drawer = document.getElementById('questionDrawer');
+            if (typeof forceState === 'boolean') {
+                drawer.classList.toggle('hidden', !forceState);
+            } else {
+                drawer.classList.toggle('hidden');
+            }
+            if (!drawer.classList.contains('hidden')) {
+                renderDrawer();
+            }
+        }
+
+        function renderDrawer() {
+            const grid = document.getElementById('drawerGrid');
+            if (!grid) return;
+
+            grid.innerHTML = filteredQuestions.map((q, idx) => {
+                const sel = userAnswers[q.id];
+                const isAnswered = sel !== undefined;
+                const isFlagged = !!flaggedQuestions[q.id];
+                const isCurrent = (viewMode === 'single' && idx === currentIndex);
+
+                let colorClass = "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600";
+
+                if (currentMode === 'study' || examFinished) {
+                    if (isAnswered) {
+                        if (sel === q.answer) {
+                            colorClass = "bg-emerald-500/20 border-emerald-500/50 text-emerald-300 font-bold";
+                        } else {
+                            colorClass = "bg-rose-500/20 border-rose-500/50 text-rose-300 font-bold";
+                        }
+                    }
+                } else {
+                    // Sınav aktifken
+                    if (isAnswered) {
+                        colorClass = "bg-indigo-600/30 border-indigo-500 text-indigo-200 font-bold";
+                    }
+                }
+
+                const ringClass = isCurrent ? "ring-2 ring-white" : "";
+                const flagDot = isFlagged ? `<span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full"></span>` : "";
+
+                return `
+                    <button onclick="jumpToQuestion(${idx})" class="relative h-10 rounded-xl border text-xs font-mono transition flex items-center justify-center ${colorClass} ${ringClass}">
+                        ${idx + 1}
+                        ${flagDot}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // ============================================================================
+        // İSTATİSTİKLER VE SINAV BİTİRME
+        // ============================================================================
+        function updateStats() {
+            let correct = 0;
+            let wrong = 0;
+            let answeredCount = 0;
+
+            questions.forEach(q => {
+                const sel = userAnswers[q.id];
+                if (sel !== undefined) {
+                    answeredCount++;
+                    if (sel === q.answer) correct++;
+                    else wrong++;
+                }
+            });
+
+            const empty = questions.length - answeredCount;
+            const percent = answeredCount > 0 ? Math.round((correct / answeredCount) * 100) : 0;
+
+            document.getElementById('statCorrect').textContent = correct;
+            document.getElementById('statWrong').textContent = wrong;
+            document.getElementById('statEmpty').textContent = empty;
+            document.getElementById('statPercent').textContent = `%${percent}`;
+
+            document.getElementById('headerProgressBadge').textContent = `${answeredCount}/${questions.length}`;
+            const progressRatio = Math.round((answeredCount / questions.length) * 100);
+            document.getElementById('progressBar').style.width = `${progressRatio}%`;
+        }
+
+        function resetExamTimer() {
+            stopExamTimer();
+            const mins = parseInt(document.getElementById('examDurationSelect').value, 10);
+            const timerDisplay = document.getElementById('timerDisplay');
+
+            if (mins === 0) {
+                timerDisplay.textContent = "Süresiz";
+                return;
+            }
+
+            remainingSeconds = mins * 60;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+                updateTimerDisplay();
+                if (remainingSeconds <= 0) {
+                    stopExamTimer();
+                    finishExam(true);
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(remainingSeconds / 60);
+            const s = remainingSeconds % 60;
+            document.getElementById('timerDisplay').textContent =
+                `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function stopExamTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function finishExam(autoFinished = false) {
+            stopExamTimer();
+            examFinished = true;
+
+            let correct = 0;
+            let wrong = 0;
+            let empty = 0;
+
+            filteredQuestions.forEach(q => {
+                const sel = userAnswers[q.id];
+                if (sel === undefined) empty++;
+                else if (sel === q.answer) correct++;
+                else wrong++;
+            });
+
+            const total = filteredQuestions.length || 1;
+            const score = Math.round((correct / total) * 100);
+
+            document.getElementById('resScore').textContent = score;
+            document.getElementById('resCorrect').textContent = correct;
+            document.getElementById('resWrong').textContent = wrong;
+            document.getElementById('resEmpty').textContent = empty;
+
+            document.getElementById('examResultModal').classList.remove('hidden');
+            setViewMode('list');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if (autoFinished) {
+                showToast("⏰ Süre doldu! Sınavınız otomatik olarak tamamlandı.");
+            } else {
+                showToast(`🏁 Sınav tamamlandı! Puanınız: ${score}`);
+            }
+        }
+
+        function startNewExam() {
+            userAnswers = {};
+            examFinished = false;
+            document.getElementById('examResultModal').classList.add('hidden');
+            resetExamTimer();
+            renderQuestions();
+            updateStats();
+            showToast("🔄 Yeni sınav başlatıldı, başarılar!");
+        }
+
+        function filterExamReview(type) {
+            const sourceSelect = document.getElementById('filterSource').value;
+            const topicSelect = document.getElementById('filterTopic').value;
+
+            let baseList = questions.filter(q => {
+                if (sourceSelect !== 'all' && sourceSelect !== 'flagged' && q.source !== sourceSelect) return false;
+                if (topicSelect !== 'all' && q.topic !== topicSelect) return false;
+                return true;
+            });
+
+            if (type === 'wrong') {
+                filteredQuestions = baseList.filter(q => userAnswers[q.id] !== undefined && userAnswers[q.id] !== q.answer);
+            } else if (type === 'empty') {
+                filteredQuestions = baseList.filter(q => userAnswers[q.id] === undefined);
+            } else {
+                filteredQuestions = baseList;
+            }
+
+            setViewMode('list');
+            renderQuestions();
+        }
+
+        function resetAllFilters() {
+            document.getElementById('filterSource').value = 'all';
+            if (document.getElementById('filterType')) document.getElementById('filterType').value = 'all';
+            document.getElementById('filterTopic').value = 'all';
+            document.getElementById('searchInput').value = '';
+            applyFilters();
+        }
+
+        // ============================================================================
+        // BİLDİRİM TOAST
+        // ============================================================================
+        let toastTimeout = null;
+        function showToast(msg) {
+            const box = document.getElementById('toastBox');
+            const text = document.getElementById('toastText');
+            text.textContent = msg;
+            box.classList.remove('hidden');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

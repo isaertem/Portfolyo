@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A'dan Z'ye Bilgisayar Donanımı - İnteraktif Soru Bankası</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .option-btn {
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg leading-tight text-slate-900 dark:text-white">A'dan Z'ye Bilgisayar Donanımı</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Ebubekir Yaşar Kitabı & PDF Testleri (95 Soru)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Quick Stats Pill -->
+                <div id="liveScoreBadge" class="hidden md:flex items-center gap-3 bg-slate-100 dark:bg-slate-800/90 px-3.5 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-slate-700">
+                    <span class="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Doğru: <strong id="headerCorrect">0</strong>
+                    </span>
+                    <span class="text-slate-300 dark:text-slate-600">|</span>
+                    <span class="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        Yanlış: <strong id="headerWrong">0</strong>
+                    </span>
+                    <span class="text-slate-300 dark:text-slate-600">|</span>
+                    <span class="text-indigo-600 dark:text-indigo-400">
+                        Başarı: <strong id="headerPercent">0%</strong>
+                    </span>
+                </div>
+
+                <!-- Timer -->
+                <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-mono font-semibold text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="timerDisplay">00:00</span>
+                </div>
+
+                <!-- Quick Reset Button in Header -->
+                <button onclick="resetCurrentAnswersOnly()" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/70 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/70 text-xs font-semibold transition cursor-pointer" title="Mevcut soru sırasını bozmadan tüm cevapları sıfırla">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Cevapları Sıfırla
+                </button>
+
+                <!-- Theme Toggle -->
+                <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition" title="Tema Değiştir">
+                    <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden dark:block text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 block dark:hidden text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Toast Notification -->
+        <div id="toastNotification" class="fixed bottom-5 right-5 z-50 hidden transform transition-all duration-300 bg-slate-900 dark:bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-xs sm:text-sm font-semibold border border-slate-700 dark:border-indigo-400">
+            <span id="toastIcon">✨</span>
+            <span id="toastMessage">İşlem tamamlandı</span>
+        </div>
+
+        <!-- Filter & Configuration Panel -->
+        <section class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-6 mb-6">
+            
+            <!-- Explicit Mode Selection Banner (Defaults to Learning Mode, Never Forces Exam Mode Automatically) -->
+            <div class="mb-5 pb-5 border-b border-slate-100 dark:border-slate-800">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Çalışma Modu Seçimi</span>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Nasıl Çözmek İstersiniz?</h2>
+                    </div>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">İstediğiniz an modlar arasında geçiş yapabilirsiniz</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Learning Mode Card (Default Active) -->
+                    <button type="button" id="modeBtnInstant" onclick="setQuizMode('instant')" class="text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 cursor-pointer border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/30">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 font-bold text-lg shadow-sm">
+                            📖
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Öğrenme Modu (Anında Cevap)</span>
+                                <span id="badgeInstantActive" class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-bold">Aktif (Varsayılan)</span>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                Şıkkı işaretlediğiniz anda doğru/yanlış bilgisini ve detaylı konu anlatımını gösterir. İsterseniz tek sorunun cevabını silip tekrar deneyebilirsiniz.
+                            </p>
+                        </div>
+                    </button>
+
+                    <!-- Exam Mode Card (Selected Only When User Wants) -->
+                    <button type="button" id="modeBtnExam" onclick="setQuizMode('exam')" class="text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 cursor-pointer border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-400">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 font-bold text-lg shadow-sm">
+                            📝
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Sınav Modu (Kendini Dene)</span>
+                                <span id="badgeExamActive" class="hidden text-[11px] px-2 py-0.5 rounded-full bg-indigo-600 text-white font-bold">Aktif</span>
+                            </div>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                Doğru/yanlışlar gizlenir, istediğiniz zaman şıkkı değiştirebilirsiniz. "Testi Bitir" dediğinizde konu bazlı sınav karnesi ve çözümler açılır.
+                            </p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Action Bar: Shuffle Questions, Reset Answers, Finish -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div>
+                    <h3 class="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        Soru Karıştırma, Cevap Sıfırlama ve Konu Filtresi
+                    </h3>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="shuffleCurrentQuestions()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm shadow-sm shadow-indigo-500/20 transition cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        🔀 Soruları Karıştır
+                    </button>
+
+                    <button onclick="resetCurrentAnswersOnly()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm shadow-sm shadow-amber-500/20 transition cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        🔄 Cevapları Sıfırla
+                    </button>
+
+                    <button onclick="finishQuizAndShowResults()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm shadow-emerald-500/20 transition cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        📊 Sonuç Karnesini Gör
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Controls Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+                <!-- Topic Select -->
+                <div>
+                    <label for="topicFilter" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Konu Başlığı</label>
+                    <select id="topicFilter" onchange="applyFiltersAndStart(false)" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">Tüm Konular (95 Soru)</option>
+                        <option value="Bilgisayara Giriş & Bit/Byte">1. Bilgisayara Giriş & Bit/Byte</option>
+                        <option value="Anakart, BIOS & Veriyolları">2. Anakart, BIOS & Veriyolları</option>
+                        <option value="İşlemci (CPU)">3. İşlemci (CPU)</option>
+                        <option value="RAM Bellek">4. RAM Bellek</option>
+                        <option value="Sabit Diskler (HDD, SSD, RAID)">5. Sabit Diskler (HDD, SSD, RAID)</option>
+                        <option value="Optik Sürücüler (CD, DVD, Blu-Ray)">6. Optik Sürücüler (CD, DVD, Blu-Ray)</option>
+                        <option value="Ekran Kartı & Monitörler">7. Ekran Kartı & Monitörler</option>
+                        <option value="Yazıcılar & Tarayıcılar">8. Yazıcılar & Tarayıcılar</option>
+                        <option value="Ağ Cihazları & Modem">9. Ağ Cihazları & Modem</option>
+                        <option value="Giriş/Çıkış, Ses, Kasa & Diğer Birimler">10. Giriş/Çıkış, Ses, Kasa & Diğer</option>
+                    </select>
+                </div>
+
+                <!-- Source Select -->
+                <div>
+                    <label for="sourceFilter" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Soru Kaynağı</label>
+                    <select id="sourceFilter" onchange="applyFiltersAndStart(false)" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">Tüm Sorular (60 PDF + 35 Yeni)</option>
+                        <option value="PDF_ALL">Sadece PDF'deki Orijinal Sorular (60)</option>
+                        <option value="Kitap Test I">PDF - Donanım Soruları I (20)</option>
+                        <option value="Kitap Test II">PDF - Donanım Soruları II (20)</option>
+                        <option value="Kitap Test III">PDF - Donanım Soruları III (20)</option>
+                        <option value="Kitap Konu Özeti (Yeni)">Sadece Yeni Üretilen Sorular (35)</option>
+                    </select>
+                </div>
+
+                <!-- Question Count & Order Select -->
+                <div>
+                    <label for="countFilter" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Sıralama & Soru Adedi</label>
+                    <select id="countFilter" onchange="applyFiltersAndStart(true)" class="w-full rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-sm font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">Tüm Seçili Sorular (Karışık Sıra)</option>
+                        <option value="SEQUENTIAL">Orijinal Kitap Sırasıyla (Karıştırmadan)</option>
+                        <option value="10">Rastgele 10 Soru Seç</option>
+                        <option value="20">Rastgele 20 Soru Seç</option>
+                        <option value="40">Rastgele 40 Soru Seç</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Extra Option Checkboxes -->
+            <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs text-slate-600 dark:text-slate-400">
+                <div class="flex flex-wrap items-center gap-4">
+                    <label class="inline-flex items-center gap-2 cursor-pointer select-none font-medium text-slate-700 dark:text-slate-300">
+                        <input type="checkbox" id="shuffleOptionsCheckbox" onchange="applyFiltersAndStart(false)" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                        <span>🔤 A-B-C-D Şıklarını da Kendi İçinde Karıştır</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="autoNextCheckbox" class="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4">
+                        <span>⏭️ Şık seçince otomatik sonraki soruya geç</span>
+                    </label>
+                </div>
+                <div id="activePoolInfo" class="font-bold text-indigo-600 dark:text-indigo-400">
+                    Aktif Havuz: 95 Soru
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Active View -->
+        <div id="quizWorkspace" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left/Main Column: Question Card (8 cols) -->
+            <div class="lg:col-span-8 flex flex-col gap-4">
+                
+                <!-- Progress Bar Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <div class="flex items-center justify-between text-xs sm:text-sm font-semibold mb-2">
+                        <span id="questionCounterText" class="text-slate-700 dark:text-slate-200">Soru 1 / 95</span>
+                        <span id="answeredCounterText" class="text-slate-500 dark:text-slate-400">Cevaplanan: 0 / 95</span>
+                    </div>
+                    <div class="w-full h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div id="progressBarFill" class="h-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300" style="width: 1%"></div>
+                    </div>
+                </div>
+
+                <!-- Active Question Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-7 border border-slate-200 dark:border-slate-800 shadow-sm flex-1 flex flex-col justify-between">
+                    <div>
+                        <!-- Question Meta Badges -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span id="qTopicBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/70">
+                                    Konu Başlığı
+                                </span>
+                                <span id="qSourceBadge" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                                    Kaynak
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="clearSingleAnswerBtn" onclick="clearSingleQuestionAnswer()" class="hidden text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/60 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition cursor-pointer">
+                                    Bu Sorunun Cevabını Temizle
+                                </button>
+                                <span id="qIdBadge" class="text-xs font-mono text-slate-400 dark:text-slate-500">#1</span>
+                            </div>
+                        </div>
+
+                        <!-- Question Stem -->
+                        <div id="questionText" class="text-base sm:text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-100 leading-relaxed mb-6 whitespace-pre-line">
+                            Soru yükleniyor...
+                        </div>
+
+                        <!-- Options List -->
+                        <div id="optionsContainer" class="space-y-3">
+                            <!-- Dynamically populated option buttons -->
+                        </div>
+
+                        <!-- Explanation Box (Shown in Instant Mode after answer) -->
+                        <div id="explanationBox" class="hidden mt-6 rounded-2xl p-4 sm:p-5 border transition-all">
+                            <div class="flex items-start gap-3">
+                                <div id="explanationIcon" class="mt-0.5 shrink-0"></div>
+                                <div class="text-xs sm:text-sm leading-relaxed">
+                                    <h4 id="explanationTitle" class="font-bold text-sm sm:text-base mb-1">Açıklama</h4>
+                                    <p id="explanationText" class="text-slate-700 dark:text-slate-300"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Footer inside Card -->
+                    <div class="flex items-center justify-between gap-3 pt-6 mt-6 border-t border-slate-100 dark:border-slate-800">
+                        <button id="prevBtn" onclick="navigateQuestion(-1)" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs sm:text-sm transition disabled:opacity-40 disabled:pointer-events-none cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Önceki Soru
+                        </button>
+
+                        <div class="text-xs text-slate-400 hidden sm:block">
+                            Klavye: <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700">←</kbd> <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700">→</kbd> veya <kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700">A</kbd>-<kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700">D</kbd>
+                        </div>
+
+                        <button id="nextBtn" onclick="navigateQuestion(1)" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm shadow-sm shadow-indigo-500/20 transition cursor-pointer">
+                            <span id="nextBtnText">Sonraki Soru</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Question Palette & Quick Stats (4 cols) -->
+            <div class="lg:col-span-4 flex flex-col gap-4">
+                
+                <!-- Score & Mode Summary Card -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center justify-between">
+                        <span>Anlık Performans Özeti</span>
+                        <span id="modeBadgeIndicator" class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold">Anında Kontrol</span>
+                    </h3>
+                    <div class="grid grid-cols-3 gap-2.5 text-center">
+                        <div class="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-900/50">
+                            <div id="statCorrect" class="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">0</div>
+                            <div class="text-[11px] font-medium text-emerald-700 dark:text-emerald-300">Doğru</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/50">
+                            <div id="statWrong" class="text-xl sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400">0</div>
+                            <div class="text-[11px] font-medium text-rose-700 dark:text-rose-300">Yanlış</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+                            <div id="statEmpty" class="text-xl sm:text-2xl font-extrabold text-slate-700 dark:text-slate-300">0</div>
+                            <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Boş</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Navigator Grid -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex-1 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Soru Gezgini</h3>
+                        <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block"></span>Doğru</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-rose-500 inline-block"></span>Yanlış</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500 inline-block"></span>Seçili</span>
+                        </div>
+                    </div>
+
+                    <div id="questionGridContainer" class="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 xl:grid-cols-6 gap-2 max-h-80 overflow-y-auto pr-1 pt-1">
+                        <!-- Dynamically generated question number buttons -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Results & Topic Breakdown Section (Hidden until Finish) -->
+        <section id="resultsSection" class="hidden space-y-6">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 mb-2">
+                            Test Sonuç Karnesi
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">A'dan Z'ye Bilgisayar Donanımı</h2>
+                        <p id="resultSummarySubtitle" class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            Çözülen soruların konu bazlı analizini ve detaylı soru çözümlerini aşağıda inceleyebilirsiniz.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button onclick="returnToQuiz()" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm transition cursor-pointer">
+                            Sorulara Geri Dön
+                        </button>
+                        <button onclick="applyFiltersAndStart(true)" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 transition cursor-pointer">
+                            Yeni Karmaşık Test Başlat
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Big Score Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
+                    <div class="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800/60 text-center">
+                        <div id="finalScorePercent" class="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">0%</div>
+                        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-1">Başarı Oranı</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-center">
+                        <div id="finalCorrectCount" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">0</div>
+                        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-1">Doğru Cevap</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60 text-center">
+                        <div id="finalWrongCount" class="text-3xl font-extrabold text-rose-600 dark:text-rose-400">0</div>
+                        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-1">Yanlış Cevap</div>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 text-center">
+                        <div id="finalEmptyCount" class="text-3xl font-extrabold text-slate-700 dark:text-slate-300">0</div>
+                        <div class="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-1">Boş Bırakılan</div>
+                    </div>
+                </div>
+
+                <!-- Topic Breakdown Table -->
+                <div class="mt-8">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-3">Konu Başlıklarına Göre Başarı Analizi</h3>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                        <table class="w-full text-left text-xs sm:text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 uppercase text-[11px] font-bold">
+                                <tr>
+                                    <th class="py-3 px-4">Konu Başlığı</th>
+                                    <th class="py-3 px-4 text-center">Toplam</th>
+                                    <th class="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">Doğru</th>
+                                    <th class="py-3 px-4 text-center text-rose-600 dark:text-rose-400">Yanlış</th>
+                                    <th class="py-3 px-4 text-center">Boş</th>
+                                    <th class="py-3 px-4">Başarı Durumu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topicBreakdownTableBody" class="divide-y divide-slate-200 dark:divide-slate-800">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Review of All Questions -->
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Detaylı Soru ve Çözüm İncelemesi</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="filterReviewList('ALL')" id="revFilterAll" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white cursor-pointer">Tümü</button>
+                        <button onclick="filterReviewList('WRONG')" id="revFilterWrong" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer">Sadece Yanlışlar</button>
+                        <button onclick="filterReviewList('EMPTY')" id="revFilterEmpty" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer">Sadece Boşlar</button>
+                        <button onclick="filterReviewList('CORRECT')" id="revFilterCorrect" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer">Sadece Doğrular</button>
+                    </div>
+                </div>
+
+                <div id="reviewListContainer" class="space-y-4">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-4 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2">
+            <div>Kaynak: <strong>Ebubekir Yaşar - A'dan Z'ye Bilgisayar Donanımı</strong> (Donanım Soruları I, II, III + Konu Özetleri)</div>
+            <div>Toplam 95 Soru • Konu Bazlı ve Karmaşık Sıralama Destekli</div>
+        </div>
+    </footer>
+
+    <script>
+        // ============================================================================
+        // COMPLETE QUESTION BANK (60 ORIGINAL PDF QUESTIONS + 35 BOOK-DERIVED QUESTIONS)
+        // ============================================================================
+        const MASTER_QUESTIONS = [
+            // ------------------------------------------------------------------------
+            // DONANIM SORULARI I (20 SORU - BİREBİR PDF VE CEVAP ANAHTARI)
+            // ------------------------------------------------------------------------
+            {
+                id: "PDF1-1",
+                source: "Kitap Test I",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Aşağıdakilerden hangisi sadece giriş donanımıdır?",
+                options: ["Ses Kartı", "Klavye", "Yazıcı", "Ekran"],
+                answer: 1,
+                explanation: "Klavye, kullanıcıdan bilgisayara yalnızca veri ve komut girişi sağlayan bir giriş (input) birimidir. Yazıcı ve ekran çıkış birimi, ses kartı ise hem giriş (mikrofon) hem çıkış (hoparlör) birimidir."
+            },
+            {
+                id: "PDF1-2",
+                source: "Kitap Test I",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Aşağıdakilerden hangisi sadece çıkış donanımıdır?",
+                options: ["Ses Kartı", "RAM", "TV Kartı", "Ekran"],
+                answer: 3,
+                explanation: "Ekran (Monitör), bilgisayarda işlenen görüntü sinyallerini kullanıcıya gösteren salt çıkış (output) donanımıdır."
+            },
+            {
+                id: "PDF1-3",
+                source: "Kitap Test I",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Aşağıdakilerden hangisi grafik ekranda imleci hareket ettirmek için kolaylık sağlar?",
+                options: ["Fare", "Klavye", "Tarayıcı", "Web CAM"],
+                answer: 0,
+                explanation: "Fare (Mouse), grafik kullanıcı arayüzlerinde (GUI) ekrandaki imleci (kürsörü) hızlı ve kolayca hareket ettirmek için kullanılan işaretleme birimidir."
+            },
+            {
+                id: "PDF1-4",
+                source: "Kitap Test I",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Bilgisayara hoparlörün bağlandığı donanım hangisidir?",
+                options: ["Ses Kartı", "Klavye", "Ekran Kartı", "CDROM"],
+                answer: 0,
+                explanation: "Hoparlör ve mikrofon gibi ses giriş/çıkış aygıtları bilgisayar üzerindeki Ses Kartına (Sound Card) bağlanır."
+            },
+            {
+                id: "PDF1-5",
+                source: "Kitap Test I",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Veriler kalıcı olarak hangisinde saklanır?",
+                options: ["Anakart", "RAM", "CPU", "HDD"],
+                answer: 3,
+                explanation: "Sabit Disk (HDD - Hard Disk Drive), bilgisayar kapansa dahi verileri manyetik plakalar üzerinde kalıcı olarak saklayan depolama birimidir."
+            },
+            {
+                id: "PDF1-6",
+                source: "Kitap Test I",
+                topic: "İşlemci (CPU)",
+                q: "İşlemci için hangisi yanlıştır?",
+                options: [
+                    "Aritmetiksel komutlara sahiptir.",
+                    "Mantıksal komutlara sahiptir.",
+                    "Anakarta uyumlu olmak zorunda değildir.",
+                    "En hızlı çalışan donanımdır."
+                ],
+                answer: 2,
+                explanation: "İşlemciler (CPU), anakart üzerindeki işlemci soket yapısına (LGA775, Socket 478, AM2 vb.) ve FSB/Chipset desteğine mutlaka uyumlu olmak zorundadır."
+            },
+            {
+                id: "PDF1-7",
+                source: "Kitap Test I",
+                topic: "İşlemci (CPU)",
+                q: "Hangisi işlemci için doğrudur?",
+                options: [
+                    "Tüm donanım birimleri ile aynı hızda haberleşir.",
+                    "Isınmadan çalışır soğutmaya gerek yoktur.",
+                    "Farklı pin yapılarına sahiptirler.",
+                    "RAM hafızayı direk olarak kullanamaz."
+                ],
+                answer: 2,
+                explanation: "İşlemciler model ve üreticilerine (Intel, AMD) göre farklı pin/soket yapılarına sahiptirler (örneğin 478 pin, 775 pin, 940 pin vb.)."
+            },
+            {
+                id: "PDF1-8",
+                source: "Kitap Test I",
+                topic: "RAM Bellek",
+                q: "RAM için hangisi doğrudur?",
+                options: [
+                    "Performansı büyüklüğü ile ters orantılıdır.",
+                    "Farklı tiplerinde pin sayıları aynıdır.",
+                    "Kuzey köprüye bağlıdır.",
+                    "İşlemciden daha hızlı çalışır."
+                ],
+                answer: 2,
+                explanation: "RAM bellekler yüksek hızlı bileşenler oldukları için anakart üzerinde Kuzey Köprüsü (Northbridge) yongasına bağlıdırlar."
+            },
+            {
+                id: "PDF1-9",
+                source: "Kitap Test I",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Hangisi olmadan da bilgisayar işletim sistemini başlatır?",
+                options: ["Anakart", "Klavye", "RAM", "HDD"],
+                answer: 1,
+                explanation: "Anakart, RAM ve işletim sisteminin yüklü olduğu HDD olmadan işletim sistemi başlatılamaz; ancak klavye takılı olmasa da (BIOS'ta Halt On hatası kapatılmışsa) işletim sistemi açılabilir."
+            },
+            {
+                id: "PDF1-10",
+                source: "Kitap Test I",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Aşağıdakilerden hangisi doğrudur?",
+                options: [
+                    "Önce işletim sistemi sonra BIOS icra edilir.",
+                    "Bilgisayara kardeşimizin sesini kaydedebiliriz.",
+                    "Klavye paralel porta bağlanabilir.",
+                    "USB paralel iletişim yapar."
+                ],
+                answer: 1,
+                explanation: "Ses kartı ve mikrofon yardımıyla dış ortamdaki analog sesler sayısal (dijital) veriye dönüştürülerek (ADC) bilgisayara kaydedilebilir. (Not: Önce BIOS çalışır, USB ise seri iletişim yapar)."
+            },
+            {
+                id: "PDF1-11",
+                source: "Kitap Test I",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Setup (BIOS) programı için hangisi yanlıştır?",
+                options: [
+                    "Saat ayarları burada yapılamaz.",
+                    "Açılışa şifre koyulabilir.",
+                    "Ayarlar CMOS hafızaya yazılır.",
+                    "Sistemin birçok başlangıç parametrelerini içerir."
+                ],
+                answer: 0,
+                explanation: "BIOS Setup programı üzerinden sistem tarih ve saat ayarları kolaylıkla yapılabilir. 'Saat ayarları burada yapılamaz' ifadesi yanlıştır."
+            },
+            {
+                id: "PDF1-12",
+                source: "Kitap Test I",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "BIOS için hangisi yanlıştır?",
+                options: [
+                    "Hemen hemen tüm donanımı denetler.",
+                    "RAM'in büyüklüğünü hesaplar.",
+                    "Ekran kartının Windows sürücülerini bulamazsa, ekranda çıktılar görünmez.",
+                    "Flash ya da EEPROM yapıdadır."
+                ],
+                answer: 2,
+                explanation: "BIOS, işletim sisteminden (Windows'tan) bağımsız çalışır. Windows sürücüsü olmasa bile standart temel görüntü sinyallerini ekrana verir ve açılış ekranı görünür."
+            },
+            {
+                id: "PDF1-13",
+                source: "Kitap Test I",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Aşağıdakilerden hangisi yanlıştır?",
+                options: [
+                    "Tarayıcı ile yazıları bilgisayara aktarabiliriz.",
+                    "WebCAM video çekemez.",
+                    "Yazıcı renkli ve siyah beyaz çıktıyı aynı kağıda alabilir.",
+                    "Ölü pikseller LCD monitörlerde oluşur."
+                ],
+                answer: 1,
+                explanation: "WebCAM (Bilgisayar kamerası) hem hareketsiz fotoğraf hem de hareketli video kaydı yapabilir. 'WebCAM video çekemez' ifadesi yanlıştır."
+            },
+            {
+                id: "PDF1-14",
+                source: "Kitap Test I",
+                topic: "RAM Bellek",
+                q: "Aşağıdakilerden hangisinin bant genişliği (veri aktarım hızı) diğerlerinden fazladır?",
+                options: ["Ses Kartı", "Klavye", "RAM", "USB"],
+                answer: 2,
+                explanation: "RAM bellek, Kuzey Köprüsü üzerinden doğrudan işlemciyle çok yüksek frekans ve bant genişliğinde haberleşir; diğer seçeneklerden çok daha yüksek bant genişliğine sahiptir."
+            },
+            {
+                id: "PDF1-15",
+                source: "Kitap Test I",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "CD-ROM'lardaki X çarpanı (1X) hangi değeri gösterir?",
+                options: ["1 MB/sn", "1.5 MB/sn", "150 KB/sn", "100 KB/sn"],
+                answer: 2,
+                explanation: "CD-ROM sürücülerde 1X hız çarpanı saniyede 150 KB (Kilobyte) veri aktarım hızını ifade eder. (Örn: 52X = 52 * 150 KB/s)."
+            },
+            {
+                id: "PDF1-16",
+                source: "Kitap Test I",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "CD-ROM (veya CD ortamı) için hangisi yanlıştır?",
+                options: [
+                    "80 dk audio biçiminde müzik alabilir.",
+                    "Aynı CD'de mp3 ile resim dosyası olamaz.",
+                    "Farklı zamanlarda üzerine kayıt destekler (Multisession).",
+                    "IDE sokete bağlanabilir."
+                ],
+                answer: 1,
+                explanation: "Veri (Data) CD'si olarak hazırlanan bir CD içerisine hem MP3 ses dosyaları hem de JPEG/BMP gibi resim dosyaları aynı anda kaydedilebilir."
+            },
+            {
+                id: "PDF1-17",
+                source: "Kitap Test I",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "IDE bağlantıları için aşağıdakilerden hangisi yanlıştır?",
+                options: [
+                    "Aynı IDE kabloya üç adet HDD bağlanabilir.",
+                    "CD-ROM ile HDD aynı IDE kabloya bağlanabilir.",
+                    "Bir bilgisayara 3 adet CD-ROM bağlanabilir.",
+                    "Bir bilgisayara 3 HDD, bir CD-ROM bağlanabilir."
+                ],
+                answer: 0,
+                explanation: "Bir PATA/IDE kablosuna en fazla 2 adet sürücü (1 Master, 1 Slave) bağlanabilir. Aynı IDE kablosuna 3 adet HDD bağlanamaz."
+            },
+            {
+                id: "PDF1-18",
+                source: "Kitap Test I",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "Optik diskler için aşağıdakilerden hangisi yanlıştır?",
+                options: [
+                    "CD'leri DVD-ROM'lar okuyabilir.",
+                    "CD'ye kayıt için CD yazıcı gereklidir.",
+                    "CD'ler DVD'lerden daha az kapasiteye sahiptir.",
+                    "CD'de veriler manyetik sektörlere yazılır."
+                ],
+                answer: 3,
+                explanation: "Kitap cevap anahtarına göre D şıkkı yanlıştır; sabit disk ve disketlerde eş merkezli manyetik iz ve sektör yapısı varken, CD'lerde merkezden dışa doğru uzanan tek bir spiral optik iz (pit/land çukurcukları) bulunur."
+            },
+            {
+                id: "PDF1-19",
+                source: "Kitap Test I",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "Aşağıdakilerden hangisi yanlıştır?",
+                options: [
+                    "Floppy diskler, disketi ifade eder.",
+                    "CD'ler disketlerden daha pahalıdır.",
+                    "Disket ile HDD'ler, manyetik ortama sahiptir.",
+                    "Disketlerde veriler sektörlere yazılır."
+                ],
+                answer: 1,
+                explanation: "Optik CD medyalarının üretim maliyeti çok düşüktür ve hem birim fiyat hem de MB başına maliyet açısından disketlerden (Floppy) daha ucuzdur."
+            },
+            {
+                id: "PDF1-20",
+                source: "Kitap Test I",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Bilgisayarın başlatılması (Boot) ile ilgili hangisi yanlıştır?",
+                options: [
+                    "CD'lerden bilgisayara işletim sistemi yüklenebilir.",
+                    "CD ile bilgisayar başlatılabilir.",
+                    "Flash bellek bilgisayarı başlatabilir.",
+                    "Disket bir bilgisayarı başlatamaz."
+                ],
+                answer: 3,
+                explanation: "Sistem (Boot/Başlangıç) disketleri ile bilgisayar başlatılabilir (MS-DOS başlangıç disketi gibi). 'Disket bir bilgisayarı başlatamaz' ifadesi yanlıştır."
+            },
+
+            // ------------------------------------------------------------------------
+            // DONANIM SORULARI II (20 SORU - BİREBİR PDF VE CEVAP ANAHTARI)
+            // ------------------------------------------------------------------------
+            {
+                id: "PDF2-1",
+                source: "Kitap Test II",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "I. HDD\nII. RAM\nIII. Flash Bellek\nYukarıdakilerden hangileri kalıcı hafıza elemanıdır?",
+                options: ["Yalnız I", "II - III", "I - II", "I - III"],
+                answer: 3,
+                explanation: "HDD (Sabit Disk) ve Flash Bellek, elektrik kesildiğinde içindeki verileri kaybetmeyen kalıcı (non-volatile) hafıza birimleridir. RAM ise geçici bellektir."
+            },
+            {
+                id: "PDF2-2",
+                source: "Kitap Test II",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Aşağıdaki HDD tiplerinden hangisinin veri kablosu daha incedir?",
+                options: ["IDE", "SCSI", "PATA", "SATA"],
+                answer: 3,
+                explanation: "SATA (Serial ATA) diskler seri iletişim yaptığından PATA/IDE ve SCSI'nin geniş şerit (ribbon) kablolarına kıyasla çok daha ince ve dar bir veri kablosuna sahiptir."
+            },
+            {
+                id: "PDF2-3",
+                source: "Kitap Test II",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Aşağıdaki HDD tiplerinden hangisi özellikle sunucularda (Server) tercih edilir?",
+                options: ["SCSI", "IDE", "PATA", "SATA"],
+                answer: 0,
+                explanation: "SCSI diskler yüksek dönüş hızları (10.000 - 15.000 RPM), kararlılıkları ve performansları nedeniyle özellikle sunucu (Server) bilgisayarlarda tercih edilir."
+            },
+            {
+                id: "PDF2-4",
+                source: "Kitap Test II",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Aşağıdaki sabit disk çeşitlerinden hangisi mekanik okuma/yazma kafasına sahip değildir?",
+                options: ["SATA", "SCSI", "SSD", "PATA"],
+                answer: 2,
+                explanation: "SSD (Solid State Drive - Katı Hal Sürücüsü) içerisinde dönen manyetik plaka veya hareketli okuma/yazma kafası bulunmaz; veriler bellek yongalarında tutulur."
+            },
+            {
+                id: "PDF2-5",
+                source: "Kitap Test II",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "I. DVD-ROM\nII. DVD-RW\nIII. CD-RW\nIV. CD-ROM\nYukarıdakilerden hangisi mutlaka CD okuyabilir? (Kitap Cevap Anahtarına Göre)",
+                options: ["Yalnız IV", "II - III", "I - IV", "Hepsi"],
+                answer: 2,
+                explanation: "Kitaptaki Donanım Soruları II cevap anahtarında 5. sorunun cevabı C (I - IV: DVD-ROM ve CD-ROM okuyucu sürücüler) olarak belirtilmiştir. (Not: Teknik olarak tüm optik sürücüler geriye dönük CD okuma özelliğine sahiptir)."
+            },
+            {
+                id: "PDF2-6",
+                source: "Kitap Test II",
+                topic: "İşlemci (CPU)",
+                q: "Aşağıdakilerden hangisi işlemciler (CPU) için yanlıştır?",
+                options: [
+                    "Her işlemci diğer işlemcilerin komutlarını çalıştıramaz.",
+                    "İşlemcilerin içerisinde tanımlı komut setleri vardır.",
+                    "İşlemci soğutulamazsa bilgisayar kilitlenir.",
+                    "FSB, PCI ile haberleşme performansını gösterir."
+                ],
+                answer: 3,
+                explanation: "FSB (Front Side Bus), işlemcinin Kuzey Köprüsü (dolayısıyla RAM) ile olan ana veriyolu hızını gösterir; doğrudan PCI veriyolu hızını göstermez."
+            },
+            {
+                id: "PDF2-7",
+                source: "Kitap Test II",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Aşağıdakilerden hangisi bir disk (depolama sürücüsü) değildir?",
+                options: ["SSD", "Floppy", "USB-HDD", "ROM"],
+                answer: 3,
+                explanation: "ROM (Read Only Memory), sadece okunabilir bellek yongasıdır (örneğin BIOS yongası); bir disk sürücüsü değildir."
+            },
+            {
+                id: "PDF2-8",
+                source: "Kitap Test II",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Aşağıdaki veri depolama ortamlarından/arayüzlerinden hangisi daha hızlıdır?",
+                options: ["SATA", "USB Disk", "IDE", "Hafıza Kartı"],
+                answer: 0,
+                explanation: "SATA (Serial ATA) arayüzü, eski paralel IDE (PATA) arayüzünden, USB 2.0 harici disklerden ve hafıza kartlarından daha yüksek veri transfer hızına sahiptir."
+            },
+            {
+                id: "PDF2-9",
+                source: "Kitap Test II",
+                topic: "Yazıcılar & Tarayıcılar",
+                q: "Aşağıdaki yazıcılardan hangisi daha sesli (gürültülü) çalışır?",
+                options: ["Siyah beyaz lazer", "Nokta vuruşlu", "Püskürtmeli", "Renkli lazer"],
+                answer: 1,
+                explanation: "Nokta vuruşlu (Dot Matrix) yazıcılar, yazma kafasındaki metal iğnelerin mürekkepli şeride mekanik olarak çarpması prensibiyle çalıştığı için oldukça sesli çalışırlar."
+            },
+            {
+                id: "PDF2-10",
+                source: "Kitap Test II",
+                topic: "Yazıcılar & Tarayıcılar",
+                q: "Yazıcılar için çözünürlük (DPI) ne anlam ifade eder?",
+                options: [
+                    "Dakikadaki sayfa yazma adedi",
+                    "Birim alana bırakılacak nokta miktarı",
+                    "Yazıcının basabildiği renk miktarı",
+                    "Yazıcının maksimum baskı (kağıt) genişliği"
+                ],
+                answer: 1,
+                explanation: "Yazıcılarda çözünürlük DPI (Dots Per Inch - İnç başına düşen nokta sayısı) ile ölçülür ve birim alana bırakılacak nokta miktarını ifade eder."
+            },
+            {
+                id: "PDF2-11",
+                source: "Kitap Test II",
+                topic: "Yazıcılar & Tarayıcılar",
+                q: "Hangi yazıcı aynı anda iki ve daha fazla nüsha (kopya) kağıt yazabilir?",
+                options: ["Siyah beyaz lazer", "Nokta vuruşlu", "Püskürtmeli", "Renkli lazer"],
+                answer: 1,
+                explanation: "Nokta vuruşlu yazıcılar kağıda fiziksel darbe uyguladıkları için karbonlu (otokopili) sürekli form kağıtları kullanarak aynı anda birden fazla nüsha fatura/irsaliye basabilirler."
+            },
+            {
+                id: "PDF2-12",
+                source: "Kitap Test II",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "USB bellek ile hafıza kartları için hangisi doğrudur?",
+                options: [
+                    "Her ikisi de flash bellek yapıdadır.",
+                    "İşletim sistemine haber vermeden (veri yazılırken) çıkarılıp takılabilir.",
+                    "Manyetik yapıya sahiptirler.",
+                    "Birlikte her cihazla doğrudan çalışabilirler."
+                ],
+                answer: 0,
+                explanation: "Hem USB Flash bellekler hem de SD/MMC gibi hafıza kartları EEPROM/NAND tabanlı Flash Bellek yapısına sahiptir."
+            },
+            {
+                id: "PDF2-13",
+                source: "Kitap Test II",
+                topic: "RAM Bellek",
+                q: "Aşağıdakilerden hangisi veriyi saklama kalıcılığı açısından diğerlerinden farklıdır?",
+                options: ["Flash Bellek", "RAM", "HDD", "Disket"],
+                answer: 1,
+                explanation: "Flash Bellek, HDD ve Disket kalıcı depolama birimleriyken; RAM enerji kesildiğinde verilerin silindiği geçici (volatile) bellektir."
+            },
+            {
+                id: "PDF2-14",
+                source: "Kitap Test II",
+                topic: "İşlemci (CPU)",
+                q: "Donanımların çalışma hızını (saat frekansını) gösteren birim hangisidir?",
+                options: ["Bit", "MHz", "Byte", "MB"],
+                answer: 1,
+                explanation: "Bit, Byte ve MB veri kapasitesi/büyüklüğü birimleridir; MHz (Megahertz) ve GHz (Gigahertz) ise donanımların çalışma frekansını (hızını) gösterir."
+            },
+            {
+                id: "PDF2-15",
+                source: "Kitap Test II",
+                topic: "Bilgisayara Giriş & Bit/Byte",
+                q: "Aşağıdaki kapasite birimlerinden hangisi büyükten küçüğe doğru sıralanmıştır?",
+                options: [
+                    "Byte - Kilobyte - Megabyte - Gigabyte",
+                    "Byte - Kilobyte - Gigabyte - Megabyte",
+                    "Gigabyte - Megabyte - Kilobyte - Byte",
+                    "Megabyte - Kilobyte - Byte - Gigabyte"
+                ],
+                answer: 2,
+                explanation: "Büyükten küçüğe doğru sıralama: Gigabyte (GB) > Megabyte (MB) > Kilobyte (KB) > Byte şeklindedir."
+            },
+            {
+                id: "PDF2-16",
+                source: "Kitap Test II",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Ekranı (görüntüyü) oluşturan noktalardan her birisine ne ad verilir?",
+                options: ["Dot", "Inch", "Piksel", "Mega"],
+                answer: 2,
+                explanation: "Dijital ekranlarda görüntüyü oluşturan ve renk/parlaklık kontrolü yapılabilen en küçük birimlere Piksel (Pixel) adı verilir."
+            },
+            {
+                id: "PDF2-17",
+                source: "Kitap Test II",
+                topic: "Ağ Cihazları & Modem",
+                q: "Telefon hatları aracılığı ile bilgisayarları birbirine (veya internete) bağlayan donanım hangisidir?",
+                options: ["Ethernet kartı", "Modem", "HUB", "Seri port"],
+                answer: 1,
+                explanation: "Modem, sayısal verileri analog telefon hatları üzerinden iletilebilecek sinyallere (ve tersine) dönüştürerek telefon hatları üzerinden bağlantı sağlar."
+            },
+            {
+                id: "PDF2-18",
+                source: "Kitap Test II",
+                topic: "Ağ Cihazları & Modem",
+                q: "ADSL modem ile bilgisayar (Ethernet kartı) arası yerel ağ bağlantı kablosuna ne ad verilir?",
+                options: ["HUB", "Telefon teli", "UTP", "Güç kablosu"],
+                answer: 2,
+                explanation: "Modem/Switch ile bilgisayarın Ethernet kartı arasındaki RJ-45 uçlu ağ kablosuna UTP (Unshielded Twisted Pair - KorumasızBükümlü Çift) kablo denir."
+            },
+            {
+                id: "PDF2-19",
+                source: "Kitap Test II",
+                topic: "Ağ Cihazları & Modem",
+                q: "Bir ADSL modem aşağıdaki bileşen/özelliklerden hangisini içermez?",
+                options: ["Gateway (Ağ Geçidi)", "Router (Yönlendirici)", "Switch veya HUB", "Sabit Disk (HDD)"],
+                answer: 3,
+                explanation: "Gelişmiş ADSL modemler içerisinde Router, Gateway ve çok portlu Switch/Hub barındırabilir; ancak sabit disk (Disk) içermezler."
+            },
+            {
+                id: "PDF2-20",
+                source: "Kitap Test II",
+                topic: "Ağ Cihazları & Modem",
+                q: "Temel bir yerel ağ (LAN) kurulumu için aşağıdakilerden hangileri gereklidir?",
+                options: [
+                    "Kablo, Ethernet kartı ve HUB (veya Switch)",
+                    "Sadece Kablo ve Switch",
+                    "Router, Modem ve HUB",
+                    "Switch, Kablo ve Modem"
+                ],
+                answer: 0,
+                explanation: "Bilgisayarlar arası yerel ağ (LAN) kurmak için her bilgisayarda bir Ağ (Ethernet) Kartı, bağlantı için UTP Kablo ve merkezi dağıtım için HUB veya Switch gereklidir (İnternet şart olmadığı için modem zorunlu değildir)."
+            },
+
+            // ------------------------------------------------------------------------
+            // DONANIM SORULARI III (20 SORU - BİREBİR PDF VE CEVAP ANAHTARI)
+            // ------------------------------------------------------------------------
+            {
+                id: "PDF3-1",
+                source: "Kitap Test III",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "AGP veriyoluna (slotuna) hangi donanım kartı bağlanır?",
+                options: ["Ses kartı", "Ekran kartı", "Modem", "TV Kartı"],
+                answer: 1,
+                explanation: "AGP (Accelerated Graphics Port - Hızlandırılmış Grafik Portu), anakart üzerinde yalnızca Ekran Kartlarının takılması için geliştirilmiş özel bir veriyoludur."
+            },
+            {
+                id: "PDF3-2",
+                source: "Kitap Test III",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Günümüz modern bilgisayarlarında aşağıdaki veriyolu/arabirim yapılarından hangisi bulunmaz?",
+                options: ["PCI", "IDE", "SATA", "ISA"],
+                answer: 3,
+                explanation: "ISA (Industry Standard Architecture) çok eski 8/16 bitlik yavaş bir veriyolu standardıdır ve güncel anakartlarda artık yer almamaktadır."
+            },
+            {
+                id: "PDF3-3",
+                source: "Kitap Test III",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "PS/2 klavye girişi bozulmuş bir bilgisayara hangi tip klavye almak gerekir?",
+                options: ["Seri", "USB", "Paralel", "PCI"],
+                answer: 1,
+                explanation: "PS/2 portu bozulan bir bilgisayarda güncel ve yaygın standart olan USB bağlantılı klavye tercih edilmelidir."
+            },
+            {
+                id: "PDF3-4",
+                source: "Kitap Test III",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "Aşağıdaki arabirimlerden hangisine CD-ROM sürücüsü bağlanamaz?",
+                options: ["SATA", "IDE", "COM", "USB"],
+                answer: 2,
+                explanation: "CD-ROM sürücüler dahili olarak IDE veya SATA, harici olarak ise USB portuna bağlanabilir; ancak düşük hızlı seri iletişim portu olan COM portuna bağlanamaz."
+            },
+            {
+                id: "PDF3-5",
+                source: "Kitap Test III",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Bir HDD ve CD-ROM aynı kanaldan paralel bağlanacaksa aşağıdakilerden hangisi gerekmez?",
+                options: [
+                    "İki IDE kablosu",
+                    "HDD Master ayarı",
+                    "CD-ROM Slave ayarı",
+                    "Her ikisine güç kablosu"
+                ],
+                answer: 0,
+                explanation: "Bir IDE kablosu üzerinde zaten iki cihaz takılabilecek konnektör vardır. Dolayısıyla iki cihazı birlikte bağlamak için iki ayrı IDE kablosuna gerek yoktur."
+            },
+            {
+                id: "PDF3-6",
+                source: "Kitap Test III",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Aşağıdakilerden hangisi anakart üzerinde bulunmaz?",
+                options: ["Chipset", "BIOS", "PS/2 konnektör", "Güç kaynağı"],
+                answer: 3,
+                explanation: "Güç Kaynağı (Power Supply - PSU) anakartın üzerinde değil, bilgisayar kasasının (Case) içerisinde yer alan ayrı bir donanım birimidir."
+            },
+            {
+                id: "PDF3-7",
+                source: "Kitap Test III",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Aşağıdakilerden hangisi anakart için yanlıştır?",
+                options: [
+                    "Katmanlardan (fiberglas) oluşur.",
+                    "Üzerinde veriyolları vardır.",
+                    "İki adet PS/2 konnektörü (klavye/fare) vardır.",
+                    "Tüm donanım birimlerini tümleşik (onboard) olarak barındırır."
+                ],
+                answer: 3,
+                explanation: "Bazı anakartlarda ses, ağ veya ekran kartı tümleşik (onboard) olabilir ancak 'tüm donanım birimlerini (HDD, optik sürücü, güç kaynağı vb.) tümleşik barındırır' ifadesi yanlıştır."
+            },
+            {
+                id: "PDF3-8",
+                source: "Kitap Test III",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Anakart için aşağıdakilerden hangisi geçerlidir?",
+                options: [
+                    "İşlemci pin yapısına göre değişiklik arz edebilir.",
+                    "Üzerinde chipset takılacak yuvalar vardır.",
+                    "IDE ve SATA yuvaları beraber bulunamaz.",
+                    "Hiçbiri tümleşik olarak modem barındırmaz."
+                ],
+                answer: 0,
+                explanation: "Teknik olarak anakartlar işlemci pin/soket yapısına (LGA775, 478 pin, AM2 vb.) göre değişiklik arz eder (A şıkkı). (Not: PDF cevap anahtarında dizgi hatasıyla 8-B basılmış olsa da chipsetler yuvalara sonradan takılmaz, anakarta fabrikada lehimlenir; doğru teknik bilgi A şıkkıdır)."
+            },
+            {
+                id: "PDF3-9",
+                source: "Kitap Test III",
+                topic: "Ağ Cihazları & Modem",
+                q: "Modemler ile ilgili aşağıdakilerden hangisi yanlıştır?",
+                options: [
+                    "Modem kelimesi Modülasyon ve Demodülasyon kelimelerinden oluşmuştur.",
+                    "ADSL modem Dial-Up modemden daha hızlıdır.",
+                    "ADSL hatlar ses bandını (aynı frekansı) kullanırlar.",
+                    "Dial-Up modemle internet kullanımı daha pahalıdır."
+                ],
+                answer: 2,
+                explanation: "Dial-up modemler normal telefon ses frekans bandını kullanırken, ADSL teknolojisi splitter aracılığıyla ses bandından farklı (yüksek) frekans bantlarını kullanarak veri taşır."
+            },
+            {
+                id: "PDF3-10",
+                source: "Kitap Test III",
+                topic: "Ağ Cihazları & Modem",
+                q: "Aşağıdakilerden hangisi ADSL için yanlıştır?",
+                options: [
+                    "Port sayısına göre bilgisayar bağlanır.",
+                    "Ücret (tarifeye göre) sabittir.",
+                    "Aynı anda telefon görüşmesi yapılamaz.",
+                    "Dial-Up modemlerden daha pahalıdırlar."
+                ],
+                answer: 2,
+                explanation: "ADSL teknolojisinde ses ve veri farklı frekanslardan taşındığı için (Splitter kullanılarak) internete bağlıyken aynı anda telefon görüşmesi de yapılabilir."
+            },
+            {
+                id: "PDF3-11",
+                source: "Kitap Test III",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Monitörler için çözünürlük (Resolution) nedir?",
+                options: [
+                    "Noktalar arası uzaklık mesafesi",
+                    "Gösterilebilecek renk sayısı",
+                    "Birim alandaki (yatay x dikey) piksel miktarı",
+                    "Ekranın fiziksel boyutları"
+                ],
+                answer: 2,
+                explanation: "Monitörlerde çözünürlük, ekranda yatay ve dikey olarak yer alan piksel sayısını (birim alandaki piksel miktarını, örn. 1024x768, 1920x1080) ifade eder."
+            },
+            {
+                id: "PDF3-12",
+                source: "Kitap Test III",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Aşağıdakilerden hangisi monitörler için yanlıştır?",
+                options: [
+                    "CRT'ler radyasyon yayarlar.",
+                    "LCD'lerde ölü noktalar (ölü piksel) olabilir.",
+                    "LCD'ler daha az renk kabiliyetine sahiptir.",
+                    "CRT'ler gözü daha fazla yorarlar."
+                ],
+                answer: 2,
+                explanation: "LCD monitörler milyonlarca rengi (True Color) yüksek doğrulukla gösterebilirler; 'daha az renk kabiliyetine sahiptir' ifadesi yanlıştır."
+            },
+            {
+                id: "PDF3-13",
+                source: "Kitap Test III",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Ekranlar (Monitörler) için aşağıdakilerden hangisi doğrudur?",
+                options: [
+                    "İki nokta aralığı (dot pitch) fazla olmalı.",
+                    "Çözünürlüğü en fazla 800x600 olmalı.",
+                    "Kurulum için mutlaka CD lazımdır.",
+                    "Boyutları inç (inch) olarak değerlendirilir."
+                ],
+                answer: 3,
+                explanation: "Monitörlerin ekran büyüklükleri köşegen uzunlukları üzerinden İnç (Inch - 1 inç = 2,54 cm) birimiyle ifade edilir (17 inç, 19 inç vb.)."
+            },
+            {
+                id: "PDF3-14",
+                source: "Kitap Test III",
+                topic: "Ekran Kartı & Monitörler",
+                q: "19 inç bir ekran için aşağıdakilerden hangisi doğrudur?",
+                options: [
+                    "Ekranın köşegen (diyagonal) uzunluğu 19 inçtir.",
+                    "Ekranın yüksekliği 19 inçtir.",
+                    "En uzunluğu 19 inçtir.",
+                    "Ekranın alanı 19 inç x inç'tir."
+                ],
+                answer: 0,
+                explanation: "Ekran boyutları ölçülürken sol alt köşeden sağ üst köşeye (veya tam tersi) olan çapraz/köşegen uzunluk baz alınır."
+            },
+            {
+                id: "PDF3-15",
+                source: "Kitap Test III",
+                topic: "Bilgisayara Giriş & Bit/Byte",
+                q: "Aşağıdakilerden hangisi doğrudur?",
+                options: [
+                    "ASCII tablosu karakterlerin sayısal karşılığını belirler.",
+                    "BIOS işletim sisteminin parçası olarak çalışır.",
+                    "1 Bayt = 10 bittir.",
+                    "ASCII karakter tablosunda noktalama işaretleri bulunmaz."
+                ],
+                answer: 0,
+                explanation: "ASCII standartları, harf, rakam ve noktalama işaretlerinin bilgisayar ortamında hangi sayısal (ve ikilik) değerle temsil edileceğini belirler."
+            },
+            {
+                id: "PDF3-16",
+                source: "Kitap Test III",
+                topic: "Bilgisayara Giriş & Bit/Byte",
+                q: "1024 KB (Kilobyte) aşağıdakilerden hangisine eşittir?",
+                options: ["1 GB", "1 MB", "24 Byte", "10 MB"],
+                answer: 1,
+                explanation: "İkilik sayı sistemine (2^10 = 1024) göre 1024 Kilobyte (KB) = 1 Megabyte (MB) eder."
+            },
+            {
+                id: "PDF3-17",
+                source: "Kitap Test III",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Aşağıdakilerden hangisi ile bilgisayara hem veri girişi hem de veri çıkışı yapılır?",
+                options: ["Monitör", "Ses kartı", "Klavye", "Yazıcı"],
+                answer: 1,
+                explanation: "Ses kartı; mikrofon girişinden sesi bilgisayara aktararak 'Giriş', hoparlör çıkışından sesi dışarı vererek 'Çıkış' işlemi yapar."
+            },
+            {
+                id: "PDF3-18",
+                source: "Kitap Test III",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Aşağıdakilerden hangisi HDD (Sabit Disk) parametreleri ile ilgili değildir?",
+                options: ["Tampon bellek (Cache)", "RPM", "Erişim hızı (Seek time)", "RPS"],
+                answer: 3,
+                explanation: "Sabit disklerde dönüş hızı dakikadaki devir sayısı olan RPM (Revolution Per Minute) ile ifade edilir; RPS terimi standart bir HDD parametresi değildir."
+            },
+            {
+                id: "PDF3-19",
+                source: "Kitap Test III",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "Aşağıdakilerden hangisi CD'ler için geçerli değildir?",
+                options: [
+                    "Işık (Optik) sistemle çalışır.",
+                    "CD-R diskler sadece bir kez yazılabilir.",
+                    "Boş kalan kısımlar asla yazılamaz.",
+                    "Standart kapasitesi 700 MB'dır."
+                ],
+                answer: 2,
+                explanation: "Çoklu oturum (Multisession) özelliği sayesinde, CD'nin sonlandırma (Finalize/Close session) işlemi yapılmadığı sürece boş kalan kısımlarına daha sonra tekrar veri eklenebilir."
+            },
+            {
+                id: "PDF3-20",
+                source: "Kitap Test III",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "Aşağıdakilerden hangisi CD ve DVD için geçerli değildir?",
+                options: [
+                    "DVD 4.7 GB, CD 700 MB kapasitededir.",
+                    "CD'lerde 1X = 150 KB/sn anlamındadır.",
+                    "CD ile DVD dönüş hızları aynı değildir.",
+                    "DVD'ler çok az olsa da CD'lerden kalındır."
+                ],
+                answer: 3,
+                explanation: "Hem standart CD hem de DVD disklerin fiziksel çapı (12 cm) ve kalınlığı (1.2 mm) birbirleriyle tamamen aynıdır. DVD'ler CD'lerden daha kalın değildir."
+            },
+
+            // ------------------------------------------------------------------------
+            // YENİ ÜRETİLEN SORULAR (35 SORU - KİTAP KONU BAŞLIKLARI VE NOTLARINDAN)
+            // ------------------------------------------------------------------------
+            {
+                id: "YENI-1",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Bilgisayara Giriş & Bit/Byte",
+                q: "Ev sinema sistemleri, televizyon ve müzik sistemleri ile bütünleşik çalışmak üzere tasarlanmış, uzaktan kumandalı ve şık yatay kasalı kişisel bilgisayar türü aşağıdakilerden hangisidir?",
+                options: ["PDA", "HTPC (Home Theater PC)", "Workstation", "Mainframe"],
+                answer: 1,
+                explanation: "HTPC (Home Theater PC - Ev Sineması Bilgisayarı), salonlarda TV ve ses sistemlerine bağlanarak multimedya merkezi olarak kullanılan bilgisayar çeşididir."
+            },
+            {
+                id: "YENI-2",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Bilgisayara Giriş & Bit/Byte",
+                q: "Bankalar ve büyük finans kuruluşları gibi binlerce kullanıcının aynı anda kesintisiz işlem yaptığı, yüksek güvenilirlikli ve devasa boyutlu bilgisayar sınıfı hangisidir?",
+                options: ["Mainframe (Ana Bilgisayar)", "PDA (Cep Bilgisayarı)", "Masaüstü PC", "Netbook"],
+                answer: 0,
+                explanation: "Mainframe bilgisayarlar, büyük kurum ve bankalarda binlerce uç birime (terminale) aynı anda yüksek güvenilirlikle hizmet veren büyük ölçekli sistemlerdir."
+            },
+            {
+                id: "YENI-3",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Bilgisayara Giriş & Bit/Byte",
+                q: "Standart ASCII tablosuna göre 'DONANIM' kelimesi bellekte kaç bitlik yer kaplar? (Her karakter 1 Byte olarak işlenir)",
+                options: ["7 Bit", "14 Bit", "56 Bit", "70 Bit"],
+                answer: 2,
+                explanation: "'DONANIM' kelimesi 7 harften oluşur. Her karakter 1 Byte = 8 Bit yer kapladığından, 7 x 8 = 56 Bit yer kaplar."
+            },
+            {
+                id: "YENI-4",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Donanım birimlerinin işlemciyi (CPU) meşgul etmeden doğrudan RAM belleğe erişerek veri alışverişi yapabilmesini sağlayan teknoloji aşağıdakilerden hangisidir?",
+                options: ["ESD (Elektrostatik Deşarj)", "DMA (Direct Memory Access)", "DRM (Dijital Haklar Yönetimi)", "PnP (Tak ve Çalıştır)"],
+                answer: 1,
+                explanation: "DMA (Direct Memory Access - Doğrudan Bellek Erişimi), ses kartı, sabit disk gibi donanımların CPU'yu yormadan doğrudan RAM ile veri transferi yapmasını sağlar."
+            },
+            {
+                id: "YENI-5",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Bilgisayar çalışır durumdayken (kapatılmadan) bir donanım biriminin takılıp çıkarılabilmesi özelliğine ne ad verilir?",
+                options: ["OnBoard", "Overclock", "Hot Plugging / Hot Swapping", "Dual Channel"],
+                answer: 2,
+                explanation: "Hot Plugging (veya Hot Swapping), sistem enerjisi kesilmeden USB, SATA gibi birimlerin çalışırken takılıp çıkartılabilmesi özelliğidir."
+            },
+            {
+                id: "YENI-6",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "İnsan vücudunda biriken statik elektriğin elektronik donanım kartlarına temas ettiğinde çiplere zarar vermesi olayına ne ad verilir?",
+                options: ["ESD (Electrostatic Discharge)", "FSB (Front Side Bus)", "CAS Latency", "Time Shifting"],
+                answer: 0,
+                explanation: "ESD (Elektrostatik Deşarj), vücuttaki statik elektriğin hassas mikroçiplere boşalarak donanımı bozması durumudur."
+            },
+            {
+                id: "YENI-7",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Anakart üzerindeki Chipset (Yonga Kümesi) mimarisinde aşağıdakilerden hangisi Kuzey Köprüsüne (Northbridge) doğrudan bağlı değildir?",
+                options: ["İşlemci (CPU)", "RAM Bellek", "AGP / PCI Express Ekran Kartı", "USB ve IDE Portları"],
+                answer: 3,
+                explanation: "Kuzey Köprüsü; CPU, RAM ve Ekran Kartı (AGP/PCI-e) gibi hızlı bileşenleri kontrol eder. USB, IDE, SATA, PCI ve BIOS gibi daha yavaş birimler Güney Köprüsüne (Southbridge) bağlıdır."
+            },
+            {
+                id: "YENI-8",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Anakart üzerindeki CMOS pili biterse veya çıkarılırsa aşağıdakilerden hangisi gerçekleşir?",
+                options: [
+                    "Sabit diskteki işletim sistemi silinir.",
+                    "BIOS tarih/saat ve kullanıcı Setup ayarları fabrika değerlerine sıfırlanır.",
+                    "İşlemci L2 önbelleği yanar.",
+                    "RAM bellek kapasitesi yarıya düşer."
+                ],
+                answer: 1,
+                explanation: "CMOS hafıza, BIOS ayarlarını ve sistem saatini tutmak için CMOS pilinden güç alır. Pil bittiğinde ayarlar sıfırlanır ve tarih/saat geri kalır."
+            },
+            {
+                id: "YENI-9",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "Dizüstü (Laptop/Notebook) bilgisayarlara harici ses kartı, modem, ağ kartı gibi genişleme kartları takmak için kullanılan kart yuvası standardı hangisidir?",
+                options: ["PCMCIA", "AGP", "ISA", "LGA775"],
+                answer: 0,
+                explanation: "PCMCIA (PC Card), dizüstü bilgisayarlarda kredi kartı büyüklüğünde genişleme kartlarının takıldığı veriyolu standardıdır."
+            },
+            {
+                id: "YENI-10",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Anakart, BIOS & Veriyolları",
+                q: "IEEE 1394 standardı olarak da bilinen ve özellikle dijital video kameralardan yüksek hızlı veri aktarımı için kullanılan port aşağıdakilerden hangisidir?",
+                options: ["Firewire", "PS/2", "LPT (Paralel Port)", "RJ-11"],
+                answer: 0,
+                explanation: "Firewire (IEEE 1394), yüksek hızlı seri veri iletimi sağlayan ve dijital kamera/ses ekipmanlarında yaygın kullanılan bağlantı standardıdır."
+            },
+            {
+                id: "YENI-11",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "İşlemci (CPU)",
+                q: "İşlemci (CPU) içerisinde toplama, çıkarma gibi matematiksel işlemler ile VE, VEYA, KARŞILAŞTIRMA gibi mantıksal işlemleri gerçekleştiren birim hangisidir?",
+                options: [
+                    "ALU (Aritmetik Mantık Birimi)",
+                    "L2 Cache (Seviye 2 Önbellek)",
+                    "Komut Çözücü (Instruction Decoder)",
+                    "FSB (Front Side Bus)"
+                ],
+                answer: 0,
+                explanation: "ALU (Arithmetic Logic Unit - Aritmetik Mantık Birimi), işlemcinin tüm aritmetik ve mantıksal hesaplamalarını yapan temel bileşenidir."
+            },
+            {
+                id: "YENI-12",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "İşlemci (CPU)",
+                q: "İşlemci içerisinde yapılan bir işlemin sonucuna göre (örneğin sonucun sıfır olması, negatif olması veya elde/taşma oluşması) 1 veya 0 değerini alan 1 bitlik özel kontrol gözlerine ne ad verilir?",
+                options: ["Bayraklar (Flags)", "Veriyolları (Buses)", "Pinler", "Slotlar"],
+                answer: 0,
+                explanation: "Bayraklar (Flags), ALU'daki işlem sonuçlarının durumunu (Zero, Carry, Overflow vb.) tutan 1 bitlik durum kontrol hücreleridir."
+            },
+            {
+                id: "YENI-13",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "İşlemci (CPU)",
+                q: "İşlemci içerisinde yer alan, o an işlenen komut ve verilerin çok hızlı şekilde geçici olarak tutulduğu en küçük ve en hızlı hafıza gözlerine ne ad verilir?",
+                options: ["Kaydediciler (Registers)", "Sektörler (Sectors)", "Kümeler (Clusters)", "Tampon (Buffer)"],
+                answer: 0,
+                explanation: "Kaydediciler (Registers), CPU çekirdeği içinde bulunan ve işlemcinin o an üzerinde çalıştığı verileri tutan en hızlı hafıza birimleridir."
+            },
+            {
+                id: "YENI-14",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "İşlemci (CPU)",
+                q: "İşlemcilerde kullanılan L1 ve L2 Cache (Önbellek) birimleri hangi tip bellek teknolojisiyle üretilir?",
+                options: ["SRAM (Statik RAM)", "DRAM (Dinamik RAM)", "EEPROM", "Manyetik Plaka"],
+                answer: 0,
+                explanation: "İşlemci önbellekleri (L1/L2 Cache), kondansatör tazeleme gerektirmeyen ve çok hızlı çalışan SRAM (Static RAM) yapısındadır."
+            },
+            {
+                id: "YENI-15",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "RAM Bellek",
+                q: "Dinamik RAM (DRAM) yapısında her bir bellek hücresi (1 bitlik veri alanı) hangi iki temel elektronik elemandan oluşur?",
+                options: [
+                    "1 Transistör ve 1 Kondansatör",
+                    "2 Diyot ve 1 Direnç",
+                    "1 Bobin ve 1 Sigorta",
+                    "1 Lazer Diyot ve 1 Ayna"
+                ],
+                answer: 0,
+                explanation: "DRAM'lerde her bir bitlik hücre 1 adet kondansatör (veriyi yük olarak tutar) ve 1 adet transistörden (anahtarlama yapar) oluşur. Kondansatör deşarj olduğu için periyodik tazeleme (refresh) gerekir."
+            },
+            {
+                id: "YENI-16",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "RAM Bellek",
+                q: "DDR, DDR2 ve DDR3 RAM belleklerin standart çalışma gerilimleri (voltajları) sırasıyla aşağıdakilerden hangisinde doğru verilmiştir?",
+                options: [
+                    "2.5V - 1.8V - 1.5V",
+                    "5.0V - 3.3V - 2.5V",
+                    "1.5V - 1.8V - 2.5V",
+                    "12V - 5V - 3.3V"
+                ],
+                answer: 0,
+                explanation: "RAM teknolojisi geliştikçe güç tüketimi ve ısınmayı azaltmak için çalışma voltajları düşürülmüştür: DDR = 2.5V, DDR2 = 1.8V, DDR3 = 1.5V."
+            },
+            {
+                id: "YENI-17",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "RAM Bellek",
+                q: "RAM bellek parametrelerinde 'CL' (CAS Latency - Sütun Adres Seçim Gecikmesi) değeri için aşağıdakilerden hangisi doğrudur?",
+                options: [
+                    "Aynı frekanstaki belleklerde CL gecikme değeri ne kadar düşükse bellek o kadar hızlı tepki verir.",
+                    "RAM'in gigabayt cinsinden maksimum kapasitesini gösterir.",
+                    "RAM'in anakarta kaç pin ile bağlandığını gösterir.",
+                    "CL değeri yükseldikçe erişim süresi kısalır."
+                ],
+                answer: 0,
+                explanation: "CAS Latency (CL), bellek kontrolcüsünün bir veri sütununa erişmek için beklediği saat darbesi (gecikme) süresidir; düşük olması daha az gecikme ve daha yüksek performans demektir."
+            },
+            {
+                id: "YENI-18",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "RAM Bellek",
+                q: "RAM modülü üzerinde bulunan ve belleğin hızı, kapasitesi, zamanlama (timing) bilgilerini tutarak açılışta BIOS'a bildiren küçük EEPROM çipine ne ad verilir?",
+                options: ["SPD (Serial Presence Detect)", "RAMDAC", "DSP", "Tuner"],
+                answer: 0,
+                explanation: "SPD çipi, RAM üzerindeki fabrika çalışma frekansı ve gecikme parametrelerini saklar ve BIOS'un RAM'i otomatik tanımasını sağlar."
+            },
+            {
+                id: "YENI-19",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Ekran kartı üzerinde yer alan ve dijital (sayısal) görüntü verilerini analog monitörlerin (CRT veya VGA girişli LCD) anlayabileceği analog sinyallere dönüştüren birim hangisidir?",
+                options: ["RAMDAC", "GPU", "SLI", "CrossFire"],
+                answer: 0,
+                explanation: "RAMDAC (Random Access Memory Digital-to-Analog Converter), ekran kartı belleğindeki sayısal görüntü bilgisini analog RGB sinyallerine çevirerek VGA portuna gönderir."
+            },
+            {
+                id: "YENI-20",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Ekran kartı üzerindeki çıkış portlarından hangisi görüntüyü analog sinyale çevirmeden doğrudan sayısal (dijital) olarak LCD/Plazma ekranlara aktarır?",
+                options: ["DVI (Digital Visual Interface)", "VGA (D-Sub 15 Pin)", "S-Video", "Composite RCA"],
+                answer: 0,
+                explanation: "VGA ve S-Video analog sinyal taşırken, DVI portu görüntüyü sayısal (dijital) olarak kayıpsız şekilde monitöre iletir."
+            },
+            {
+                id: "YENI-21",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Sabit disklerde (HDD) manyetik plakalar üzerindeki eş merkezli dairesel veri halkalarına 'İz (Track)' denir. Bu izlerin ayrıldığı en küçük fiziksel kayıt bölümlerine (genellikle 512 Byte) ne ad verilir?",
+                options: ["Sektör (Sector)", "RPM", "Jumper", "Plaka (Platter)"],
+                answer: 0,
+                explanation: "Sabit disk plakalarında eş merkezli halkalara İz (Track), izlerin bölündüğü 512 byte'lık en küçük dilimlere Sektör (Sector), birden fazla sektörün oluşturduğu mantıksal gruba ise Küme (Cluster) denir."
+            },
+            {
+                id: "YENI-22",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "En az iki sabit diskin kullanılarak verilerin parçalara ayrılıp (şeritleme/striping) eşzamanlı olarak yazıldığı, yüksek hız sağlayan ancak disklerden biri bozulursa tüm verilerin kaybolduğu RAID seviyesi hangisidir?",
+                options: ["RAID 0", "RAID 1", "RAID 5", "JBOD"],
+                answer: 0,
+                explanation: "RAID 0 (Striping), veriyi iki diske bölerek paralel yazar; okuma/yazma performansını artırır ancak hata toleransı (yedeklilik) yoktur."
+            },
+            {
+                id: "YENI-23",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "İki sabit diske aynı verinin birebir kopyalanarak (Aynalama / Mirroring) yazıldığı ve maksimum veri güvenliği sağlayan RAID yapısı hangisidir?",
+                options: ["RAID 1", "RAID 0", "AHCI", "HHD"],
+                answer: 0,
+                explanation: "RAID 1 (Mirroring - Aynalama), bir diskteki verinin aynısını ikinci diske yedekler. Disklerden biri arızalansa bile sistem diğer diskten kayıpsız çalışmaya devam eder."
+            },
+            {
+                id: "YENI-24",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Sabit Diskler (HDD, SSD, RAID)",
+                q: "Klasik manyetik plakalı sabit disk (HDD) yapısı ile yüksek hızlı Flash tampon belleğin aynı sürücü içerisinde birleştirildiği sabit disk türüne ne ad verilir?",
+                options: ["HHD (Hybrid Hard Drive - Hibrit Disk)", "Floppy Disk", "DVD-RAM", "SCSI Disk"],
+                answer: 0,
+                explanation: "HHD (Hibrit Sabit Disk), mekanik sabit diskin yüksek kapasitesi ile NAND flash belleğin hızlı erişim ve düşük güç tüketimi avantajlarını birleştirir."
+            },
+            {
+                id: "YENI-25",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Ses kartı üzerinde yer alan ve ses efektlerini, 3 boyutlu ses hesaplamalarını ana işlemciye (CPU) yük bindirmeden kendi başına işleyen özel yongaya ne ad verilir?",
+                options: ["DSP (Digital Signal Processor)", "GPU (Graphics Processing Unit)", "RAMDAC", "Southbridge"],
+                answer: 0,
+                explanation: "DSP (Sayısal Sinyal İşlemcisi), ses kartının beynidir; ses sıkıştırma, efekt ve çok kanallı ses işlemlerini yürütür."
+            },
+            {
+                id: "YENI-26",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Ekran Kartı & Monitörler",
+                q: "Ekran (Monitör) teknolojilerinden hangisi iki cam panel arasındaki özel gaz karışımının elektrik akımıyla iyonize edilip (ultraviyole ışıma ile) fosfor tabakasını aydınlatması prensibine dayanır?",
+                options: ["Plazma Ekranlar", "CRT Monitörler", "LCD Monitörler", "Nokta Vuruşlu Paneller"],
+                answer: 0,
+                explanation: "Plazma ekranlar, hücrelerdeki neon/ksenon gazlarının elektrik deşarjıyla plazma haline geçerek fosfor piksellerini parlatması esasıyla çalışır."
+            },
+            {
+                id: "YENI-27",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "DVD sürücülerde 1X hız çarpanı saniyede kaç Kilobyte (KB/s) veri aktarım hızına karşılık gelir?",
+                options: ["1350 KB/sn", "150 KB/sn", "300 KB/sn", "4700 KB/sn"],
+                answer: 0,
+                explanation: "CD'lerde 1X = 150 KB/sn iken, DVD sürücülerde 1X hız çarpanı bunun 9 katı olan 1350 KB/sn (약 1.35 MB/sn) veri aktarım hızına eşittir."
+            },
+            {
+                id: "YENI-28",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Optik Sürücüler (CD, DVD, Blu-Ray)",
+                q: "Mavi-mor lazer teknolojisi kullanan Blu-Ray (BD) optik disklerin tek katmanlı (Single Layer) ve çift katmanlı (Dual Layer) veri depolama kapasiteleri sırasıyla nedir?",
+                options: [
+                    "25 GB ve 50 GB",
+                    "4.7 GB ve 8.5 GB",
+                    "700 MB ve 1.4 GB",
+                    "15 GB ve 30 GB"
+                ],
+                answer: 0,
+                explanation: "Blu-Ray diskler tek katmanda 25 GB, çift katmanda ise 50 GB yüksek çözünürlüklü veri depolayabilir (DVD ise 4.7 GB / 8.5 GB)."
+            },
+            {
+                id: "YENI-29",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Yazıcılar & Tarayıcılar",
+                q: "Lazer yazıcılarda lazer ışınıyla elektrostatik olarak yüklenen ve toner tozunu kağıda aktaran silindirik temel parçaya ne ad verilir?",
+                options: ["Drum (Görüntü Tamburu)", "Kartuş Memesi", "Şerit İğnesi", "Splitter"],
+                answer: 0,
+                explanation: "Lazer yazıcılarda görüntünün elektrostatik olarak oluşturulduğu ve toner tozunun yapışarak kağıda aktarıldığı ışığa duyarlı silindire Drum (Tambur) denir."
+            },
+            {
+                id: "YENI-30",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Ağ Cihazları & Modem",
+                q: "Yerel ağda (LAN) kendisine gelen veri paketini tüm portlara yayınlamak yerine, hedef bilgisayarın MAC adresine bakarak yalnızca ilgili porta ileten akıllı ağ cihazı hangisidir?",
+                options: ["Switch (Anahtar)", "Hub", "Repeater", "Splitter"],
+                answer: 0,
+                explanation: "Hub gelen veriyi tüm portlara göndererek ağ trafiğini yavaşlatırken; Switch paketi sadece alıcı bilgisayarın bağlı olduğu porta yönlendirir."
+            },
+            {
+                id: "YENI-31",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Ağ Cihazları & Modem",
+                q: "Her ağ kartına (Ethernet) üretim aşamasında fabrikada verilen, dünyada eşi olmayan 48 bitlik (6 oktet onaltılık) fiziksel kimlik adresine ne ad verilir?",
+                options: ["MAC Adresi", "TCP Portu", "DNS Adresi", "Alt Ağ Maskesi"],
+                answer: 0,
+                explanation: "MAC (Media Access Control) adresi, ağ kartlarının ROM belleğine üretici tarafından işlenen benzersiz fiziksel donanım adresidir."
+            },
+            {
+                id: "YENI-32",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Hoparlör sistemlerinde (örneğin 2.1 veya 5.1) bas (kalın/düşük frekanslı) sesleri ve tiz (ince/yüksek frekanslı) sesleri üretmekle görevli sürücüler sırasıyla hangileridir?",
+                options: [
+                    "Woofer (Bas) ve Tweeter (Tiz)",
+                    "Tweeter (Bas) ve Midrange (Tiz)",
+                    "DAC (Bas) ve ADC (Tiz)",
+                    "Tuner ve Amfi"
+                ],
+                answer: 0,
+                explanation: "Hoparlör kabinlerinde düşük frekanslı bas sesleri Woofer (veya Subwoofer), orta sesleri Midrange, yüksek frekanslı ince (tiz) sesleri ise Tweeter üretir."
+            },
+            {
+                id: "YENI-33",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Bilgisayar güç kaynağı (Power Supply - PSU), 220V şehir alternatif akımını (AC) kasa içi bileşenlerin kullandığı doğru akım (DC) voltajlarına dönüştürür. Aşağıdakilerden hangisi PSU'nun ürettiği standart çıkış voltajlarından biridir?",
+                options: ["+12V, +5V ve +3.3V", "+110V DC", "+48V ve +24V", "+1.5V AC"],
+                answer: 0,
+                explanation: "Güç kaynakları anakart, işlemci, disk motorları ve elektronik devreler için standart olarak +12V, +5V, +3.3V (ve yardımcı -12V, -5V) doğru akım voltajlarını üretir."
+            },
+            {
+                id: "YENI-34",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Projeksiyon cihazlarında üzerinde yüz binlerce mikroskobik hareketli ayna bulunan DMD (Digital Micromirror Device) çipi kullanan görüntüleme teknolojisi hangisidir?",
+                options: ["DLP (Digital Light Processing)", "CRT Tüplü", "Nokta Vuruşlu", "E-Ink"],
+                answer: 0,
+                explanation: "Projeksiyon cihazları temel olarak LCD (Sıvı Kristal Prizmalı) ve DLP (Mikro Aynalı DMD çipli) olmak üzere iki ana teknolojiye ayrılır."
+            },
+            {
+                id: "YENI-35",
+                source: "Kitap Konu Özeti (Yeni)",
+                topic: "Giriş/Çıkış, Ses, Kasa & Diğer Birimler",
+                q: "Televizyon kartlarında (TV Card) izlenmekte olan canlı televizyon yayınının arka planda sabit diske kaydedilerek durdurulabilmesi ve kaldığı yerden devam ettirilebilmesi özelliğine ne ad verilir?",
+                options: ["Time Shifting (Zaman Kaydırma)", "Overclocking", "Bursting", "De-interlacing"],
+                answer: 0,
+                explanation: "Time Shifting özelliği, canlı TV yayınını tampon belleğe/sabit diske kaydederek yayını duraklatma ve geri sarma imkanı tanır."
+            }
+        ];
+
+        // ============================================================================
+        // APPLICATION STATE
+        // ============================================================================
+        let activeQuestions = [];      // Filtered & shuffled questions for current session
+        let currentIndex = 0;          // Active question index
+        let userAnswers = {};          // { questionIndex: selectedOptionIndex }
+        let quizMode = "instant";      // Always defaults to "instant" (Öğrenme Modu), never forces Exam mode
+        let timerSeconds = 0;
+        let timerInterval = null;
+        let currentReviewFilter = "ALL";
+        let toastTimeout = null;
+
+        // ============================================================================
+        // INITIALIZATION & HELPERS
+        // ============================================================================
+        window.onload = function () {
+            quizMode = "instant";
+            applyFiltersAndStart(true);
+            startTimer();
+            setupKeyboardShortcuts();
+        };
+
+        function showToast(message, icon = "✨") {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = message;
+            document.getElementById('toastIcon').textContent = icon;
+            toast.classList.remove('hidden');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2600);
+        }
+
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            htmlEl.classList.toggle('dark');
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerSeconds = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const secs = String(timerSeconds % 60).padStart(2, '0');
+            document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+        }
+
+        // Fisher-Yates Shuffle
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function setQuizMode(mode) {
+            quizMode = mode;
+            const btnInstant = document.getElementById('modeBtnInstant');
+            const btnExam = document.getElementById('modeBtnExam');
+            const badgeInstant = document.getElementById('badgeInstantActive');
+            const badgeExam = document.getElementById('badgeExamActive');
+            const modeBadge = document.getElementById('modeBadgeIndicator');
+
+            if (quizMode === 'instant') {
+                btnInstant.className = "text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 cursor-pointer border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/40 shadow-sm";
+                btnExam.className = "text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 cursor-pointer border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-indigo-400 opacity-80";
+                badgeInstant.classList.remove('hidden');
+                badgeExam.classList.add('hidden');
+
+                modeBadge.textContent = "Öğrenme Modu (Anında Kontrol)";
+                modeBadge.className = "text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold";
+                showToast("Öğrenme Modu aktif: Cevaplar ve çözümler anında gösterilir.", "📖");
+            } else {
+                btnExam.className = "text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 cursor-pointer border-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40 shadow-sm";
+                btnInstant.className = "text-left p-4 rounded-2xl border-2 transition-all flex items-start gap-3.5 cursor-pointer border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-emerald-400 opacity-80";
+                badgeExam.classList.remove('hidden');
+                badgeInstant.classList.add('hidden');
+
+                modeBadge.textContent = "Sınav Modu";
+                modeBadge.className = "text-[11px] px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold";
+                showToast("Sınav Modu aktif: Sonuçlar testi bitirdiğinizde gösterilir.", "📝");
+            }
+            renderCurrentQuestion();
+            updateStatsAndGrid();
+        }
+
+        // Reset only answers without losing current question order
+        function resetCurrentAnswersOnly() {
+            userAnswers = {};
+            currentIndex = 0;
+            startTimer();
+            document.getElementById('quizWorkspace').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            renderCurrentQuestion();
+            updateStatsAndGrid();
+            showToast("Tüm işaretlenen cevaplar ve süre sıfırlandı!", "🔄");
+        }
+
+        // Explicitly shuffle current questions & reset answers
+        function shuffleCurrentQuestions() {
+            const countSelect = document.getElementById('countFilter');
+            if (countSelect.value === "SEQUENTIAL") {
+                countSelect.value = "ALL";
+            }
+            applyFiltersAndStart(true);
+            showToast("Sorular rastgele karıştırıldı ve baştan başlatıldı!", "🔀");
+        }
+
+        // Clear answer for the single active question
+        function clearSingleQuestionAnswer() {
+            if (userAnswers[currentIndex] !== undefined) {
+                delete userAnswers[currentIndex];
+                renderCurrentQuestion();
+                updateStatsAndGrid();
+                showToast("Bu sorunun cevabı temizlendi, tekrar seçebilirsiniz.", "🧹");
+            }
+        }
+
+        // ============================================================================
+        // FILTERING & QUIZ GENERATION
+        // ============================================================================
+        function applyFiltersAndStart(forceShuffle = true) {
+            const topicVal = document.getElementById('topicFilter').value;
+            const sourceVal = document.getElementById('sourceFilter').value;
+            const countVal = document.getElementById('countFilter').value;
+            const shuffleOpts = document.getElementById('shuffleOptionsCheckbox').checked;
+
+            // 1. Filter from Master Bank
+            let filtered = MASTER_QUESTIONS.filter(item => {
+                const topicMatch = (topicVal === "ALL") || (item.topic === topicVal);
+                let sourceMatch = true;
+                if (sourceVal === "PDF_ALL") {
+                    sourceMatch = item.source.startsWith("Kitap Test");
+                } else if (sourceVal !== "ALL") {
+                    sourceMatch = (item.source === sourceVal);
+                }
+                return topicMatch && sourceMatch;
+            });
+
+            // Fallback if combination is empty
+            if (filtered.length === 0) {
+                filtered = [...MASTER_QUESTIONS];
+                document.getElementById('topicFilter').value = "ALL";
+            }
+
+            // 2. Clone questions so option shuffling doesn't mutate MASTER_QUESTIONS
+            let prepared = filtered.map(qObj => {
+                const optsWithMeta = qObj.options.map((optText, idx) => ({
+                    text: optText,
+                    isCorrect: idx === qObj.answer
+                }));
+
+                const finalOpts = shuffleOpts ? shuffleArray(optsWithMeta) : optsWithMeta;
+                const newCorrectIndex = finalOpts.findIndex(o => o.isCorrect);
+
+                return {
+                    ...qObj,
+                    options: finalOpts.map(o => o.text),
+                    answer: newCorrectIndex
+                };
+            });
+
+            // 3. Shuffle Question Order unless SEQUENTIAL is selected
+            if (countVal !== "SEQUENTIAL" && forceShuffle) {
+                prepared = shuffleArray(prepared);
+            } else if (countVal !== "SEQUENTIAL" && !forceShuffle) {
+                prepared = shuffleArray(prepared);
+            }
+
+            // 4. Slice if specific question count is requested
+            if (countVal !== "ALL" && countVal !== "SEQUENTIAL") {
+                const limit = parseInt(countVal, 10);
+                if (!isNaN(limit) && prepared.length > limit) {
+                    prepared = prepared.slice(0, limit);
+                }
+            }
+
+            activeQuestions = prepared;
+            currentIndex = 0;
+            userAnswers = {};
+
+            // Update Pool Info
+            document.getElementById('activePoolInfo').textContent = `Aktif Test Havuzu: ${activeQuestions.length} Soru`;
+
+            // Show Quiz Workspace, Hide Results
+            document.getElementById('quizWorkspace').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+
+            startTimer();
+            renderCurrentQuestion();
+            updateStatsAndGrid();
+        }
+
+        // ============================================================================
+        // RENDERING ACTIVE QUESTION & OPTIONS
+        // ============================================================================
+        function renderCurrentQuestion() {
+            if (activeQuestions.length === 0) return;
+
+            const qObj = activeQuestions[currentIndex];
+            const total = activeQuestions.length;
+            const answeredCount = Object.keys(userAnswers).length;
+
+            // Update Progress Bar & Counters
+            document.getElementById('questionCounterText').textContent = `Soru ${currentIndex + 1} / ${total}`;
+            document.getElementById('answeredCounterText').textContent = `Cevaplanan: ${answeredCount} / ${total}`;
+            const pct = Math.max(2, Math.round(((currentIndex + 1) / total) * 100));
+            document.getElementById('progressBarFill').style.width = `${pct}%`;
+
+            // Badges
+            document.getElementById('qTopicBadge').textContent = qObj.topic;
+            document.getElementById('qSourceBadge').textContent = qObj.source;
+            document.getElementById('qIdBadge').textContent = `Kod: ${qObj.id}`;
+
+            // Single Question Clear Answer Button visibility
+            const clearSingleBtn = document.getElementById('clearSingleAnswerBtn');
+            if (userAnswers[currentIndex] !== undefined) {
+                clearSingleBtn.classList.remove('hidden');
+            } else {
+                clearSingleBtn.classList.add('hidden');
+            }
+
+            // Question Text
+            document.getElementById('questionText').textContent = `${currentIndex + 1}. ${qObj.q}`;
+
+            // Options
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            const letters = ['A', 'B', 'C', 'D'];
+            const userSelected = userAnswers[currentIndex];
+            const hasAnswered = (userSelected !== undefined);
+
+            qObj.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+
+                // Default styling
+                let btnClasses = "option-btn w-full text-left p-4 rounded-xl border-2 flex items-center justify-between gap-3 cursor-pointer ";
+                let badgeClasses = "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 transition-colors ";
+                let statusIconHTML = "";
+
+                if (!hasAnswered) {
+                    btnClasses += "bg-slate-50/70 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 text-slate-800 dark:text-slate-100";
+                    badgeClasses += "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600";
+                } else if (quizMode === 'exam') {
+                    // Exam mode: only highlight selected choice neutrally
+                    if (userSelected === idx) {
+                        btnClasses += "bg-indigo-50 dark:bg-indigo-950/70 border-indigo-500 text-indigo-900 dark:text-indigo-100 font-medium";
+                        badgeClasses += "bg-indigo-600 text-white";
+                        statusIconHTML = `<span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Seçildi</span>`;
+                    } else {
+                        btnClasses += "bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400";
+                        badgeClasses += "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400";
+                    }
+                } else {
+                    // Instant Feedback mode: reveal correct & wrong
+                    btn.disabled = true;
+                    if (idx === qObj.answer) {
+                        btnClasses += "bg-emerald-50 dark:bg-emerald-950/60 border-emerald-500 text-emerald-900 dark:text-emerald-100 font-semibold";
+                        badgeClasses += "bg-emerald-600 text-white";
+                        statusIconHTML = `
+                            <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                Doğru Cevap
+                            </span>`;
+                    } else if (userSelected === idx && idx !== qObj.answer) {
+                        btnClasses += "bg-rose-50 dark:bg-rose-950/60 border-rose-500 text-rose-900 dark:text-rose-100 font-medium";
+                        badgeClasses += "bg-rose-600 text-white";
+                        statusIconHTML = `
+                            <span class="inline-flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                </svg>
+                                Sizin Seçiminiz
+                            </span>`;
+                    } else {
+                        btnClasses += "bg-slate-50/40 dark:bg-slate-900/40 border-slate-200/70 dark:border-slate-800 text-slate-400 dark:text-slate-500 opacity-75";
+                        badgeClasses += "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500";
+                    }
+                }
+
+                btn.className = btnClasses;
+                btn.onclick = () => selectOption(idx);
+
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3.5">
+                        <span class="${badgeClasses}">${letters[idx]}</span>
+                        <span class="text-sm sm:text-base">${optText}</span>
+                    </div>
+                    ${statusIconHTML}
+                `;
+
+                optionsContainer.appendChild(btn);
+            });
+
+            // Explanation Box Handling
+            const expBox = document.getElementById('explanationBox');
+            const expTitle = document.getElementById('explanationTitle');
+            const expText = document.getElementById('explanationText');
+            const expIcon = document.getElementById('explanationIcon');
+
+            if (hasAnswered && quizMode === 'instant') {
+                const isCorrect = (userSelected === qObj.answer);
+                expBox.classList.remove('hidden');
+                expText.textContent = qObj.explanation;
+
+                if (isCorrect) {
+                    expBox.className = "mt-6 rounded-2xl p-4 sm:p-5 border bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/70";
+                    expTitle.className = "font-bold text-sm sm:text-base mb-1 text-emerald-800 dark:text-emerald-300";
+                    expTitle.textContent = "Tebrikler, Doğru Cevap!";
+                    expIcon.innerHTML = `<div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">✓</div>`;
+                } else {
+                    expBox.className = "mt-6 rounded-2xl p-4 sm:p-5 border bg-rose-50/70 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/70";
+                    expTitle.className = "font-bold text-sm sm:text-base mb-1 text-rose-800 dark:text-rose-300";
+                    expTitle.textContent = `Yanlış Cevap! Doğru Şık: ${letters[qObj.answer]}) ${qObj.options[qObj.answer]}`;
+                    expIcon.innerHTML = `<div class="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/70 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">!</div>`;
+                }
+            } else {
+                expBox.classList.add('hidden');
+            }
+
+            // Prev / Next button states
+            document.getElementById('prevBtn').disabled = (currentIndex === 0);
+            const nextBtnText = document.getElementById('nextBtnText');
+            if (currentIndex === total - 1) {
+                nextBtnText.textContent = "Testi Bitir ve Sonucu Gör";
+            } else {
+                nextBtnText.textContent = "Sonraki Soru";
+            }
+        }
+
+        function selectOption(optionIdx) {
+            if (quizMode === 'instant' && userAnswers[currentIndex] !== undefined) {
+                return; // Prevent changing answer in instant mode once revealed
+            }
+
+            userAnswers[currentIndex] = optionIdx;
+            renderCurrentQuestion();
+            updateStatsAndGrid();
+
+            // Optional auto-advance in exam mode
+            const autoNext = document.getElementById('autoNextCheckbox').checked;
+            if (autoNext && currentIndex < activeQuestions.length - 1) {
+                setTimeout(() => {
+                    navigateQuestion(1);
+                }, 450);
+            }
+        }
+
+        function navigateQuestion(delta) {
+            const target = currentIndex + delta;
+            if (target >= 0 && target < activeQuestions.length) {
+                currentIndex = target;
+                renderCurrentQuestion();
+                updateStatsAndGrid();
+            } else if (target >= activeQuestions.length) {
+                finishQuizAndShowResults();
+            }
+        }
+
+        function jumpToQuestion(idx) {
+            currentIndex = idx;
+            renderCurrentQuestion();
+            updateStatsAndGrid();
+        }
+
+        // ============================================================================
+        // STATS & NAVIGATOR GRID UPDATES
+        // ============================================================================
+        function updateStatsAndGrid() {
+            let correct = 0;
+            let wrong = 0;
+            const total = activeQuestions.length;
+
+            activeQuestions.forEach((q, idx) => {
+                const ans = userAnswers[idx];
+                if (ans !== undefined) {
+                    if (ans === q.answer) correct++;
+                    else wrong++;
+                }
+            });
+
+            const empty = total - (correct + wrong);
+            const answered = correct + wrong;
+            const pct = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+
+            // If in exam mode, hide live right/wrong counts until finish
+            if (quizMode === 'exam') {
+                document.getElementById('statCorrect').textContent = "?";
+                document.getElementById('statWrong').textContent = "?";
+                document.getElementById('statEmpty').textContent = empty;
+                document.getElementById('headerCorrect').textContent = "?";
+                document.getElementById('headerWrong').textContent = "?";
+                document.getElementById('headerPercent').textContent = `${answered}/${total}`;
+            } else {
+                document.getElementById('statCorrect').textContent = correct;
+                document.getElementById('statWrong').textContent = wrong;
+                document.getElementById('statEmpty').textContent = empty;
+                document.getElementById('headerCorrect').textContent = correct;
+                document.getElementById('headerWrong').textContent = wrong;
+                document.getElementById('headerPercent').textContent = `${pct}%`;
+            }
+
+            // Render Navigator Grid
+            const grid = document.getElementById('questionGridContainer');
+            grid.innerHTML = '';
+
+            activeQuestions.forEach((q, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = idx + 1;
+                btn.onclick = () => jumpToQuestion(idx);
+
+                let cls = "h-9 rounded-lg font-bold text-xs transition flex items-center justify-center cursor-pointer ";
+                const ans = userAnswers[idx];
+
+                if (idx === currentIndex) {
+                    cls += "ring-2 ring-indigo-600 dark:ring-indigo-400 ring-offset-2 dark:ring-offset-slate-900 ";
+                }
+
+                if (ans === undefined) {
+                    cls += "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700";
+                } else if (quizMode === 'exam') {
+                    cls += "bg-indigo-600 text-white";
+                } else {
+                    if (ans === q.answer) {
+                        cls += "bg-emerald-500 text-white";
+                    } else {
+                        cls += "bg-rose-500 text-white";
+                    }
+                }
+
+                btn.className = cls;
+                grid.appendChild(btn);
+            });
+        }
+
+        // ============================================================================
+        // FINISH QUIZ & RESULTS REPORT
+        // ============================================================================
+        function finishQuizAndShowResults() {
+            document.getElementById('quizWorkspace').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+
+            let correct = 0;
+            let wrong = 0;
+            const total = activeQuestions.length;
+            const topicStats = {};
+
+            activeQuestions.forEach((q, idx) => {
+                if (!topicStats[q.topic]) {
+                    topicStats[q.topic] = { total: 0, correct: 0, wrong: 0, empty: 0 };
+                }
+                topicStats[q.topic].total++;
+
+                const ans = userAnswers[idx];
+                if (ans === undefined) {
+                    topicStats[q.topic].empty++;
+                } else if (ans === q.answer) {
+                    correct++;
+                    topicStats[q.topic].correct++;
+                } else {
+                    wrong++;
+                    topicStats[q.topic].wrong++;
+                }
+            });
+
+            const empty = total - (correct + wrong);
+            const scorePct = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+            document.getElementById('finalScorePercent').textContent = `${scorePct}%`;
+            document.getElementById('finalCorrectCount').textContent = correct;
+            document.getElementById('finalWrongCount').textContent = wrong;
+            document.getElementById('finalEmptyCount').textContent = empty;
+
+            // Populate Topic Breakdown Table
+            const tbody = document.getElementById('topicBreakdownTableBody');
+            tbody.innerHTML = '';
+
+            Object.keys(topicStats).forEach(topicName => {
+                const st = topicStats[topicName];
+                const tPct = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 dark:hover:bg-slate-800/40";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">${topicName}</td>
+                    <td class="py-3 px-4 text-center font-medium">${st.total}</td>
+                    <td class="py-3 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">${st.correct}</td>
+                    <td class="py-3 px-4 text-center font-bold text-rose-600 dark:text-rose-400">${st.wrong}</td>
+                    <td class="py-3 px-4 text-center text-slate-500">${st.empty}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden max-w-[120px]">
+                                <div class="h-full ${tPct >= 70 ? 'bg-emerald-500' : tPct >= 40 ? 'bg-amber-500' : 'bg-rose-500'}" style="width: ${tPct}%"></div>
+                            </div>
+                            <span class="text-xs font-bold">${tPct}%</span>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            filterReviewList('ALL');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function returnToQuiz() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('quizWorkspace').classList.remove('hidden');
+            renderCurrentQuestion();
+            updateStatsAndGrid();
+        }
+
+        function filterReviewList(filterType) {
+            currentReviewFilter = filterType;
+            const buttons = {
+                ALL: document.getElementById('revFilterAll'),
+                WRONG: document.getElementById('revFilterWrong'),
+                EMPTY: document.getElementById('revFilterEmpty'),
+                CORRECT: document.getElementById('revFilterCorrect')
+            };
+
+            Object.keys(buttons).forEach(k => {
+                if (k === filterType) {
+                    buttons[k].className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white cursor-pointer";
+                } else {
+                    buttons[k].className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer";
+                }
+            });
+
+            const container = document.getElementById('reviewListContainer');
+            container.innerHTML = '';
+            const letters = ['A', 'B', 'C', 'D'];
+
+            let shownCount = 0;
+
+            activeQuestions.forEach((q, idx) => {
+                const ans = userAnswers[idx];
+                const isEmpty = (ans === undefined);
+                const isCorrect = (!isEmpty && ans === q.answer);
+                const isWrong = (!isEmpty && ans !== q.answer);
+
+                if (filterType === 'WRONG' && !isWrong) return;
+                if (filterType === 'EMPTY' && !isEmpty) return;
+                if (filterType === 'CORRECT' && !isCorrect) return;
+
+                shownCount++;
+
+                let statusBadge = '';
+                if (isCorrect) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">Doğru</span>`;
+                } else if (isWrong) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">Yanlış</span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Boş Bırakıldı</span>`;
+                }
+
+                const userChoiceText = isEmpty ? "Boş Bırakıldı" : `${letters[ans]}) ${q.options[ans]}`;
+                const correctChoiceText = `${letters[q.answer]}) ${q.options[q.answer]}`;
+
+                const card = document.createElement('div');
+                card.className = "p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3";
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">${q.topic}</span>
+                            <span class="text-xs text-slate-400">${q.source} (${q.id})</span>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <div class="font-semibold text-sm sm:text-base text-slate-900 dark:text-slate-100 whitespace-pre-line">${idx + 1}. ${q.q}</div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm pt-1">
+                        <div class="p-2.5 rounded-xl border ${isCorrect ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800' : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'}">
+                            <span class="font-bold block text-[11px] uppercase opacity-75">Sizin Cevabınız:</span>
+                            <span class="font-semibold">${userChoiceText}</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl border bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800">
+                            <span class="font-bold block text-[11px] uppercase text-emerald-700 dark:text-emerald-400">Doğru Cevap:</span>
+                            <span class="font-semibold text-emerald-900 dark:text-emerald-200">${correctChoiceText}</span>
+                        </div>
+                    </div>
+                    <div class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                        <strong class="text-indigo-600 dark:text-indigo-400">Çözüm Açıklaması:</strong> ${q.explanation}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            if (shownCount === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">Bu filtreye uygun soru bulunamadı.</div>`;
+            }
+        }
+
+        // ============================================================================
+        // KEYBOARD SHORTCUTS (A,B,C,D & Left/Right Arrows)
+        // ============================================================================
+        function setupKeyboardShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (!document.getElementById('resultsSection').classList.contains('hidden')) return;
+                if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+
+                const key = e.key.toUpperCase();
+                if (key === 'ARROWLEFT') {
+                    navigateQuestion(-1);
+                } else if (key === 'ARROWRIGHT') {
+                    navigateQuestion(1);
+                } else if (['A', '1'].includes(key)) {
+                    selectOption(0);
+                } else if (['B', '2'].includes(key)) {
+                    selectOption(1);
+                } else if (['C', '3'].includes(key)) {
+                    selectOption(2);
+                } else if (['D', '4'].includes(key)) {
+                    selectOption(3);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

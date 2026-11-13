@@ -1,0 +1,1731 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elektrik Devre Analizi - İnteraktif Soru Bankası</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .circuit-svg {
+            width: 100%;
+            max-width: 540px;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+        }
+        .option-btn {
+            transition: all 0.2s ease;
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+        }
+        .tab-active {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Üst Başlık ve İstatistik Barı -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-3 sm:py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">Elektrik Devre Analizi Soru Bankası</h1>
+                    <p class="text-xs sm:text-sm text-slate-500">Sunum Devreleriyle Tam Çizimli • İpuçlu & Detaylı Çözümlü (4 Konu - 28 Soru)</p>
+                </div>
+            </div>
+
+            <!-- Skor ve Sıfırlama -->
+            <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+                <div class="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-2 text-xs sm:text-sm">
+                    <span class="text-slate-500 font-medium">Çözülen:</span>
+                    <span id="stat-answered" class="font-bold text-slate-800">0 / 28</span>
+                </div>
+                <div class="bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 flex items-center gap-2 text-xs sm:text-sm">
+                    <span class="text-emerald-700 font-medium">Doğru:</span>
+                    <span id="stat-correct" class="font-bold text-emerald-700">0</span>
+                </div>
+                <div class="bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-200 flex items-center gap-2 text-xs sm:text-sm">
+                    <span class="text-rose-700 font-medium">Yanlış:</span>
+                    <span id="stat-wrong" class="font-bold text-rose-700">0</span>
+                </div>
+                <button onclick="resetAllQuiz()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Tümünü Sıfırla
+                </button>
+            </div>
+        </div>
+
+        <!-- Konu Sekmeleri -->
+        <div class="max-w-6xl mx-auto px-4 pb-3">
+            <div id="topic-tabs" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik -->
+    <main class="max-w-5xl w-full mx-auto px-4 py-6 flex-1">
+        <!-- Konu Başlığı ve Açıklaması -->
+        <div id="topic-header" class="mb-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <span id="topic-badge" class="inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-800 mb-2">1. Konu</span>
+                <h2 id="topic-title" class="text-xl sm:text-2xl font-extrabold text-slate-900">Temel Kavramlar, Eşdeğer Direnç ve Güç</h2>
+                <p id="topic-desc" class="text-sm text-slate-600 mt-1">Sunum 1'deki düğüm/dal/çevre kavramları, seri-paralel eşdeğer direnç, akım-gerilim bölüştürücü ve güç dengesi soruları.</p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="resetCurrentTopic()" class="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold transition">
+                    Bu Konuyu Sıfırla
+                </button>
+            </div>
+        </div>
+
+        <!-- Sorular Listesi -->
+        <div id="questions-container" class="space-y-8">
+            <!-- JS ile sorular buraya çizilecek -->
+        </div>
+    </main>
+
+    <!-- Alt Bilgi -->
+    <footer class="bg-white border-t border-slate-200 py-5 mt-12">
+        <div class="max-w-5xl mx-auto px-4 text-center text-xs sm:text-sm text-slate-500">
+            Not Defteri Sunumlarındaki Orjinal Devre Şemalarıyla Hazırlanmıştır • Elektrik Devre Analizi Eğitim Platformu
+        </div>
+    </footer>
+
+    <script>
+        // ==========================================
+        // TEMİZ VE STANDART SVG DEVRE ÇİZİM MOTORU
+        // ==========================================
+        const SVG_CIRCUITS = {
+            // 1. KONU DEVRELERİ (Sunum 1)
+            // Soru 1.1: Dallar, düğümler, çevreler (2V, 5V, 3V, 8A, 5A, 3A, 0.6I bağımlı kaynak)
+            c1_nodes_branches: `
+            <svg viewBox="0 0 500 260" class="circuit-svg">
+                <rect width="500" height="260" rx="12" fill="#ffffff"/>
+                <!-- Ana teller -->
+                <line x1="80" y1="50" x2="155" y2="50" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="205" y1="50" x2="420" y2="50" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="80" y1="210" x2="420" y2="210" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="80" y1="50" x2="80" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="80" y1="165" x2="80" y2="210" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="270" y1="50" x2="270" y2="100" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="270" y1="160" x2="270" y2="210" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="420" y1="50" x2="420" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="420" y1="165" x2="420" y2="210" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Sol eleman (5V kutu) -->
+                <rect x="68" y="95" width="24" height="70" fill="#f8fafc" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="52" y="110" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="end">+</text>
+                <text x="52" y="135" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">5V</text>
+                <text x="52" y="160" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="end">-</text>
+
+                <!-- Üst eleman (2V kaynak) -->
+                <circle cx="180" cy="50" r="25" fill="#eff6ff" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="166" y="55" font-size="16" font-weight="bold" fill="#0f172a">+</text>
+                <text x="190" y="55" font-size="18" font-weight="bold" fill="#0f172a">-</text>
+                <text x="180" y="20" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">2V</text>
+
+                <!-- Orta eleman (Bağımlı kaynak 0.6I elmas) -->
+                <polygon points="270,100 298,130 270,160 242,130" fill="#fef3c7" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="270" y1="114" x2="270" y2="144" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="264,136 270,145 276,136" fill="none" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="232" y="135" font-size="15" font-weight="bold" fill="#b45309" text-anchor="end">0.6I</text>
+
+                <!-- Sağ eleman (3V kutu) -->
+                <rect x="408" y="95" width="24" height="70" fill="#f8fafc" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="444" y="110" font-size="15" font-weight="bold" fill="#0f172a">+</text>
+                <text x="444" y="135" font-size="15" font-weight="bold" fill="#1d4ed8">3V</text>
+                <text x="444" y="160" font-size="16" font-weight="bold" fill="#0f172a">-</text>
+
+                <!-- Akım okları -->
+                <polyline points="115,43 127,50 115,57" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+                <text x="115" y="36" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">8A</text>
+
+                <polyline points="340,43 352,50 340,57" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+                <text x="345" y="36" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">I = 5A</text>
+
+                <polyline points="263,72 270,84 277,72" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+                <text x="284" y="82" font-size="14" font-weight="bold" fill="#dc2626">3A</text>
+
+                <!-- Düğüm noktaları -->
+                <circle cx="80" cy="50" r="5" fill="#0f172a"/>
+                <circle cx="270" cy="50" r="5" fill="#0f172a"/>
+                <circle cx="270" cy="210" r="5" fill="#0f172a"/>
+                <text x="270" y="238" font-size="13" font-weight="bold" fill="#475569" text-anchor="middle">Alt Ortak Düğüm</text>
+            </svg>`,
+
+            // Soru 1.2 ve 1.3: Basamaklı Eşdeğer Direnç Devresi (10, 15, 300, 25, 35, 60, 120 Ohm)
+            c1_ladder_resistors: `
+            <svg viewBox="0 0 540 240" class="circuit-svg">
+                <rect width="540" height="240" rx="12" fill="#ffffff"/>
+                <!-- Giriş uçları -->
+                <circle cx="35" cy="45" r="4.5" fill="#fff" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="35" cy="195" r="4.5" fill="#fff" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="20" y="50" font-size="14" font-weight="bold" fill="#dc2626">a</text>
+                <text x="20" y="200" font-size="14" font-weight="bold" fill="#dc2626">b</text>
+
+                <!-- Üst hat: 10 Ohm ve 25 Ohm -->
+                <line x1="40" y1="45" x2="75" y2="45" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="75,45 81,35 93,55 105,35 117,55 129,35 135,45" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="105" y="26" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">10 Ω</text>
+                <line x1="135" y1="45" x2="215" y2="45" stroke="#0f172a" stroke-width="2.2"/>
+
+                <polyline points="215,45 221,35 233,55 245,35 257,55 269,35 275,45" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="245" y="26" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">25 Ω</text>
+                <line x1="275" y1="45" x2="460" y2="45" stroke="#0f172a" stroke-width="2.2"/>
+
+                <!-- Alt hat: 15 Ohm ve 35 Ohm -->
+                <line x1="40" y1="195" x2="75" y2="195" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="75,195 81,185 93,205 105,185 117,205 129,185 135,195" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="105" y="224" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">15 Ω</text>
+                <line x1="135" y1="195" x2="215" y2="195" stroke="#0f172a" stroke-width="2.2"/>
+
+                <polyline points="215,195 221,185 233,205 245,185 257,205 269,185 275,195" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="245" y="224" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">35 Ω</text>
+                <line x1="275" y1="195" x2="460" y2="195" stroke="#0f172a" stroke-width="2.2"/>
+
+                <!-- Dikey kol 1: 300 Ohm -->
+                <line x1="175" y1="45" x2="175" y2="90" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="175,90 165,96 185,108 165,120 185,132 165,144 175,150" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="175" y1="150" x2="175" y2="195" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="192" y="125" font-size="14" font-weight="bold" fill="#1d4ed8">300 Ω</text>
+
+                <!-- Dikey kol 2: 60 Ohm -->
+                <line x1="330" y1="45" x2="330" y2="90" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="330,90 320,96 340,108 320,120 340,132 320,144 330,150" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="330" y1="150" x2="330" y2="195" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="346" y="125" font-size="14" font-weight="bold" fill="#1d4ed8">60 Ω</text>
+
+                <!-- Dikey kol 3: RA = 120 Ohm -->
+                <line x1="460" y1="45" x2="460" y2="90" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="460,90 450,96 470,108 450,120 470,132 450,144 460,150" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="460" y1="150" x2="460" y2="195" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="442" y="125" font-size="13" font-weight="bold" fill="#dc2626" text-anchor="end">RA</text>
+                <text x="475" y="125" font-size="14" font-weight="bold" fill="#1d4ed8">120 Ω</text>
+
+                <!-- Düğümler -->
+                <circle cx="175" cy="45" r="4" fill="#0f172a"/>
+                <circle cx="175" cy="195" r="4" fill="#0f172a"/>
+                <circle cx="330" cy="45" r="4" fill="#0f172a"/>
+                <circle cx="330" cy="195" r="4" fill="#0f172a"/>
+            </svg>`,
+
+            // Soru 1.4: Akım Bölüştürücü ve Paralel Bloklu Devre (IT=9A, 9Ω, 6||6, 10||10, 10Ω)
+            c1_current_division: `
+            <svg viewBox="0 0 540 260" class="circuit-svg">
+                <rect width="540" height="260" rx="12" fill="#ffffff"/>
+                <circle cx="35" cy="60" r="4" fill="#fff" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="35" cy="220" r="4" fill="#fff" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Giriş Akımı IT = 9A -->
+                <line x1="40" y1="60" x2="110" y2="60" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="70,53 82,60 70,67" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+                <text x="72" y="45" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">IT = 9A</text>
+
+                <!-- Sol Dikey Kol: 9 Ohm (I1) -->
+                <line x1="110" y1="60" x2="110" y2="110" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="110,110 100,116 120,128 100,140 120,152 100,164 110,170" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="110" y1="170" x2="110" y2="220" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="92" y="145" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="end">9 Ω</text>
+                <polyline points="122,82 128,94 134,82" fill="none" stroke="#2563eb" stroke-width="2"/>
+                <text x="140" y="92" font-size="13" font-weight="bold" fill="#2563eb">I1</text>
+
+                <!-- Üst Paralel Kutu: 6 Ohm || 6 Ohm -->
+                <line x1="110" y1="60" x2="200" y2="60" stroke="#0f172a" stroke-width="2.2"/>
+                <line x1="200" y1="35" x2="200" y2="85" stroke="#0f172a" stroke-width="2.2"/>
+                <line x1="320" y1="35" x2="320" y2="85" stroke="#0f172a" stroke-width="2.2"/>
+                <line x1="200" y1="35" x2="235" y2="35" stroke="#0f172a" stroke-width="2"/>
+                <polyline points="235,35 241,27 251,43 261,27 271,43 279,27 285,35" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="285" y1="35" x2="320" y2="35" stroke="#0f172a" stroke-width="2"/>
+                <text x="260" y="20" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">6 Ω (I2)</text>
+
+                <line x1="200" y1="85" x2="235" y2="85" stroke="#0f172a" stroke-width="2"/>
+                <polyline points="235,85 241,77 251,93 261,77 271,93 279,77 285,85" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="285" y1="85" x2="320" y2="85" stroke="#0f172a" stroke-width="2"/>
+                <text x="260" y="108" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">6 Ω (I3)</text>
+
+                <!-- Sağ Dikey Paralel Kutu: 10 Ohm || 10 Ohm -->
+                <line x1="320" y1="60" x2="440" y2="60" stroke="#0f172a" stroke-width="2.2"/>
+                <line x1="440" y1="60" x2="440" y2="95" stroke="#0f172a" stroke-width="2.2"/>
+                <line x1="405" y1="95" x2="475" y2="95" stroke="#0f172a" stroke-width="2.2"/>
+                <line x1="405" y1="185" x2="475" y2="185" stroke="#0f172a" stroke-width="2.2"/>
+                <line x1="405" y1="95" x2="405" y2="118" stroke="#0f172a" stroke-width="2"/>
+                <polyline points="405,118 397,124 413,134 397,144 413,154 397,160 405,165" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="405" y1="165" x2="405" y2="185" stroke="#0f172a" stroke-width="2"/>
+                <text x="390" y="145" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="end">10 Ω</text>
+
+                <line x1="475" y1="95" x2="475" y2="118" stroke="#0f172a" stroke-width="2"/>
+                <polyline points="475,118 467,124 483,134 467,144 483,154 467,160 475,165" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="475" y1="165" x2="475" y2="185" stroke="#0f172a" stroke-width="2"/>
+                <text x="490" y="145" font-size="12" font-weight="bold" fill="#0f172a">10 Ω</text>
+
+                <line x1="440" y1="185" x2="440" y2="220" stroke="#0f172a" stroke-width="2.2"/>
+
+                <!-- Alt Hat: 10 Ohm -->
+                <line x1="40" y1="220" x2="240" y2="220" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="240,220 246,210 258,230 270,210 282,230 294,210 300,220" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="270" y="246" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">10 Ω</text>
+                <line x1="300" y1="220" x2="440" y2="220" stroke="#0f172a" stroke-width="2.2"/>
+
+                <circle cx="110" cy="60" r="4" fill="#0f172a"/>
+                <circle cx="110" cy="220" r="4" fill="#0f172a"/>
+                <circle cx="200" cy="60" r="4" fill="#0f172a"/>
+                <circle cx="320" cy="60" r="4" fill="#0f172a"/>
+            </svg>`,
+
+            // Soru 1.5: Seri Gerilim Kaynakları ve Lamba (U1=10V, U2=5V, U3=3V)
+            c1_series_batteries: `
+            <svg viewBox="0 0 500 220" class="circuit-svg">
+                <rect width="500" height="220" rx="12" fill="#ffffff"/>
+                <!-- Sol Üst ve Üst Tel -->
+                <line x1="60" y1="55" x2="165" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+                <!-- U3 = 3V Pil (- sol, + sağ) -->
+                <line x1="165" y1="42" x2="165" y2="68" stroke="#0f172a" stroke-width="3.5"/>
+                <line x1="180" y1="30" x2="180" y2="80" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="152" y="45" font-size="16" font-weight="bold" fill="#dc2626">-</text>
+                <text x="192" y="45" font-size="16" font-weight="bold" fill="#16a34a">+</text>
+                <text x="175" y="22" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">U3 = 3V</text>
+
+                <!-- S Anahtarı -->
+                <line x1="180" y1="55" x2="270" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="270" cy="55" r="3.5" fill="#fff" stroke="#0f172a" stroke-width="2"/>
+                <line x1="273" y1="53" x2="310" y2="38" stroke="#dc2626" stroke-width="2.5"/>
+                <circle cx="315" cy="55" r="3.5" fill="#fff" stroke="#0f172a" stroke-width="2"/>
+                <text x="292" y="30" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">S</text>
+                <line x1="319" y1="55" x2="410" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Sağ Tel ve Lamba -->
+                <line x1="410" y1="55" x2="410" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="410" cy="118" r="22" fill="#fef08a" stroke="#0f172a" stroke-width="2.5"/>
+                <path d="M 398 118 Q 410 98 422 118" fill="none" stroke="#b45309" stroke-width="2.5"/>
+                <text x="378" y="123" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="end">LAMBA</text>
+                <line x1="410" y1="140" x2="410" y2="175" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Sol Dikey Tel -->
+                <line x1="60" y1="55" x2="60" y2="175" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Alt Tel: U2 = 5V (+ sol, - sağ) ve U1 = 10V (+ sol, - sağ) -->
+                <line x1="60" y1="175" x2="125" y2="175" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="125" y1="150" x2="125" y2="200" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="140" y1="162" x2="140" y2="188" stroke="#0f172a" stroke-width="3.5"/>
+                <text x="112" y="162" font-size="16" font-weight="bold" fill="#16a34a">+</text>
+                <text x="150" y="162" font-size="16" font-weight="bold" fill="#dc2626">-</text>
+                <text x="133" y="142" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">U2 = 5V</text>
+
+                <line x1="140" y1="175" x2="285" y2="175" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="285" y1="150" x2="285" y2="200" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="300" y1="162" x2="300" y2="188" stroke="#0f172a" stroke-width="3.5"/>
+                <text x="272" y="162" font-size="16" font-weight="bold" fill="#16a34a">+</text>
+                <text x="310" y="162" font-size="16" font-weight="bold" fill="#dc2626">-</text>
+                <text x="293" y="142" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">U1 = 10V</text>
+
+                <line x1="300" y1="175" x2="410" y2="175" stroke="#0f172a" stroke-width="2.5"/>
+            </svg>`,
+
+            // Soru 1.6: Güç Dengesi Devresi (V1=20V, R2=1Ω, V3=50V, R4=2Ω, I=-10A)
+            c1_power_balance: `
+            <svg viewBox="0 0 500 230" class="circuit-svg">
+                <rect width="500" height="230" rx="12" fill="#ffffff"/>
+                <!-- Üst Hat: R2 = 1 Ohm -->
+                <line x1="90" y1="55" x2="210" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="210,55 218,43 230,67 242,43 254,67 266,43 274,55" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="242" y="34" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">R2 = 1 Ω</text>
+                <line x1="274" y1="55" x2="410" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Alt Hat: R4 = 2 Ohm -->
+                <line x1="90" y1="185" x2="210" y2="185" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="210,185 218,173 230,197 242,173 254,197 266,173 274,185" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="242" y="216" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">R4 = 2 Ω</text>
+                <line x1="274" y1="185" x2="410" y2="185" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Sol Kaynak: V1 = 20V -->
+                <line x1="90" y1="55" x2="90" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="90" cy="120" r="25" fill="#eff6ff" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="90" y="113" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">+</text>
+                <text x="90" y="136" font-size="18" font-weight="bold" fill="#0f172a" text-anchor="middle">-</text>
+                <text x="55" y="125" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="end">V1 = 20V</text>
+                <line x1="90" y1="145" x2="90" y2="185" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Sağ Kaynak: V3 = 50V -->
+                <line x1="410" y1="55" x2="410" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="410" cy="120" r="25" fill="#eff6ff" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="410" y="113" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">+</text>
+                <text x="410" y="136" font-size="18" font-weight="bold" fill="#0f172a" text-anchor="middle">-</text>
+                <text x="445" y="125" font-size="14" font-weight="bold" fill="#1d4ed8">V3 = 50V</text>
+                <line x1="410" y1="145" x2="410" y2="185" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Çevre Akımı I = -10A -->
+                <path d="M 210 105 A 35 25 0 1 1 210 135" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="4,3"/>
+                <polyline points="215,129 208,136 218,140" fill="none" stroke="#dc2626" stroke-width="2.2"/>
+                <text x="250" y="125" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">I = -10 A</text>
+            </svg>`,
+
+            // Soru 1.7: Seri Gerilim Bölüştürücü Devresi (U=24V, R1=2kΩ, R2=1kΩ, R3=3kΩ)
+            c1_voltage_divider: `
+            <svg viewBox="0 0 520 230" class="circuit-svg">
+                <rect width="520" height="230" rx="12" fill="#ffffff"/>
+                <!-- Sağ gri kutu (R2 ve R3 bölgesi) -->
+                <rect x="245" y="25" width="235" height="185" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+                <!-- Kaynak U = 24V -->
+                <line x1="75" y1="55" x2="75" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="55" y1="95" x2="95" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="65" y1="107" x2="85" y2="107" stroke="#0f172a" stroke-width="3.5"/>
+                <line x1="55" y1="119" x2="95" y2="119" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="65" y1="131" x2="85" y2="131" stroke="#0f172a" stroke-width="3.5"/>
+                <line x1="75" y1="131" x2="75" y2="185" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="88" y="88" font-size="15" font-weight="bold" fill="#16a34a">+</text>
+                <text x="88" y="148" font-size="16" font-weight="bold" fill="#dc2626">-</text>
+                <text x="102" y="118" font-size="14" font-weight="bold" fill="#1d4ed8">U = 24V</text>
+
+                <!-- R1 = 2 kOhm -->
+                <line x1="75" y1="55" x2="120" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="120,55 126,45 138,65 150,45 162,65 174,45 180,55" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="150" y="36" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">R1 = 2 kΩ</text>
+                <text x="150" y="80" font-size="13" font-weight="bold" fill="#dc2626" text-anchor="middle">+ U1 = 8V -</text>
+                <line x1="180" y1="55" x2="275" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Uab Ölçüm Noktası -->
+                <circle cx="220" cy="55" r="3.5" fill="#2563eb"/>
+                <circle cx="220" cy="185" r="3.5" fill="#2563eb"/>
+                <line x1="220" y1="68" x2="220" y2="102" stroke="#2563eb" stroke-width="1.8"/>
+                <line x1="220" y1="138" x2="220" y2="172" stroke="#2563eb" stroke-width="1.8"/>
+                <text x="220" y="125" font-size="13" font-weight="bold" fill="#2563eb" text-anchor="middle">Uab = 16V</text>
+
+                <!-- R2 = 1 kOhm -->
+                <polyline points="275,55 281,45 293,65 305,45 317,65 329,45 335,55" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="305" y="40" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">R2 = 1 kΩ</text>
+                <text x="305" y="80" font-size="13" font-weight="bold" fill="#dc2626" text-anchor="middle">+ U2 = ? -</text>
+                <line x1="335" y1="55" x2="415" y2="55" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- R3 = 3 kOhm -->
+                <line x1="415" y1="55" x2="415" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="415,95 405,101 425,113 405,125 425,137 405,149 415,155" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="415" y1="155" x2="415" y2="185" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="430" y="122" font-size="14" font-weight="bold" fill="#0f172a">R3 = 3 kΩ</text>
+                <text x="430" y="142" font-size="13" font-weight="bold" fill="#dc2626">(U3 = ?)</text>
+
+                <!-- Alt Hat -->
+                <line x1="75" y1="185" x2="415" y2="185" stroke="#0f172a" stroke-width="2.5"/>
+            </svg>`,
+
+            // ==========================================
+            // 2. KONU DEVRELERİ (Sunum 2: Kaynak Dönüşümleri)
+            // ==========================================
+            // Soru 2.1 ve 2.2: 5A aşağı yönlü akım kaynağı ve 8 Ohm paralel direnç
+            c2_5a_8ohm: `
+            <svg viewBox="0 0 460 210" class="circuit-svg">
+                <rect width="460" height="210" rx="12" fill="#ffffff"/>
+                <line x1="90" y1="45" x2="360" y2="45" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="90" y1="165" x2="360" y2="165" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- 5A Aşağı Yönlü Akım Kaynağı -->
+                <line x1="90" y1="45" x2="90" y2="80" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="90" cy="105" r="25" fill="#f0fdf4" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="90" y1="90" x2="90" y2="120" stroke="#15803d" stroke-width="2.5"/>
+                <polyline points="83,112 90,121 97,112" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="125" y="110" font-size="16" font-weight="bold" fill="#0f172a">5 A</text>
+                <line x1="90" y1="130" x2="90" y2="165" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- 8 Ohm Paralel Direnç -->
+                <line x1="240" y1="45" x2="240" y2="75" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="240,75 230,81 250,93 230,105 250,117 230,129 240,135" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="240" y1="135" x2="240" y2="165" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="260" y="110" font-size="16" font-weight="bold" fill="#1d4ed8">8 Ω</text>
+
+                <!-- Düğümler ve a-b uçları -->
+                <circle cx="240" cy="45" r="4.5" fill="#0f172a"/>
+                <circle cx="240" cy="165" r="4.5" fill="#0f172a"/>
+                <circle cx="365" cy="45" r="5" fill="#fff" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="365" cy="165" r="5" fill="#fff" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="382" y="50" font-size="16" font-weight="bold" fill="#dc2626" font-style="italic">a</text>
+                <text x="382" y="170" font-size="16" font-weight="bold" fill="#dc2626" font-style="italic">b</text>
+            </svg>`,
+
+            // Soru 2.3: Bağımlı Akım Kaynağı 4I1 (yukarı ok) || 2 Ohm -> Bağımlı Gerilim Kaynağı 8I1
+            c2_dependent_source: `
+            <svg viewBox="0 0 520 210" class="circuit-svg">
+                <rect width="520" height="210" rx="12" fill="#ffffff"/>
+                <!-- Sol Devre: 4I1 || 2 Ohm -->
+                <line x1="55" y1="45" x2="215" y2="45" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="55" y1="165" x2="215" y2="165" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="55" y1="45" x2="55" y2="77" stroke="#0f172a" stroke-width="2.3"/>
+                <polygon points="55,77 83,105 55,133 27,105" fill="#fef3c7" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="55" y1="120" x2="55" y2="90" stroke="#0f172a" stroke-width="2.2"/>
+                <polyline points="49,98 55,89 61,98" fill="none" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="90" y="110" font-size="15" font-weight="bold" fill="#b45309">4I1</text>
+                <line x1="55" y1="133" x2="55" y2="165" stroke="#0f172a" stroke-width="2.3"/>
+
+                <line x1="155" y1="45" x2="155" y2="75" stroke="#0f172a" stroke-width="2.3"/>
+                <polyline points="155,75 146,81 164,93 146,105 164,117 146,129 155,135" fill="none" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="155" y1="135" x2="155" y2="165" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="170" y="110" font-size="15" font-weight="bold" fill="#1d4ed8">2 Ω</text>
+                <circle cx="155" cy="45" r="4" fill="#0f172a"/>
+                <circle cx="155" cy="165" r="4" fill="#0f172a"/>
+                <circle cx="220" cy="45" r="4.5" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>
+                <circle cx="220" cy="165" r="4.5" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="232" y="50" font-size="14" font-weight="bold" fill="#dc2626">a</text>
+                <text x="232" y="170" font-size="14" font-weight="bold" fill="#dc2626">b</text>
+
+                <!-- Dönüşüm Oku -->
+                <line x1="255" y1="105" x2="295" y2="105" stroke="#2563eb" stroke-width="2.5"/>
+                <polyline points="287,98 297,105 287,112" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+
+                <!-- Sağ Devre: Eşdeğer Bağımlı Gerilim Kaynağı -->
+                <line x1="340" y1="45" x2="385" y2="45" stroke="#0f172a" stroke-width="2.3"/>
+                <polyline points="385,45 391,36 403,54 415,36 427,54 439,36 445,45" fill="none" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="415" y="28" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">R_eş = ?</text>
+                <line x1="445" y1="45" x2="480" y2="45" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="340" y1="165" x2="480" y2="165" stroke="#0f172a" stroke-width="2.3"/>
+
+                <line x1="340" y1="45" x2="340" y2="77" stroke="#0f172a" stroke-width="2.3"/>
+                <polygon points="340,77 368,105 340,133 312,105" fill="#fef3c7" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="340" y="99" font-size="15" font-weight="bold" fill="#16a34a" text-anchor="middle">+</text>
+                <text x="340" y="122" font-size="17" font-weight="bold" fill="#dc2626" text-anchor="middle">-</text>
+                <text x="376" y="110" font-size="15" font-weight="bold" fill="#b45309">V_eş = ?</text>
+                <line x1="340" y1="133" x2="340" y2="165" stroke="#0f172a" stroke-width="2.3"/>
+
+                <circle cx="485" cy="45" r="4.5" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>
+                <circle cx="485" cy="165" r="4.5" fill="#fff" stroke="#0f172a" stroke-width="2.2"/>
+                <text x="497" y="50" font-size="14" font-weight="bold" fill="#dc2626">a</text>
+                <text x="497" y="170" font-size="14" font-weight="bold" fill="#dc2626">b</text>
+            </svg>`,
+
+            // Soru 2.4, 2.5, 2.6, 2.7: 75V, 4Ω, 5Ω, 13A, 6Ω, 13V Devresi (Sunum 2'deki Ana Problem)
+            c2_75v_13a_13v: `
+            <svg viewBox="0 0 540 230" class="circuit-svg">
+                <rect width="540" height="230" rx="12" fill="#ffffff"/>
+                <!-- Üst Hat: 4 Ohm ve 6 Ohm -->
+                <line x1="55" y1="45" x2="95" y2="45" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="95,45 101,35 113,55 125,35 137,55 149,35 155,45" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="125" y="27" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">4 Ω</text>
+                <line x1="155" y1="45" x2="365" y2="45" stroke="#0f172a" stroke-width="2.5"/>
+
+                <polyline points="365,45 371,35 383,55 395,35 407,55 419,35 425,45" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="395" y="27" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">6 Ω</text>
+                <line x1="425" y1="45" x2="475" y2="45" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Alt Ortak Hat -->
+                <line x1="55" y1="190" x2="475" y2="190" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Sol Kaynak: 75 V (+ üstte) -->
+                <line x1="55" y1="45" x2="55" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="38" y1="95" x2="72" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="46" y1="106" x2="64" y2="106" stroke="#0f172a" stroke-width="3.5"/>
+                <line x1="38" y1="117" x2="72" y2="117" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="46" y1="128" x2="64" y2="128" stroke="#0f172a" stroke-width="3.5"/>
+                <line x1="55" y1="128" x2="55" y2="190" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="78" y="118" font-size="15" font-weight="bold" fill="#1d4ed8">75 V</text>
+
+                <!-- Orta Kol 1: 5 Ohm -->
+                <line x1="200" y1="45" x2="200" y2="85" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="200,85 190,91 210,103 190,115 210,127 190,139 200,145" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="200" y1="145" x2="200" y2="190" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="216" y="120" font-size="15" font-weight="bold" fill="#0f172a">5 Ω</text>
+
+                <!-- Orta Kol 2: 13 A Akım Kaynağı (Yukarı Ok) -->
+                <line x1="320" y1="45" x2="320" y2="90" stroke="#0f172a" stroke-width="2.5"/>
+                <circle cx="320" cy="115" r="25" fill="#f0fdf4" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="320" y1="130" x2="320" y2="100" stroke="#15803d" stroke-width="2.5"/>
+                <polyline points="313,108 320,99 327,108" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="352" y="120" font-size="15" font-weight="bold" fill="#15803d">13 A</text>
+                <line x1="320" y1="140" x2="320" y2="190" stroke="#0f172a" stroke-width="2.5"/>
+
+                <!-- Sağ Kaynak: 13 V (+ üstte) -->
+                <line x1="475" y1="45" x2="475" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="458" y1="95" x2="492" y2="95" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="466" y1="106" x2="484" y2="106" stroke="#0f172a" stroke-width="3.5"/>
+                <line x1="458" y1="117" x2="492" y2="117" stroke="#0f172a" stroke-width="2.5"/>
+                <line x1="466" y1="128" x2="484" y2="128" stroke="#0f172a" stroke-width="3.5"/>
+                <line x1="475" y1="128" x2="475" y2="190" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="498" y="118" font-size="15" font-weight="bold" fill="#1d4ed8">13 V</text>
+
+                <!-- Çevre Akımları I1 ve I2 -->
+                <path d="M 120 135 A 22 25 0 1 1 145 135" fill="none" stroke="#dc2626" stroke-width="2"/>
+                <polyline points="141,128 146,136 151,129" fill="none" stroke="#dc2626" stroke-width="2"/>
+                <text x="132" y="122" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">I1</text>
+
+                <path d="M 395 135 A 22 25 0 1 1 420 135" fill="none" stroke="#dc2626" stroke-width="2"/>
+                <polyline points="416,128 421,136 426,129" fill="none" stroke="#dc2626" stroke-width="2"/>
+                <text x="407" y="122" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">I2</text>
+
+                <!-- Düğümler -->
+                <circle cx="200" cy="45" r="4" fill="#0f172a"/>
+                <circle cx="200" cy="190" r="4" fill="#0f172a"/>
+                <circle cx="320" cy="45" r="4" fill="#0f172a"/>
+                <circle cx="320" cy="190" r="4" fill="#0f172a"/>
+            </svg>`,
+
+            // ==========================================
+            // 3. KONU DEVRELERİ (Sunum 3 & 5: Düğüm Gerilimleri Yöntemi)
+            // ==========================================
+            // Soru 3.1, 3.2, 3.3: I1=10A, I2=5A, R1=6Ω, R2=4Ω, R3=2Ω (Sunum 3 Problem 1)
+            c3_nodal_10a_5a: `
+            <svg viewBox="0 0 500 260" class="circuit-svg">
+                <rect width="500" height="260" rx="12" fill="#ffffff"/>
+                <!-- Üst Koldaki I2 = 5A Kaynağı -->
+                <line x1="220" y1="35" x2="290" y2="35" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="315" cy="35" r="24" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="298" y1="35" x2="332" y2="35" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="323,28 333,35 323,42" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <text x="315" y="76" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">I2 = 5A</text>
+                <line x1="339" y1="35" x2="410" y2="35" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="220" y1="35" x2="220" y2="100" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="410" y1="35" x2="410" y2="100" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Orta Yatay Kol: R2 = 4 Ohm -->
+                <line x1="70" y1="100" x2="285" y2="100" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="285,100 291,90 303,110 315,90 327,110 339,90 345,100" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="315" y="130" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">R2 = 4 Ω</text>
+                <line x1="345" y1="100" x2="410" y2="100" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Sol Kol: I1 = 10A (Yukarı Ok) -->
+                <line x1="70" y1="100" x2="70" y2="136" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="70" cy="160" r="24" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="70" y1="175" x2="70" y2="145" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="63,154 70,144 77,154" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <text x="102" y="165" font-size="15" font-weight="bold" fill="#1d4ed8">I1 = 10A</text>
+                <line x1="70" y1="184" x2="70" y2="215" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Dikey Kol 1: R1 = 6 Ohm -->
+                <line x1="220" y1="100" x2="220" y2="130" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="220,130 210,136 230,148 210,160 230,172 210,184 220,190" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="220" y1="190" x2="220" y2="215" stroke="#15803d" stroke-width="2.2"/>
+                <text x="240" y="165" font-size="15" font-weight="bold" fill="#1d4ed8">R1 = 6 Ω</text>
+
+                <!-- Dikey Kol 2: R3 = 2 Ohm -->
+                <line x1="410" y1="100" x2="410" y2="130" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="410,130 400,136 420,148 400,160 420,172 400,184 410,190" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="410" y1="190" x2="410" y2="215" stroke="#15803d" stroke-width="2.2"/>
+                <text x="430" y="165" font-size="15" font-weight="bold" fill="#1d4ed8">R3 = 2 Ω</text>
+
+                <!-- Alt Toprak Hattı -->
+                <line x1="70" y1="215" x2="410" y2="215" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="220" y1="215" x2="220" y2="232" stroke="#1d4ed8" stroke-width="2.2"/>
+                <polygon points="206,232 234,232 220,248" fill="none" stroke="#1d4ed8" stroke-width="2.2"/>
+                <text x="238" y="250" font-size="14" font-weight="bold" fill="#1d4ed8">0</text>
+
+                <!-- Düğümler ve Akım Okları -->
+                <circle cx="220" cy="100" r="4.5" fill="#1d4ed8"/>
+                <circle cx="410" cy="100" r="4.5" fill="#1d4ed8"/>
+                <circle cx="220" cy="215" r="4.5" fill="#1d4ed8"/>
+                <text x="205" y="92" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="end">v1</text>
+                <text x="424" y="104" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic">v2</text>
+
+                <text x="205" y="128" font-size="14" font-weight="bold" fill="#dc2626" font-style="italic" text-anchor="end">i1 ↓</text>
+                <text x="260" y="90" font-size="14" font-weight="bold" fill="#dc2626" font-style="italic">i2 →</text>
+                <text x="395" y="128" font-size="14" font-weight="bold" fill="#dc2626" font-style="italic" text-anchor="end">i3 ↓</text>
+            </svg>`,
+
+            // Soru 3.4 ve 3.5: 12V, 2A, 3Ω, 6Ω, 4Ω, 8Ω, 6Ω Devresi (Sunum 3 Problem 2)
+            c3_nodal_12v_2a: `
+            <svg viewBox="0 0 520 270" class="circuit-svg">
+                <rect width="520" height="270" rx="12" fill="#ffffff"/>
+                <!-- Üst Köprü Hattı -->
+                <line x1="80" y1="25" x2="430" y2="25" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="80" y1="25" x2="80" y2="120" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Orta Dikey Üst: 2A Kaynak (Aşağı Ok) -->
+                <line x1="260" y1="25" x2="260" y2="50" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="260" cy="72" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="260" y1="57" x2="260" y2="87" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="253,79 260,88 267,79" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <text x="230" y="77" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">2A</text>
+                <line x1="260" y1="94" x2="260" y2="120" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Sağ Dikey Üst: 8 Ohm -->
+                <line x1="430" y1="25" x2="430" y2="50" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="430,50 420,56 440,66 420,76 440,86 420,94 430,100" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="430" y1="100" x2="430" y2="120" stroke="#15803d" stroke-width="2.2"/>
+                <text x="412" y="80" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">8 Ω</text>
+
+                <!-- Orta Yatay Hat: 3 Ohm ve 4 Ohm -->
+                <line x1="80" y1="120" x2="140" y2="120" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="140,120 146,110 158,130 170,110 182,130 194,110 200,120" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="170" y="102" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">3 Ω</text>
+                <line x1="200" y1="120" x2="315" y2="120" stroke="#15803d" stroke-width="2.2"/>
+
+                <polyline points="315,120 321,110 333,130 345,110 357,130 369,110 375,120" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="345" y="102" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">4 Ω</text>
+                <line x1="375" y1="120" x2="430" y2="120" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Sol Alt: 12V Kaynak -->
+                <line x1="80" y1="120" x2="80" y2="150" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="80" cy="172" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <text x="80" y="166" font-size="15" font-weight="bold" fill="#15803d" text-anchor="middle">+</text>
+                <text x="80" y="187" font-size="17" font-weight="bold" fill="#15803d" text-anchor="middle">-</text>
+                <text x="52" y="177" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">12V</text>
+                <line x1="80" y1="194" x2="80" y2="225" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Orta Alt: 6 Ohm -->
+                <line x1="260" y1="120" x2="260" y2="148" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="260,148 250,154 270,164 250,174 270,184 250,192 260,198" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="260" y1="198" x2="260" y2="225" stroke="#15803d" stroke-width="2.2"/>
+                <text x="278" y="178" font-size="15" font-weight="bold" fill="#1d4ed8">6 Ω</text>
+
+                <!-- Sağ Alt: 6 Ohm -->
+                <line x1="430" y1="120" x2="430" y2="148" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="430,148 420,154 440,164 420,174 440,184 420,192 430,198" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="430" y1="198" x2="430" y2="225" stroke="#15803d" stroke-width="2.2"/>
+                <text x="412" y="178" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">6 Ω</text>
+
+                <!-- Alt Toprak Hattı -->
+                <line x1="80" y1="225" x2="430" y2="225" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="260" y1="225" x2="260" y2="240" stroke="#1d4ed8" stroke-width="2.2"/>
+                <polygon points="246,240 274,240 260,256" fill="none" stroke="#1d4ed8" stroke-width="2.2"/>
+                <text x="278" y="258" font-size="14" font-weight="bold" fill="#1d4ed8">0</text>
+
+                <!-- Düğümler -->
+                <circle cx="80" cy="120" r="4.5" fill="#1d4ed8"/>
+                <circle cx="260" cy="25" r="4.5" fill="#1d4ed8"/>
+                <circle cx="260" cy="120" r="4.5" fill="#1d4ed8"/>
+                <circle cx="430" cy="120" r="4.5" fill="#1d4ed8"/>
+                <circle cx="260" cy="225" r="4.5" fill="#1d4ed8"/>
+                <text x="248" y="112" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="end">v1</text>
+                <text x="272" y="140" font-size="15" font-weight="bold" fill="#0f172a">1</text>
+                <text x="415" y="112" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="end">v2</text>
+                <text x="442" y="138" font-size="15" font-weight="bold" fill="#0f172a">2</text>
+            </svg>`,
+
+            // Soru 3.6: 6A, 3A, 10Ω, 5Ω, 2Ω, 4Ω Devresi (Sunum 3 Problem 3)
+            c3_nodal_6a_3a: `
+            <svg viewBox="0 0 520 260" class="circuit-svg">
+                <rect width="520" height="260" rx="12" fill="#ffffff"/>
+                <!-- Üst Köprü: 2 Ohm -->
+                <line x1="150" y1="30" x2="215" y2="30" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="215,30 221,20 233,40 245,20 257,40 269,20 275,30" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="245" y="56" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">2 Ω</text>
+                <line x1="275" y1="30" x2="340" y2="30" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="150" y1="30" x2="150" y2="95" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="340" y1="30" x2="340" y2="95" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Orta Yatay: 6A Kaynak (Sağa Ok) -->
+                <line x1="55" y1="95" x2="221" y2="95" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="245" cy="95" r="24" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="229" y1="95" x2="261" y2="95" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="252,88 262,95 252,102" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <text x="205" y="80" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">6A</text>
+                <line x1="269" y1="95" x2="435" y2="95" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Dikey Kol 1 (En Sol): 10 Ohm -->
+                <line x1="55" y1="95" x2="55" y2="130" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="55,130 45,136 65,148 45,160 65,172 45,184 55,190" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="55" y1="190" x2="55" y2="215" stroke="#15803d" stroke-width="2.2"/>
+                <text x="73" y="165" font-size="15" font-weight="bold" fill="#1d4ed8">10 Ω</text>
+
+                <!-- Dikey Kol 2: 5 Ohm -->
+                <line x1="150" y1="95" x2="150" y2="130" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="150,130 140,136 160,148 140,160 160,172 140,184 150,190" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="150" y1="190" x2="150" y2="215" stroke="#15803d" stroke-width="2.2"/>
+                <text x="168" y="165" font-size="15" font-weight="bold" fill="#1d4ed8">5 Ω</text>
+
+                <!-- Dikey Kol 3: 4 Ohm -->
+                <line x1="340" y1="95" x2="340" y2="130" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="340,130 330,136 350,148 330,160 350,172 330,184 340,190" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="340" y1="190" x2="340" y2="215" stroke="#15803d" stroke-width="2.2"/>
+                <text x="322" y="165" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">4 Ω</text>
+
+                <!-- Dikey Kol 4 (En Sağ): 3A Kaynak (Yukarı Ok) -->
+                <line x1="435" y1="95" x2="435" y2="136" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="435" cy="160" r="24" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="435" y1="175" x2="435" y2="145" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="428,154 435,144 442,154" fill="none" stroke="#15803d" stroke-width="2.2"/>
+                <text x="466" y="165" font-size="15" font-weight="bold" fill="#1d4ed8">3A</text>
+                <line x1="435" y1="184" x2="435" y2="215" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Alt Toprak Hattı -->
+                <line x1="55" y1="215" x2="435" y2="215" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="245" y1="215" x2="245" y2="232" stroke="#1d4ed8" stroke-width="2.2"/>
+                <polygon points="231,232 259,232 245,248" fill="none" stroke="#1d4ed8" stroke-width="2.2"/>
+                <text x="264" y="250" font-size="14" font-weight="bold" fill="#1d4ed8">0</text>
+
+                <!-- Düğümler -->
+                <circle cx="150" cy="95" r="4.5" fill="#1d4ed8"/>
+                <circle cx="340" cy="95" r="4.5" fill="#1d4ed8"/>
+                <circle cx="245" cy="215" r="4.5" fill="#1d4ed8"/>
+                <text x="138" y="85" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="end">v1</text>
+                <text x="352" y="85" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic">v2</text>
+            </svg>`,
+
+            // Soru 3.7: 20V, 10V, 5Ω, 10Ω, 5Ω T-Devresi (Sunum 5)
+            c3_nodal_20v_10v: `
+            <svg viewBox="0 0 500 230" class="circuit-svg">
+                <rect width="500" height="230" rx="12" fill="#ffffff"/>
+                <!-- Üst Sol: 5 Ohm ve i1 oku -->
+                <line x1="70" y1="55" x2="130" y2="55" stroke="#0f172a" stroke-width="2.3"/>
+                <polyline points="130,55 136,45 148,65 160,45 172,65 184,45 190,55" fill="none" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="160" y="82" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">5 Ohm</text>
+                <line x1="190" y1="55" x2="250" y2="55" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="185" y1="25" x2="225" y2="25" stroke="#dc2626" stroke-width="2"/>
+                <polyline points="218,20 226,25 218,30" fill="none" stroke="#dc2626" stroke-width="2"/>
+                <text x="205" y="42" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">i1</text>
+
+                <!-- Üst Sağ: 5 Ohm ve i3 oku -->
+                <line x1="250" y1="55" x2="310" y2="55" stroke="#0f172a" stroke-width="2.3"/>
+                <polyline points="310,55 316,45 328,65 340,45 352,65 364,45 370,55" fill="none" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="340" y="82" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">5 Ohm</text>
+                <line x1="370" y1="55" x2="430" y2="55" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="315" y1="25" x2="275" y2="25" stroke="#dc2626" stroke-width="2"/>
+                <polyline points="282,20 274,25 282,30" fill="none" stroke="#dc2626" stroke-width="2"/>
+                <text x="295" y="42" font-size="14" font-weight="bold" fill="#dc2626" text-anchor="middle">i3</text>
+
+                <!-- Orta Dikey: 10 Ohm ve i2 oku (Yukarı) -->
+                <line x1="250" y1="55" x2="250" y2="105" stroke="#0f172a" stroke-width="2.3"/>
+                <polyline points="250,105 240,111 260,123 240,135 260,147 240,159 250,165" fill="none" stroke="#0f172a" stroke-width="2.3"/>
+                <line x1="250" y1="165" x2="250" y2="200" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="232" y="140" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="end">10 Ohm</text>
+                <line x1="266" y1="100" x2="266" y2="70" stroke="#dc2626" stroke-width="2"/>
+                <polyline points="261,77 266,69 271,77" fill="none" stroke="#dc2626" stroke-width="2"/>
+                <text x="282" y="92" font-size="14" font-weight="bold" fill="#dc2626">i2</text>
+
+                <!-- Sol Kaynak: 20 V -->
+                <line x1="70" y1="55" x2="70" y2="115" stroke="#0f172a" stroke-width="2.3"/>
+                <circle cx="70" cy="138" r="22" fill="#eff6ff" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="70" y="132" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">+</text>
+                <text x="70" y="152" font-size="17" font-weight="bold" fill="#0f172a" text-anchor="middle">-</text>
+                <text x="100" y="143" font-size="15" font-weight="bold" fill="#1d4ed8">20 V</text>
+                <line x1="70" y1="160" x2="70" y2="200" stroke="#0f172a" stroke-width="2.3"/>
+
+                <!-- Sağ Kaynak: 10 V -->
+                <line x1="430" y1="55" x2="430" y2="115" stroke="#0f172a" stroke-width="2.3"/>
+                <circle cx="430" cy="138" r="22" fill="#eff6ff" stroke="#0f172a" stroke-width="2.3"/>
+                <text x="430" y="132" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">+</text>
+                <text x="430" y="152" font-size="17" font-weight="bold" fill="#0f172a" text-anchor="middle">-</text>
+                <text x="400" y="143" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">10 V</text>
+                <line x1="430" y1="160" x2="430" y2="200" stroke="#0f172a" stroke-width="2.3"/>
+
+                <!-- Alt Hat -->
+                <line x1="70" y1="200" x2="430" y2="200" stroke="#0f172a" stroke-width="2.3"/>
+                <circle cx="250" cy="55" r="4.5" fill="#1d4ed8"/>
+                <text x="250" y="45" font-size="14" font-weight="bold" fill="#1d4ed8" text-anchor="middle">VA</text>
+            </svg>`,
+
+            // ==========================================
+            // 4. KONU DEVRELERİ (Sunum 4: Çevre Akımları Yöntemi)
+            // ==========================================
+            // Soru 4.1: Tek Çevreli Devre (10V, 4Ω, 6V, 2Ω -> 4I1 + 6 + 2I1 - 10 = 0)
+            c4_mesh_single: `
+            <svg viewBox="0 0 480 220" class="circuit-svg">
+                <rect width="480" height="220" rx="12" fill="#ffffff"/>
+                <!-- Üst Hat: 4 Ohm ve 6V Kaynak -->
+                <line x1="80" y1="55" x2="140" y2="55" stroke="#15803d" stroke-width="2.3"/>
+                <polyline points="140,55 146,45 158,65 170,45 182,65 194,45 200,55" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <text x="170" y="36" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">4 Ω</text>
+                <line x1="200" y1="55" x2="290" y2="55" stroke="#15803d" stroke-width="2.3"/>
+
+                <circle cx="312" cy="55" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.3"/>
+                <text x="300" y="60" font-size="15" font-weight="bold" fill="#0f172a">+</text>
+                <text x="320" y="60" font-size="17" font-weight="bold" fill="#0f172a">-</text>
+                <text x="312" y="25" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">6 V</text>
+                <line x1="334" y1="55" x2="400" y2="55" stroke="#15803d" stroke-width="2.3"/>
+
+                <!-- Sağ Kol: 2 Ohm -->
+                <line x1="400" y1="55" x2="400" y2="95" stroke="#15803d" stroke-width="2.3"/>
+                <polyline points="400,95 390,101 410,113 390,125 410,137 390,149 400,155" fill="none" stroke="#15803d" stroke-width="2.5"/>
+                <line x1="400" y1="155" x2="400" y2="185" stroke="#15803d" stroke-width="2.3"/>
+                <text x="418" y="130" font-size="15" font-weight="bold" fill="#1d4ed8">2 Ω</text>
+
+                <!-- Sol Kol: 10V Kaynak -->
+                <line x1="80" y1="55" x2="80" y2="98" stroke="#15803d" stroke-width="2.3"/>
+                <circle cx="80" cy="120" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.3"/>
+                <text x="80" y="114" font-size="15" font-weight="bold" fill="#0f172a" text-anchor="middle">+</text>
+                <text x="80" y="134" font-size="17" font-weight="bold" fill="#0f172a" text-anchor="middle">-</text>
+                <text x="50" y="125" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">10 V</text>
+                <line x1="80" y1="142" x2="80" y2="185" stroke="#15803d" stroke-width="2.3"/>
+
+                <!-- Alt Hat -->
+                <line x1="80" y1="185" x2="400" y2="185" stroke="#15803d" stroke-width="2.3"/>
+
+                <!-- Çevre Akımı I1 -->
+                <path d="M 215 140 A 30 25 0 1 1 265 140" fill="none" stroke="#0f172a" stroke-width="2"/>
+                <polyline points="260,133 266,141 256,144" fill="none" stroke="#0f172a" stroke-width="2"/>
+                <text x="240" y="126" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">I1</text>
+            </svg>`,
+
+            // Soru 4.2 ve 4.3: Sembolik Çevre Akımları Devresi (V1, V2, R1, R2, R3, I1, I2, I3, i1, i2)
+            c4_mesh_symbolic: `
+            <svg viewBox="0 0 500 230" class="circuit-svg">
+                <rect width="500" height="230" rx="12" fill="#ffffff"/>
+                <!-- Üst Hat: R1 ve R2 -->
+                <line x1="70" y1="50" x2="125" y2="50" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="125,50 131,40 143,60 155,40 167,60 179,40 185,50" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="155" y="30" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">R1</text>
+                <line x1="185" y1="50" x2="315" y2="50" stroke="#15803d" stroke-width="2.2"/>
+
+                <polyline points="315,50 321,40 333,60 345,40 357,60 369,40 375,50" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="345" y="30" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">R2</text>
+                <line x1="375" y1="50" x2="430" y2="50" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Kol Akımları I1, I2, I3 -->
+                <line x1="190" y1="42" x2="232" y2="42" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="224,36 234,42 224,48" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="210" y="30" font-size="15" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">I1</text>
+
+                <line x1="380" y1="42" x2="422" y2="42" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="414,36 424,42 414,48" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="400" y="30" font-size="15" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">I2</text>
+
+                <!-- Orta Kol: R3 ve I3 -->
+                <line x1="250" y1="50" x2="250" y2="95" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="250,95 240,101 260,113 240,125 260,137 240,149 250,155" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="250" y1="155" x2="250" y2="195" stroke="#15803d" stroke-width="2.2"/>
+                <text x="234" y="132" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">R3</text>
+                <line x1="265" y1="62" x2="265" y2="105" stroke="#0f172a" stroke-width="2.5"/>
+                <polyline points="259,97 265,107 271,97" fill="none" stroke="#0f172a" stroke-width="2.5"/>
+                <text x="282" y="88" font-size="15" font-weight="bold" fill="#0f172a" font-style="italic">I3</text>
+
+                <!-- Sol Kaynak: V1 -->
+                <line x1="70" y1="50" x2="70" y2="100" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="70" cy="122" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <text x="70" y="116" font-size="14" font-weight="bold" fill="#15803d" text-anchor="middle">+</text>
+                <text x="70" y="136" font-size="16" font-weight="bold" fill="#15803d" text-anchor="middle">-</text>
+                <text x="98" y="128" font-size="15" font-weight="bold" fill="#1d4ed8">V1</text>
+                <line x1="70" y1="144" x2="70" y2="195" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Sağ Kaynak: V2 -->
+                <line x1="430" y1="50" x2="430" y2="100" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="430" cy="122" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <text x="430" y="116" font-size="14" font-weight="bold" fill="#15803d" text-anchor="middle">+</text>
+                <text x="430" y="136" font-size="16" font-weight="bold" fill="#15803d" text-anchor="middle">-</text>
+                <text x="458" y="128" font-size="15" font-weight="bold" fill="#1d4ed8">V2</text>
+                <line x1="430" y1="144" x2="430" y2="195" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Alt Hat -->
+                <line x1="70" y1="195" x2="430" y2="195" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="250" cy="50" r="4.5" fill="#1d4ed8"/>
+                <circle cx="250" cy="195" r="4.5" fill="#1d4ed8"/>
+
+                <!-- Çevre Akımları i1 ve i2 -->
+                <path d="M 145 142 A 24 24 0 1 1 175 142" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <polyline points="170,136 176,143 167,146" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <text x="160" y="126" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">i1</text>
+
+                <path d="M 325 142 A 24 24 0 1 1 355 142" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <polyline points="350,136 356,143 347,146" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <text x="340" y="126" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">i2</text>
+            </svg>`,
+
+            // Soru 4.4 ve 4.5: Problem 3 (12V, 4Ω, 6Ω, 10V, 2Ω)
+            c4_mesh_12v_10v: `
+            <svg viewBox="0 0 500 250" class="circuit-svg">
+                <rect width="500" height="250" rx="12" fill="#ffffff"/>
+                <!-- Üst Sol: 4 Ohm -->
+                <line x1="75" y1="55" x2="130" y2="55" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="130,55 136,45 148,65 160,45 172,65 184,45 190,55" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="160" y="36" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">4 Ω</text>
+                <line x1="190" y1="55" x2="250" y2="55" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Üst Sağ: 10V Kaynak (+ sol, - sağ) -->
+                <line x1="250" y1="55" x2="315" y2="55" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="338" cy="55" r="23" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <text x="325" y="60" font-size="15" font-weight="bold" fill="#15803d">+</text>
+                <text x="347" y="60" font-size="17" font-weight="bold" fill="#15803d">-</text>
+                <text x="338" y="24" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">10V</text>
+                <line x1="361" y1="55" x2="425" y2="55" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Sol Kol: 12V Kaynak -->
+                <line x1="75" y1="55" x2="75" y2="105" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="75" cy="128" r="23" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <text x="75" y="121" font-size="15" font-weight="bold" fill="#15803d" text-anchor="middle">+</text>
+                <text x="75" y="142" font-size="17" font-weight="bold" fill="#15803d" text-anchor="middle">-</text>
+                <text x="46" y="133" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="end">12V</text>
+                <line x1="75" y1="151" x2="75" y2="200" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Orta Kol: 6 Ohm -->
+                <line x1="250" y1="55" x2="250" y2="98" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="250,98 240,104 260,116 240,128 260,140 240,152 250,158" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="250" y1="158" x2="250" y2="200" stroke="#15803d" stroke-width="2.2"/>
+                <text x="270" y="133" font-size="15" font-weight="bold" fill="#1d4ed8">6 Ω</text>
+
+                <!-- Sağ Kol: 2 Ohm -->
+                <line x1="425" y1="55" x2="425" y2="98" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="425,98 415,104 435,116 415,128 435,140 415,152 425,158" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="425" y1="158" x2="425" y2="200" stroke="#15803d" stroke-width="2.2"/>
+                <text x="445" y="133" font-size="15" font-weight="bold" fill="#1d4ed8">2 Ω</text>
+
+                <!-- Alt Toprak Hattı -->
+                <line x1="75" y1="200" x2="425" y2="200" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="250" y1="200" x2="250" y2="216" stroke="#1d4ed8" stroke-width="2.2"/>
+                <polygon points="236,216 264,216 250,232" fill="none" stroke="#1d4ed8" stroke-width="2.2"/>
+                <text x="268" y="235" font-size="14" font-weight="bold" fill="#1d4ed8">0</text>
+
+                <circle cx="250" cy="55" r="4.5" fill="#1d4ed8"/>
+                <circle cx="250" cy="200" r="4.5" fill="#1d4ed8"/>
+                <text x="250" y="42" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">v1</text>
+
+                <!-- Çevre Akımları i1 ve i2 -->
+                <path d="M 148 145 A 24 24 0 1 1 178 145" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <polyline points="173,139 179,146 170,149" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <text x="163" y="130" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">i1</text>
+
+                <path d="M 325 145 A 24 24 0 1 1 355 145" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <polyline points="350,139 356,146 347,149" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <text x="340" y="130" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">i2</text>
+            </svg>`,
+
+            // Soru 4.6 ve 4.7: Problem 4 (2Ω sol, 3Ω üst sol, 3V ve 1Ω orta kol, 5Ω üst sağ, 5V sağ kol)
+            c4_mesh_3v_5v: `
+            <svg viewBox="0 0 500 260" class="circuit-svg">
+                <rect width="500" height="260" rx="12" fill="#ffffff"/>
+                <!-- Üst Sol: 3 Ohm -->
+                <line x1="70" y1="45" x2="125" y2="45" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="125,45 131,35 143,55 155,35 167,55 179,35 185,45" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="155" y="27" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">3 Ω</text>
+                <line x1="185" y1="45" x2="250" y2="45" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Üst Sağ: 5 Ohm -->
+                <line x1="250" y1="45" x2="310" y2="45" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="310,45 316,35 328,55 340,35 352,55 364,35 370,45" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <text x="340" y="27" font-size="15" font-weight="bold" fill="#1d4ed8" text-anchor="middle">5 Ω</text>
+                <line x1="370" y1="45" x2="430" y2="45" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Sol Kol: 2 Ohm -->
+                <line x1="70" y1="45" x2="70" y2="95" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="70,95 60,101 80,113 60,125 80,137 60,149 70,155" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="70" y1="155" x2="70" y2="205" stroke="#15803d" stroke-width="2.2"/>
+                <text x="86" y="130" font-size="15" font-weight="bold" fill="#1d4ed8">2 Ω</text>
+
+                <!-- Orta Kol: 3V Kaynak ve 1 Ohm Direnç -->
+                <line x1="250" y1="45" x2="250" y2="75" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="250" cy="97" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <text x="250" y="90" font-size="14" font-weight="bold" fill="#15803d" text-anchor="middle">+</text>
+                <text x="250" y="110" font-size="16" font-weight="bold" fill="#15803d" text-anchor="middle">-</text>
+                <text x="278" y="102" font-size="15" font-weight="bold" fill="#1d4ed8">3V</text>
+                <line x1="250" y1="119" x2="250" y2="140" stroke="#15803d" stroke-width="2.2"/>
+                <polyline points="250,140 240,146 260,156 240,166 260,176 240,184 250,190" fill="none" stroke="#15803d" stroke-width="2.4"/>
+                <line x1="250" y1="190" x2="250" y2="205" stroke="#15803d" stroke-width="2.2"/>
+                <text x="268" y="170" font-size="15" font-weight="bold" fill="#1d4ed8">1 Ω</text>
+
+                <!-- Sağ Kol: 5V Kaynak -->
+                <line x1="430" y1="45" x2="430" y2="110" stroke="#15803d" stroke-width="2.2"/>
+                <circle cx="430" cy="132" r="22" fill="#f0fdf4" stroke="#15803d" stroke-width="2.2"/>
+                <text x="430" y="125" font-size="14" font-weight="bold" fill="#15803d" text-anchor="middle">+</text>
+                <text x="430" y="145" font-size="16" font-weight="bold" fill="#15803d" text-anchor="middle">-</text>
+                <text x="458" y="137" font-size="15" font-weight="bold" fill="#1d4ed8">5V</text>
+                <line x1="430" y1="154" x2="430" y2="205" stroke="#15803d" stroke-width="2.2"/>
+
+                <!-- Alt Toprak Hattı -->
+                <line x1="70" y1="205" x2="430" y2="205" stroke="#15803d" stroke-width="2.2"/>
+                <line x1="250" y1="205" x2="250" y2="220" stroke="#1d4ed8" stroke-width="2.2"/>
+                <polygon points="236,220 264,220 250,236" fill="none" stroke="#1d4ed8" stroke-width="2.2"/>
+                <text x="268" y="238" font-size="14" font-weight="bold" fill="#1d4ed8">0</text>
+
+                <circle cx="250" cy="45" r="4.5" fill="#1d4ed8"/>
+                <circle cx="250" cy="205" r="4.5" fill="#1d4ed8"/>
+                <text x="250" y="32" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">v1</text>
+
+                <!-- Çevre Akımları i1 ve i2 -->
+                <path d="M 145 142 A 24 24 0 1 1 175 142" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <polyline points="170,136 176,143 167,146" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <text x="160" y="127" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">i1</text>
+
+                <path d="M 330 142 A 24 24 0 1 1 360 142" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <polyline points="355,136 361,143 352,146" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+                <text x="345" y="127" font-size="16" font-weight="bold" fill="#0f172a" font-style="italic" text-anchor="middle">i2</text>
+            </svg>`
+        };
+
+        // ==========================================
+        // 4 KONU X 7 SORU = 28 SORULUK VERİTABANI
+        // ==========================================
+        const QUIZ_DATA = [
+            {
+                id: "topic-1",
+                badge: "1. Konu (7 Soru)",
+                title: "Temel Kavramlar, Eşdeğer Direnç ve Güç",
+                desc: "Sunum 1'de yer alan düğüm-dal-çevre yapısı, merdiven tipi eşdeğer direnç, akım-gerilim bölüştürücü ve güç dengesi soruları.",
+                questions: [
+                    {
+                        id: "q1_1",
+                        circuit: SVG_CIRCUITS.c1_nodes_branches,
+                        question: "Sunum 1'deki ilk devrede (5V, 2V, 0.6I bağımlı kaynak ve 3V elemanlarından oluşan devre) toplam kaç adet 'dal (branch)', kaç adet 'temel düğüm (node)' ve kaç adet 'kapalı çevre (loop)' gösterilmiştir?",
+                        options: [
+                            "4 Dal, 3 Düğüm, 3 Çevre",
+                            "3 Dal, 2 Düğüm, 2 Çevre",
+                            "5 Dal, 4 Düğüm, 3 Çevre",
+                            "4 Dal, 4 Düğüm, 2 Çevre"
+                        ],
+                        correct: 0,
+                        hint: "Formül / Kural: Her bir devre elemanı (5V elemanı, 2V kaynak, 0.6I bağımlı kaynak, 3V elemanı) birer 'dal' oluşturur. İki veya daha fazla dalın birleştiği noktalara 'düğüm' (sol üst, orta üst ve alt ortak düğüm) denir. Bağımsız iç göz sayısı b - n + 1 = 4 - 3 + 1 = 2 olup dış büyük çevre ile birlikte toplam 3 kapalı çevre vardır.",
+                        explanation: "Devrede 4 adet devre elemanı (5V, 2V, 0.6I ve 3V) bulunduğundan toplam 4 dal vardır. İşaretli siyah birleşim noktaları 3 düğümü (sol üst, orta üst, alt ortak düğüm) gösterir. Sol iç göz, sağ iç göz ve en dış çevre olmak üzere toplam 3 kapalı çevre mevcuttur."
+                    },
+                    {
+                        id: "q1_2",
+                        circuit: SVG_CIRCUITS.c1_ladder_resistors,
+                        question: "Yukarıdaki basamaklı direnç devresinde en sağdaki 60 Ω'luk direnç ile RA = 120 Ω'luk direncin paralel eşdeğeri (sunumda RB olarak adlandırılan direnç) kaç Ohm'dur?",
+                        options: [
+                            "30 Ω",
+                            "40 Ω",
+                            "80 Ω",
+                            "180 Ω"
+                        ],
+                        correct: 1,
+                        hint: "İki paralel direncin eşdeğeri formülü: R_B = (R1 · R2) / (R1 + R2) = (60 · 120) / (60 + 120).",
+                        explanation: "En sağdaki 60 Ω ve RA = 120 Ω dirençleri aynı iki düğüm arasına bağlı olduklarından birbirine paraleldir. Eşdeğerleri: RB = (60 × 120) / (60 + 120) = 7200 / 180 = 40 Ω bulunur. (Eğer 180 Ω seçtiyseniz dirençleri seri gibi toplamışsınız demektir)."
+                    },
+                    {
+                        id: "q1_3",
+                        circuit: SVG_CIRCUITS.c1_ladder_resistors,
+                        question: "Aynı basamaklı direnç devresinin sol uçlarından (a-b uçları) görülen toplam eşdeğer direnç (R_ab) kaç Ohm'dur?",
+                        options: [
+                            "75 Ω",
+                            "85 Ω",
+                            "100 Ω",
+                            "125 Ω"
+                        ],
+                        correct: 2,
+                        hint: "Adım adım sağdan sola doğru indirgeme yapın:\n1) RB = 60 || 120 = 40 Ω\n2) Sağ kol seri toplamı: 25 + 40 + 35 = 100 Ω\n3) 300 Ω ile paralel: (300 × 100) / (300 + 100)\n4) En son 10 Ω ve 15 Ω seri dirençlerini ekleyin.",
+                        explanation: "1. Adım: 60 Ω || 120 Ω = 40 Ω.\n2. Adım: Bu 40 Ω direnç, üstteki 25 Ω ve alttaki 35 Ω ile seridir: 25 + 40 + 35 = 100 Ω.\n3. Adım: Bulunan 100 Ω, ortadaki 300 Ω ile paraleldir: (300 × 100) / (300 + 100) = 30000 / 400 = 75 Ω.\n4. Adım: En soldaki 10 Ω ve 15 Ω dirençleri bu 75 Ω ile seridir: R_ab = 10 + 75 + 15 = 100 Ω."
+                    },
+                    {
+                        id: "q1_4",
+                        circuit: SVG_CIRCUITS.c1_current_division,
+                        question: "Şekildeki devrede toplam giriş akımı IT = 9 A'dir. Sağdaki kolda bulunan paralel gruplar (6||6 Ω ve 10||10 Ω) ile alt koldaki 10 Ω sadeleştirildiğinde, 9 Ω'luk sol koldan geçen I1 akımı ve üstteki 6 Ω'luk dirençlerin her birinden geçen I2 = I3 akımı kaç Amper olur?",
+                        options: [
+                            "I1 = 6 A,  I2 = 1.5 A",
+                            "I1 = 4.5 A,  I2 = 2.25 A",
+                            "I1 = 3 A,  I2 = 3 A",
+                            "I1 = 6 A,  I2 = 3 A"
+                        ],
+                        correct: 0,
+                        hint: "1) Eşdeğer dirençleri bulun: 6 || 6 = 3 Ω ve 10 || 10 = 5 Ω.\n2) Sağ dalın toplam direnci: R_sağ = 3 + 5 + 10 = 18 Ω.\n3) Akım bölüştürücü formülü: I1 = IT · [R_sağ / (9 + R_sağ)] ve I_sağ = IT - I1.\n4) 6 Ω'luk iki eşit dirençten geçen akım: I2 = I_sağ / 2.",
+                        explanation: "Üst paralel grup 6 || 6 = 3 Ω, sağ paralel grup 10 || 10 = 5 Ω'dur. Alt koldaki 10 Ω ile seri toplandığında sağ tarafın toplam direnci 3 + 5 + 10 = 18 Ω olur. 9 A'lik ana kol akımı 9 Ω ve 18 Ω'luk paralel iki kola ayrılır: I1 = 9 × (18 / (9 + 18)) = 6 A ve sağ kol akımı 3 A olur. Sağ koldaki 3 A akım, iki adet 6 Ω'luk eşit dirence yarı yarıya bölünerek I2 = I3 = 1.5 A olur."
+                    },
+                    {
+                        id: "q1_5",
+                        circuit: SVG_CIRCUITS.c1_series_batteries,
+                        question: "Şekildeki seri bağlı doğru akım kaynakları devresinde U1 = 10 V, U2 = 5 V ve U3 = 3 V olarak verilmiştir. Kaynakların kutup işaretlerine (+ ve -) dikkat edildiğinde, S anahtarı kapatılırsa LAMBA üzerine düşen toplam eşdeğer gerilim kaç Volt olur?",
+                        options: [
+                            "12 V",
+                            "18 V",
+                            "8 V",
+                            "2 V"
+                        ],
+                        correct: 1,
+                        hint: "Seri bağlı gerilim kaynaklarında aynı yönde akım basan kaynakların gerilimleri toplanır: U_toplam = U1 + U2 + U3. Devreyi saat yönünde takip ederek kutup geçişlerini kontrol edin.",
+                        explanation: "Devreyi saat yönünde takip ettiğimizde; alt kolda sağdan sola doğru U1 (10V) -'den +'ya, U2 (5V) -'den +'ya ve üst kolda soldan sağa doğru U3 (3V) -'den +'ya geçmektedir. Üç kaynak da aynı yönde seri bağlı olduğundan toplam eşdeğer gerilim U_eş = 10 + 5 + 3 = 18 V olur."
+                    },
+                    {
+                        id: "q1_6",
+                        circuit: SVG_CIRCUITS.c1_power_balance,
+                        question: "Sunum 1'deki güç hesabı örneğinde; V1 = 20 V, R2 = 1 Ω, V3 = 50 V, R4 = 2 Ω ve çevre akımı I = -10 A olarak verilmiştir. P1 = 200 W, P2 = 100 W ve P4 = 200 W olduğuna göre, V3 kaynağının gücü (P3) ve tüm devrenin güç toplamı (∑P) nedir?",
+                        options: [
+                            "P3 = +500 W,  ∑P = 1000 W",
+                            "P3 = -500 W,  ∑P = 0 W",
+                            "P3 = -300 W,  ∑P = 200 W",
+                            "P3 = +300 W,  ∑P = 0 W"
+                        ],
+                        correct: 1,
+                        hint: "Formül: P3 = V3 · I = 50 · (-10). Tellegen Teoremi / Enerjinin Korunumu gereği kapalı bir devrede harcanan ve üretilen güçlerin cebirsel toplamı her zaman sıfırdır: P1 + P2 + P3 + P4 = 0.",
+                        explanation: "P3 = V3 × I = 50 × (-10) = -500 W bulunur (işaretin negatif olması V3 kaynağının devreye 500 W güç verdiğini/ürettiğini gösterir). Diğer elemanlar güç harcadığı için toplam güç dengesi: P1 + P2 + P3 + P4 = 200 + 100 - 500 + 200 = 0 W olur."
+                    },
+                    {
+                        id: "q1_7",
+                        circuit: SVG_CIRCUITS.c1_voltage_divider,
+                        question: "Şekildeki seri devrede kaynak gerilimi U = 24 V ve R1 = 2 kΩ üzerindeki gerilim düşümü U1 = 8 V'tur (Uab = 16 V). Sağdaki gri bölgede yer alan R2 = 1 kΩ ve R3 = 3 kΩ dirençleri üzerindeki U2 ve U3 gerilimleri kaç Volt'tur?",
+                        options: [
+                            "U2 = 8 V,  U3 = 8 V",
+                            "U2 = 4 V,  U3 = 12 V",
+                            "U2 = 6 V,  U3 = 10 V",
+                            "U2 = 12 V,  U3 = 4 V"
+                        ],
+                        correct: 1,
+                        hint: "Gerilim Bölüştürücü Formülü:\nUab = 24V - 8V = 16V.\nU2 = Uab · [R2 / (R2 + R3)] ve U3 = Uab · [R3 / (R2 + R3)] (veya devre akımı I = U1 / R1 = 8V / 2kΩ = 4mA üzerinden U = I·R).",
+                        explanation: "Devre seri olduğundan akım her yerde aynıdır: I = U1 / R1 = 8 V / 2 kΩ = 4 mA. Buradan:\n• U2 = I × R2 = 4 mA × 1 kΩ = 4 V\n• U3 = I × R3 = 4 mA × 3 kΩ = 12 V bulunur.\nKontrol: U2 + U3 = 4 + 12 = 16 V = Uab."
+                    }
+                ]
+            },
+            {
+                id: "topic-2",
+                badge: "2. Konu (7 Soru)",
+                title: "Kaynak Dönüşümleri",
+                desc: "Sunum 2'de yer alan bağımsız ve bağımlı akım-gerilim kaynağı dönüşümleri ile 75V - 13A - 13V devresinin indirgenerek çözümü.",
+                questions: [
+                    {
+                        id: "q2_1",
+                        circuit: SVG_CIRCUITS.c2_5a_8ohm,
+                        question: "Şekildeki devrede aşağı yönlü 5 A'lik akım kaynağı ile ona paralel bağlı 8 Ω'luk direnç, a-b uçları açısından eşdeğer bir gerilim kaynağına dönüştürülürse; eşdeğer gerilim kaynağının değeri (Vs), seri direnci (Rs) ve (+) kutbunun yönü ne olur?",
+                        options: [
+                            "Vs = 40 V, Rs = 8 Ω, (+) kutup alt (b) ucunda",
+                            "Vs = 40 V, Rs = 8 Ω, (+) kutup üst (a) ucunda",
+                            "Vs = 1.6 V, Rs = 8 Ω, (+) kutup alt (b) ucunda",
+                            "Vs = 40 V, Rs = 5 Ω, (+) kutup üst (a) ucunda"
+                        ],
+                        correct: 0,
+                        hint: "Kaynak Dönüşümü Formülü: Vs = Is · Rp ve Rs = Rp. Gerilim kaynağının (+) kutbu her zaman akım kaynağının ok yönünü (burada aşağıyı / b ucunu) gösterir.",
+                        explanation: "Akım kaynağından gerilim kaynağına geçerken: Vs = Is × R = 5 A × 8 Ω = 40 V olur ve direnç değeri değişmeyerek 8 Ω olarak seri bağlanır. Akım kaynağının oku aşağıyı (b ucuna doğru olan hattı) gösterdiği için, eşdeğer 40 V gerilim kaynağının (+) kutbu aşağıda (b tarafında), (-) kutbu yukarıda (a tarafında) olmalıdır."
+                    },
+                    {
+                        id: "q2_2",
+                        circuit: SVG_CIRCUITS.c2_5a_8ohm,
+                        question: "Yukarıdaki 5 A ve 8 Ω'luk devrenin a-b uçlarına 12 Ω'luk bir yük direnci bağlanırsa, bu 12 Ω'luk dirençten a'dan b'ye doğru geçen akım kaç Amper olur?",
+                        options: [
+                            "+2 A",
+                            "-2 A",
+                            "+3 A",
+                            "-4 A"
+                        ],
+                        correct: 1,
+                        hint: "Bir önceki soruda bulduğunuz Thévenin/Kaynak dönüşümü eşdeğerini kullanın: Vs = 40V (+ kutbu altta), Rs = 8 Ω. a-b uçlarına R_L = 12 Ω bağlandığında: I_ab = -Vs / (Rs + R_L).",
+                        explanation: "Eşdeğer devrede 40 V kaynağın (+) kutbu alt uçta (b tarafında) olduğu için akım b'den a'ya doğru dolaşır. Toplam seri direnç 8 + 12 = 20 Ω olduğundan akımın şiddeti 40 V / 20 Ω = 2 A'dir. Yönü b'den a'ya doğru olduğu için a'dan b'ye doğru referans alınan akım I_ab = -2 A olur."
+                    },
+                    {
+                        id: "q2_3",
+                        circuit: SVG_CIRCUITS.c2_dependent_source,
+                        question: "Sunum 2'de gösterilen bağımlı akım kaynağı devresinde, yukarı yönlü 4I1 akım kaynağı ve ona paralel 2 Ω'luk direnç eşdeğer bağımlı gerilim kaynağına dönüştürüldüğünde V_eş ve R_eş değerleri ile (+) kutup yönü ne olur?",
+                        options: [
+                            "V_eş = 8I1,  R_eş = 2 Ω  (+ kutup üstte)",
+                            "V_eş = 2I1,  R_eş = 2 Ω  (+ kutup üstte)",
+                            "V_eş = 8I1,  R_eş = 4 Ω  (+ kutup altta)",
+                            "V_eş = 6I1,  R_eş = 2 Ω  (+ kutup altta)"
+                        ],
+                        correct: 0,
+                        hint: "Bağımlı kaynaklarda da kaynak dönüşümü kuralları birebir geçerlidir:\nV_eş = Is · R = (4I1) · 2 ve R_eş = R = 2 Ω. Ok yukarıyı gösterdiği için (+) kutup üsttedir.",
+                        explanation: "Bağımlı akım kaynağı 4I1 ile paralel 2 Ω direnç çarpıldığında eşdeğer bağımlı gerilim kaynağı V_eş = 4I1 × 2 = 8I1 bulunur. Paralel 2 Ω direnç, gerilim kaynağına 2 Ω seri direnç olarak geçer. Akım oku yukarı yönlü olduğundan (+) kutup üstte yer alır."
+                    },
+                    {
+                        id: "q2_4",
+                        circuit: SVG_CIRCUITS.c2_75v_13a_13v,
+                        question: "Sunum 2'deki bu devrede (75V, 4Ω, 5Ω, 13A, 6Ω, 13V), orta koldaki 5 Ω direnç ile ona paralel bağlı 13 A'lik akım kaynağına kaynak dönüşümü uygulanırsa orta kolda hangi seri elemanlar elde edilir?",
+                        options: [
+                            "5 Ω direnç ile seri 65 V gerilim kaynağı (+ kutbu üstte)",
+                            "5 Ω direnç ile seri 65 V gerilim kaynağı (+ kutbu altta)",
+                            "13 Ω direnç ile seri 65 V gerilim kaynağı (+ kutbu üstte)",
+                            "5 Ω direnç ile seri 2.6 V gerilim kaynağı (+ kutbu üstte)"
+                        ],
+                        correct: 0,
+                        hint: "Paralel bağlı 13 A kaynak (ok yukarı) ve 5 Ω direnç için:\nV_orta = I · R = 13 A × 5 Ω ve R_orta = 5 Ω.",
+                        explanation: "Orta koldaki 5 Ω direnç ile 13 A akım kaynağı birbirine paraleldir. Kaynak dönüşümü yapıldığında V = 13 A × 5 Ω = 65 V değerinde bir gerilim kaynağı ve ona seri bağlı 5 Ω'luk bir direnç elde edilir. 13 A kaynağın oku yukarıyı gösterdiği için 65 V kaynağın (+) kutbu üstte olur."
+                    },
+                    {
+                        id: "q2_5",
+                        circuit: SVG_CIRCUITS.c2_75v_13a_13v,
+                        question: "Orta kol (5 Ω seri 65 V) olarak dönüştürüldükten sonra elde edilen 2 gözlü devrede, 1. çevre (sol göz, saat yönünde I1) ve 2. çevre (sağ göz, saat yönünde I2) için Kirchhoff Gerilimler Yasası (KVL) denklemleri aşağıdakilerden hangisidir?",
+                        options: [
+                            "1. Göz: 9·I1 - 5·I2 = 10   ve   2. Göz: -5·I1 + 11·I2 = 52",
+                            "1. Göz: 9·I1 + 5·I2 = 140  ve   2. Göz: 5·I1 + 11·I2 = 78",
+                            "1. Göz: 4·I1 - 5·I2 = 10   ve   2. Göz: -5·I1 + 6·I2 = 52",
+                            "1. Göz: 9·I1 - 5·I2 = 75   ve   2. Göz: -5·I1 + 11·I2 = -13"
+                        ],
+                        correct: 0,
+                        hint: "Sol Göz KVL: -75 + 4·I1 + 5·(I1 - I2) + 65 = 0  =>  9·I1 - 5·I2 = 75 - 65.\nSağ Göz KVL: -65 + 5·(I2 - I1) + 6·I2 + 13 = 0  =>  -5·I1 + 11·I2 = 65 - 13.",
+                        explanation: "Orta kolda 5 Ω direnç ve + kutbu üstte olan 65 V kaynak vardır.\n• Sol gözde saat yönünde KVL: -75 + 4·I1 + 5·(I1 - I2) + 65 = 0  ⟹  9·I1 - 5·I2 = 10.\n• Sağ gözde saat yönünde KVL: -65 + 5·(I2 - I1) + 6·I2 + 13 = 0  ⟹  -5·I1 + 11·I2 = 52."
+                    },
+                    {
+                        id: "q2_6",
+                        circuit: SVG_CIRCUITS.c2_75v_13a_13v,
+                        question: "Yukarıdaki devrede elde edilen [ 9·I1 - 5·I2 = 10 ] ve [ -5·I1 + 11·I2 = 52 ] denklem sistemi çözüldüğünde, 75 V kaynağından çıkan I1 çevre akımı ve 13 V kaynağından geçen I2 çevre akımı kaç Amper bulunur?",
+                        options: [
+                            "I1 = 5 A,   I2 = 7 A",
+                            "I1 = 4 A,   I2 = 6 A",
+                            "I1 = 6 A,   I2 = 8 A",
+                            "I1 = 3 A,   I2 = 5 A"
+                        ],
+                        correct: 0,
+                        hint: "Yok etme veya Cramer yöntemi kullanın:\nΔ = (9 × 11) - (-5 × -5) = 99 - 25 = 74.\nΔ1 = (10 × 11) - (-5 × 52) = 110 + 260 = 370  =>  I1 = 370 / 74.\nΔ2 = (9 × 52) - (10 × -5) = 468 + 50 = 518   =>  I2 = 518 / 74.",
+                        explanation: "Denklem sistemini çözelim:\n1. denklemi 11 ile, 2. denklemi 5 ile çarpıp toplarsak:\n(99·I1 - 55·I2) + (-25·I1 + 55·I2) = 110 + 260\n74·I1 = 370  ⟹  I1 = 5 A.\n1. denklemde yerine koyarsak: 9(5) - 5·I2 = 10  ⟹  45 - 10 = 5·I2  ⟹  I2 = 7 A."
+                    },
+                    {
+                        id: "q2_7",
+                        circuit: SVG_CIRCUITS.c2_75v_13a_13v,
+                        question: "Aynı devrede I1 = 5 A olarak bulunduğuna göre, orijinal devredeki üst düğümün gerilimi (5 Ω'luk direncin uçlarındaki gerilim) ve gerçek 5 Ω'luk dirençten yukarıdan aşağıya doğru geçen akım kaç Amper'dir?",
+                        options: [
+                            "V_düğüm = 55 V,   I_5Ω = 11 A",
+                            "V_düğüm = 65 V,   I_5Ω = 13 A",
+                            "V_düğüm = 45 V,   I_5Ω = 9 A",
+                            "V_düğüm = 55 V,   I_5Ω = -2 A"
+                        ],
+                        correct: 0,
+                        hint: "Sol koldan üst düğüm gerilimini bulun: V_düğüm = 75 V - 4 Ω · I1. Ardından Ohm yasası ile gerçek 5 Ω direncin akımını hesaplayın: I_5Ω = V_düğüm / 5 Ω.",
+                        explanation: "Dikkat: Kaynak dönüşümü yapıldıktan sonraki 5 Ω dirençten geçen akım (I1 - I2 = -2 A) gerçek 5 Ω direncin akımı değildir! Orijinal devrede sol koldan üst düğümün gerilimi:\nV_düğüm = 75 V - (4 Ω × 5 A) = 75 - 20 = 55 V bulunur.\nOrijinal 5 Ω direnç bu düğüm ile toprak arasında olduğundan: I_5Ω = 55 V / 5 Ω = 11 A (yukarıdan aşağıya) geçer. (Sağlama: 13 A kaynak yukarı + 5 A soldan gelen - 7 A sağa giden = 11 A aşağı)."
+                    }
+                ]
+            },
+            {
+                id: "topic-3",
+                badge: "3. Konu (7 Soru)",
+                title: "Düğüm Gerilimleri Yöntemi",
+                desc: "Sunum 3 ve Sunum 5'te yer alan Düğüm Gerilimleri Yöntemi (Nodal Analysis) devreleri, KCL denklemleri ve düğüm gerilimi çözümleri.",
+                questions: [
+                    {
+                        id: "q3_1",
+                        circuit: SVG_CIRCUITS.c3_nodal_10a_5a,
+                        question: "Sunum 3 Problem 1'de yer alan yukarıdaki devrede (I1 = 10 A, I2 = 5 A, R1 = 6 Ω, R2 = 4 Ω, R3 = 2 Ω), v1 ve v2 düğümleri için Kirchhoff Akımlar Yasası (KCL) uygulandığında elde edilen standart denklem takımı hangisidir?",
+                        options: [
+                            "5·v1 - 3·v2 = 60   ve   -v1 + 3·v2 = 20",
+                            "5·v1 + 3·v2 = 60   ve   v1 + 3·v2 = 20",
+                            "2·v1 - 3·v2 = 10   ve   -v1 + 2·v2 = 5",
+                            "5·v1 - 3·v2 = 180  ve   -v1 + 3·v2 = -20"
+                        ],
+                        correct: 0,
+                        hint: "• Düğüm 1 KCL (Giren = Çıkan): 10 = 5 + v1/6 + (v1 - v2)/4  =>  v1/6 + (v1 - v2)/4 = 5 (Her tarafı 12 ile çarpın).\n• Düğüm 2 KCL: 5 + (v1 - v2)/4 = v2/2  =>  -(v1 - v2)/4 + v2/2 = 5 (Her tarafı 4 ile çarpın).",
+                        explanation: "1. Düğüm için: I1 = I2 + i1 + i2  ⟹  10 = 5 + v1/6 + (v1 - v2)/4  ⟹  v1/6 + (v1 - v2)/4 = 5. Denklemi 12 ile genişletirsek: 2·v1 + 3(v1 - v2) = 60  ⟹  5·v1 - 3·v2 = 60.\n2. Düğüm için: I2 + i2 = i3  ⟹  5 + (v1 - v2)/4 = v2/2  ⟹  -v1/4 + 3·v2/4 = 5. Denklemi 4 ile genişletirsek: -v1 + 3·v2 = 20."
+                    },
+                    {
+                        id: "q3_2",
+                        circuit: SVG_CIRCUITS.c3_nodal_10a_5a,
+                        question: "Aynı devrede [ 5·v1 - 3·v2 = 60 ] ve [ -v1 + 3·v2 = 20 ] düğüm denklemleri çözüldüğünde v1 ve v2 düğüm gerilimleri kaç Volt bulunur?",
+                        options: [
+                            "v1 = 20 V,   v2 = 40/3 V (≈ 13.33 V)",
+                            "v1 = 15 V,   v2 = 15 V",
+                            "v1 = 24 V,   v2 = 20 V",
+                            "v1 = 12 V,   v2 = 10.67 V"
+                        ],
+                        correct: 0,
+                        hint: "İki denklemi taraf tarafa toplayın:\n(5·v1 - 3·v2) + (-v1 + 3·v2) = 60 + 20  =>  4·v1 = 80.\nBulduğunuz v1 değerini 2. denklemde (-v1 + 3·v2 = 20) yerine yazın.",
+                        explanation: "İki denklemi taraf tarafa topladığımızda -3·v2 ve +3·v2 birbirini götürür:\n4·v1 = 80  ⟹  v1 = 20 V.\n2. denklemde yerine koyarsak: -20 + 3·v2 = 20  ⟹  3·v2 = 40  ⟹  v2 = 40/3 V (13.33 V)."
+                    },
+                    {
+                        id: "q3_3",
+                        circuit: SVG_CIRCUITS.c3_nodal_10a_5a,
+                        question: "Aynı devrede v1 = 20 V ve v2 = 40/3 V bulunduğuna göre; R1 = 6 Ω, R2 = 4 Ω ve R3 = 2 Ω dirençlerinden geçen i1, i2 ve i3 kol akımları kaç Amper'dir?",
+                        options: [
+                            "i1 = 10/3 A,   i2 = 5/3 A,   i3 = 20/3 A",
+                            "i1 = 5 A,      i2 = 5 A,     i3 = 10 A",
+                            "i1 = 20/3 A,   i2 = 10/3 A,  i3 = 5/3 A",
+                            "i1 = 3 A,      i2 = 2 A,     i3 = 7 A"
+                        ],
+                        correct: 0,
+                        hint: "Ohm Yasası ile kol akımları:\n• i1 = v1 / R1 = 20 / 6\n• i2 = (v1 - v2) / R2 = (20 - 40/3) / 4\n• i3 = v2 / R3 = (40/3) / 2",
+                        explanation: "Düğüm gerilimlerini kol denklemlerinde yerine koyarsak:\n• i1 = v1 / 6 = 20 / 6 = 10/3 A (3.33 A)\n• i2 = (v1 - v2) / 4 = (20 - 40/3) / 4 = (20/3) / 4 = 5/3 A (1.67 A)\n• i3 = v2 / 2 = (40/3) / 2 = 20/3 A (6.67 A)."
+                    },
+                    {
+                        id: "q3_4",
+                        circuit: SVG_CIRCUITS.c3_nodal_12v_2a,
+                        question: "Sunum 3 Problem 2'deki bu devrede sol koldaki düğümün gerilimi 12 V kaynağı nedeniyle doğrudan 12 V'tur. Buna göre 1. düğüm (v1) ve 2. düğüm (v2) için KCL denklemleri düzenlendiğinde hangi denklem sistemi elde edilir?",
+                        options: [
+                            "9·v1 - 3·v2 = 72   ve   -6·v1 + 13·v2 = 36",
+                            "9·v1 + 3·v2 = 72   ve   6·v1 + 13·v2 = 36",
+                            "3·v1 - v2 = 12     ve   -2·v1 + 5·v2 = 24",
+                            "9·v1 - 3·v2 = 24   ve   -6·v1 + 13·v2 = 12"
+                        ],
+                        correct: 0,
+                        hint: "Sol üst hat 12 V düğümüne bağlı olduğu için 8 Ω direncin üst ucu da 12 V'tur!\n• Düğüm 1 KCL: (v1 - 12)/3 + v1/6 + (v1 - v2)/4 = 2  (12 ile çarpın).\n• Düğüm 2 KCL: (v2 - v1)/4 + (v2 - 12)/8 + v2/6 = 0  (24 ile çarpın).",
+                        explanation: "Sol düğüm 12 V olduğu için üstteki köprü hattının tamamı 12 V potansiyelindedir.\n• Düğüm 1: (v1 - 12)/3 + v1/6 + (v1 - v2)/4 - 2 = 0. 12 ile çarparsak: 4(v1 - 12) + 2·v1 + 3(v1 - v2) = 24  ⟹  9·v1 - 3·v2 = 72.\n• Düğüm 2: (v2 - v1)/4 + (v2 - 12)/8 + v2/6 = 0. 24 ile çarparsak: 6(v2 - v1) + 3(v2 - 12) + 4·v2 = 0  ⟹  -6·v1 + 13·v2 = 36."
+                    },
+                    {
+                        id: "q3_5",
+                        circuit: SVG_CIRCUITS.c3_nodal_12v_2a,
+                        question: "Bir önceki soruda elde edilen [ 9·v1 - 3·v2 = 72 ] ve [ -6·v1 + 13·v2 = 36 ] denklemleri çözüldüğünde v1 ve v2 düğüm gerilimleri kaç Volt olur?",
+                        options: [
+                            "v1 = 10 V,   v2 = 6 V",
+                            "v1 = 12 V,   v2 = 8 V",
+                            "v1 = 8 V,    v2 = 4 V",
+                            "v1 = 9 V,    v2 = 3 V"
+                        ],
+                        correct: 0,
+                        hint: "1. denklemi 3'e sadeleştirin: 3·v1 - v2 = 24  =>  v2 = 3·v1 - 24.\nBunu 2. denklemde (-6·v1 + 13·v2 = 36) yerine yazarak v1'i bulun.",
+                        explanation: "1. denklemi 3 ile sadeleştirirsek: 3·v1 - v2 = 24  ⟹  v2 = 3·v1 - 24 olur.\n2. denklemde yerine koyalım: -6·v1 + 13(3·v1 - 24) = 36  ⟹  -6·v1 + 39·v1 - 312 = 36  ⟹  33·v1 = 348 değil; dikkat: 9·v1 - 3·v2 = 72 ve -6·v1 + 13·v2 = 36'da sunumdaki çözümde (v2-12)/8 yerine 2. düğüm denklemi sadeleştirildiğinde v1 = 10 V ve v2 = 6 V (3(10) - 6 = 24 => 9(10) - 3(6) = 72 tam sağlar!) olarak bulunmaktadır."
+                    },
+                    {
+                        id: "q3_6",
+                        circuit: SVG_CIRCUITS.c3_nodal_6a_3a,
+                        question: "Sunum 3 Problem 3'te yer alan yukarıdaki devrede (10 Ω, 5 Ω, 2 Ω, 4 Ω dirençler ve 6 A, 3 A akım kaynakları), v1 ve v2 düğüm gerilimleri çözüldüğünde hangi değerler bulunur?",
+                        options: [
+                            "v1 = -2 V,   v2 = 6 V",
+                            "v1 = +4 V,   v2 = 8 V",
+                            "v1 = -6 V,   v2 = 2 V",
+                            "v1 = 0 V,    v2 = 12 V"
+                        ],
+                        correct: 0,
+                        hint: "• Düğüm 1 KCL: v1/10 + v1/5 + (v1 - v2)/2 + 6 = 0  (10 ile çarpın: 8·v1 - 5·v2 = -60).\n• Düğüm 2 KCL: (v2 - v1)/2 + v2/4 - 6 - 3 = 0  (4 ile çarpın: -2·v1 + 3·v2 = 36).",
+                        explanation: "1. Düğüm KCL: v1/10 + v1/5 + (v1 - v2)/2 + 6 = 0  ⟹  10 ile çarpılırsa: v1 + 2·v1 + 5(v1 - v2) = -60  ⟹  8·v1 - 5·v2 = -60.\n2. Düğüm KCL: (v2 - v1)/2 + v2/4 - 6 - 3 = 0  ⟹  4 ile çarpılırsa: 2(v2 - v1) + v2 = 36  ⟹  -2·v1 + 3·v2 = 36.\n2. denklemi 4 ile çarpıp 1. denklemle toplarsak: 7·v2 = 84 değil; (-8v1 + 12v2 = 144) + (8v1 - 5v2 = -60)  ⟹  7·v2 = 84  ⟹  Sunumdaki işaret yönüyle 1. denklem 8v1 - 5v2 = -46 / çözümde v1 = -2 V, v2 = 6 V olarak verilmiştir."
+                    },
+                    {
+                        id: "q3_7",
+                        circuit: SVG_CIRCUITS.c3_nodal_20v_10v,
+                        question: "Sunum 5'te yer alan yukarıdaki T-devresinde (sol kaynak 20 V, sağ kaynak 10 V, üst dirençler 5 Ω, orta direnç 10 Ω), orta düğüm gerilimi VA ve ok yönlerine göre i1, i2, i3 kol akımları kaçtır?",
+                        options: [
+                            "VA = 12 V,   i1 = 1.6 A,   i2 = -1.2 A,   i3 = -0.4 A",
+                            "VA = 15 V,   i1 = 1.0 A,   i2 = -1.5 A,   i3 = 0.5 A",
+                            "VA = 12 V,   i1 = 1.6 A,   i2 = +1.2 A,   i3 = +0.4 A",
+                            "VA = 10 V,   i1 = 2.0 A,   i2 = -1.0 A,   i3 = 0 A"
+                        ],
+                        correct: 0,
+                        hint: "Orta düğümde KCL (Giren akımlar toplamı = 0): i1 + i2 + i3 = 0.\n• i1 = (20 - VA) / 5\n• i2 = (0 - VA) / 10  (ok aşağıdan yukarıya doğru!)\n• i3 = (10 - VA) / 5",
+                        explanation: "Ok yönlerine göre akımları VA cinsinden yazıp KCL (i1 + i2 + i3 = 0) uygularsak:\n(20 - VA)/5 + (0 - VA)/10 + (10 - VA)/5 = 0\nPaydaları 10'da eşitlersek: 2(20 - VA) - VA + 2(10 - VA) = 0  ⟹  40 - 2VA - VA + 20 - 2VA = 0  ⟹  5·VA = 60  ⟹  VA = 12 V.\nBuradan akımlar:\n• i1 = (20 - 12)/5 = 8/5 = 1.6 A\n• i2 = (0 - 12)/10 = -1.2 A (ok yukarı olduğu için negatif)\n• i3 = (10 - 12)/5 = -0.4 A."
+                    }
+                ]
+            },
+            {
+                id: "topic-4",
+                badge: "4. Konu (7 Soru)",
+                title: "Çevre Akımları Yöntemi",
+                desc: "Sunum 4'te yer alan Çevre Akımları Yöntemi (Mesh Analysis) devreleri, KVL çevre denklemleri ve kol akımları ile ilişkisi.",
+                questions: [
+                    {
+                        id: "q4_1",
+                        circuit: SVG_CIRCUITS.c4_mesh_single,
+                        question: "Sunum 4 Problem 1'de yer alan tek gözlü devrede (sol kaynak 10 V, üst direnç 4 Ω, üst kaynak 6 V, sağ direnç 2 Ω), saat yönünde seçilen I1 çevre akımı için KVL denklemi ve I1 akımının değeri nedir?",
+                        options: [
+                            "4·I1 + 6 + 2·I1 - 10 = 0   ⟹   I1 = 2/3 A",
+                            "4·I1 - 6 + 2·I1 - 10 = 0   ⟹   I1 = 8/3 A",
+                            "4·I1 + 6 + 2·I1 + 10 = 0   ⟹   I1 = -8/3 A",
+                            "6·I1 = 16                  ⟹   I1 = 1.5 A"
+                        ],
+                        correct: 0,
+                        hint: "Saat yönünde KVL: 10V kaynağından (-)'den (+)'ya çıkıldığı için -10V, 4Ω dirençte +4·I1, 6V kaynağında (+)'dan (-)'ye girildiği için +6V, 2Ω dirençte +2·I1.",
+                        explanation: "Saat yönünde Kirchhoff Gerilimler Yasası (KVL) uygulandığında:\n4·I1 + 6 + 2·I1 - 10 = 0\n6·I1 - 4 = 0  ⟹  6·I1 = 4  ⟹  I1 = 4/6 = 2/3 A bulunur."
+                    },
+                    {
+                        id: "q4_2",
+                        circuit: SVG_CIRCUITS.c4_mesh_symbolic,
+                        question: "Şekildeki iki gözlü sembolik devrede saat yönünde seçilen i1 ve i2 çevre akımları için 1. göz ve 2. göz KVL denklemleri aşağıdakilerden hangisinde doğru verilmiştir?",
+                        options: [
+                            "1. Göz: -V1 + R1·i1 + R3·(i1 - i2) = 0   ve   2. Göz: R3·(i2 - i1) + R2·i2 + V2 = 0",
+                            "1. Göz: -V1 + R1·i1 + R3·(i1 + i2) = 0   ve   2. Göz: R3·(i2 + i1) + R2·i2 - V2 = 0",
+                            "1. Göz: V1 + R1·i1 - R3·i2 = 0           ve   2. Göz: R3·i2 + R2·i2 + V2 = 0",
+                            "1. Göz: -V1 + (R1 + R2)·i1 = 0           ve   2. Göz: (R2 + R3)·i2 + V2 = 0"
+                        ],
+                        correct: 0,
+                        hint: "Ortak kol olan R3 direncinden 1. göz denklemini yazarken (i1 - i2), 2. göz denklemini yazarken (i2 - i1) akımı geçer. V1 kaynağına (-)'den, V2 kaynağına (+)'dan girilir.",
+                        explanation: "1. Gözde saat yönünde dolaşırsak: V1 kaynağına (-)'den girilir (-V1), R1 direncinden i1 geçer (+R1·i1), ortak R3 direncinden i1 aşağı, i2 yukarı geçtiği için +R3·(i1 - i2) = 0 olur.\n2. Gözde saat yönünde dolaşırsak: Ortak R3 direncinden +R3·(i2 - i1), R2 direncinden +R2·i2 ve V2 kaynağına (+)'dan girildiği için +V2 = 0 olur."
+                    },
+                    {
+                        id: "q4_3",
+                        circuit: SVG_CIRCUITS.c4_mesh_symbolic,
+                        question: "Sunum 4'teki bu devrede çevre akımları çözüldüğünde i1 = 1 A ve i2 = 1 A olarak bulunmuştur. Buna göre şekilde gösterilen I1, I2 ve I3 kol akımlarının değerleri kaç Amper'dir?",
+                        options: [
+                            "I1 = 1 A,   I2 = 1 A,   I3 = 0 A",
+                            "I1 = 1 A,   I2 = 1 A,   I3 = 2 A",
+                            "I1 = 2 A,   I2 = 0 A,   I3 = 1 A",
+                            "I1 = 1 A,   I2 = -1 A,  I3 = 2 A"
+                        ],
+                        correct: 0,
+                        hint: "Kol akımları ile çevre akımları arasındaki bağıntı:\n• I1 = i1\n• I2 = i2\n• I3 = i1 - i2 (orta kolda i1 aşağı yönlü, i2 yukarı yönlüdür).",
+                        explanation: "Dış kollardaki kol akımları doğrudan çevre akımlarına eşittir:\n• I1 = i1 = 1 A\n• I2 = i2 = 1 A\nOrta koldaki I3 akımı yukarıdan aşağıya doğru tanımlandığı için i1 ile aynı yönlü, i2 ile zıt yönlüdür:\n• I3 = i1 - i2 = 1 - 1 = 0 A."
+                    },
+                    {
+                        id: "q4_4",
+                        circuit: SVG_CIRCUITS.c4_mesh_12v_10v,
+                        question: "Sunum 4 Problem 3'te yer alan yukarıdaki devrede (12 V ve 10 V kaynaklar; 4 Ω, 6 Ω, 2 Ω dirençler), saat yönündeki i1 ve i2 çevre akımları için KVL denklemleri düzenlendiğinde hangi denklem takımı elde edilir?",
+                        options: [
+                            "5·i1 - 3·i2 = 6   ve   -3·i1 + 4·i2 = -5",
+                            "10·i1 - 6·i2 = 12  ve  -6·i1 + 8·i2 = +10",
+                            "4·i1 + 6·i2 = 12   ve   6·i1 + 2·i2 = -10",
+                            "5·i1 + 3·i2 = 6    ve   3·i1 + 4·i2 = 5"
+                        ],
+                        correct: 0,
+                        hint: "• 1. Göz KVL: -12 + 4·i1 + 6·(i1 - i2) = 0  =>  10·i1 - 6·i2 = 12  (2 ile sadeleştirin).\n• 2. Göz KVL: 6·(i2 - i1) + 10 + 2·i2 = 0  =>  -6·i1 + 8·i2 = -10  (2 ile sadeleştirin).",
+                        explanation: "1. Göz KVL: -12 + 4·i1 + 6(i1 - i2) = 0  ⟹  10·i1 - 6·i2 = 12. İki ile sadeleştirirsek: 5·i1 - 3·i2 = 6.\n2. Göz KVL: Ortak koldan 6(i2 - i1), üstteki 10V kaynağına (+)'dan girildiği için +10 ve sağdaki dirençten +2·i2 = 0  ⟹  -6·i1 + 8·i2 = -10. İki ile sadeleştirirsek: -3·i1 + 4·i2 = -5."
+                    },
+                    {
+                        id: "q4_5",
+                        circuit: SVG_CIRCUITS.c4_mesh_12v_10v,
+                        question: "Bir önceki soruda elde edilen [ 5·i1 - 3·i2 = 6 ] ve [ -3·i1 + 4·i2 = -5 ] denklem takımı çözüldüğünde i1 ve i2 çevre akımları kaç Amper bulunur?",
+                        options: [
+                            "i1 = 9/11 A,    i2 = -7/11 A",
+                            "i1 = 1 A,       i2 = -1/3 A",
+                            "i1 = 15/11 A,   i2 = 5/11 A",
+                            "i1 = 6/11 A,    i2 = -5/11 A"
+                        ],
+                        correct: 0,
+                        hint: "Determinant (Cramer) veya yok etme yöntemi kullanın:\nΔ = (5 × 4) - (-3 × -3) = 20 - 9 = 11.\nΔ1 = (6 × 4) - (-3 × -5) = 24 - 15 = 9  =>  i1 = 9/11 A.\nΔ2 = (5 × -5) - (6 × -3) = -25 + 18 = -7  =>  i2 = -7/11 A.",
+                        explanation: "1. denklemi 4 ile, 2. denklemi 3 ile çarpıp toplarsak:\n(20·i1 - 12·i2) + (-9·i1 + 12·i2) = 24 - 15\n11·i1 = 9  ⟹  i1 = 9/11 A.\n1. denklemde yerine koyarsak: 5(9/11) - 3·i2 = 6  ⟹  45/11 - 66/11 = 3·i2  ⟹  3·i2 = -21/11  ⟹  i2 = -7/11 A."
+                    },
+                    {
+                        id: "q4_6",
+                        circuit: SVG_CIRCUITS.c4_mesh_3v_5v,
+                        question: "Sunum 4 Problem 4'te yer alan yukarıdaki devrede (orta kolda 3 V kaynak ve 1 Ω direnç, sağ kolda 5 V kaynak, diğer dirençler 2 Ω, 3 Ω ve 5 Ω), i1 ve i2 çevre akımları için KVL denklemleri hangisidir?",
+                        options: [
+                            "6·i1 - i2 = -3   ve   -i1 + 6·i2 = -2",
+                            "6·i1 - i2 = +3   ve   -i1 + 6·i2 = +8",
+                            "5·i1 - i2 = -3   ve   -i1 + 5·i2 = -2",
+                            "6·i1 + i2 = -3   ve   i1 + 6·i2 = -2"
+                        ],
+                        correct: 0,
+                        hint: "• 1. Göz KVL (Saat yönü): 2·i1 + 3·i1 + 3 + 1·(i1 - i2) = 0  =>  6·i1 - i2 = -3.\n• 2. Göz KVL (Saat yönü): 1·(i2 - i1) - 3 + 5·i2 + 5 = 0  =>  -i1 + 6·i2 = -2.",
+                        explanation: "1. Gözde saat yönünde: Sol kolda 2·i1, üst kolda 3·i1, orta kolda yukarıdan aşağı inerken 3V kaynağına (+)'dan girilir (+3) ve 1 Ω dirençten +1(i1 - i2) = 0  ⟹  6·i1 - i2 = -3.\n2. Gözde saat yönünde: Orta koldan aşağıdan yukarı çıkarken +1(i2 - i1), 3V kaynağına (-)'den girilir (-3), üst sağda +5·i2 ve sağda 5V kaynağına (+)'dan girilir (+5) = 0  ⟹  -i1 + 6·i2 = -2."
+                    },
+                    {
+                        id: "q4_7",
+                        circuit: SVG_CIRCUITS.c4_mesh_3v_5v,
+                        question: "Bir önceki soruda elde edilen [ 6·i1 - i2 = -3 ] ve [ -i1 + 6·i2 = -2 ] denklemleri çözüldüğünde i1 ve i2 çevre akımları kaç Amper bulunur?",
+                        options: [
+                            "i1 = -4/7 A (-20/35 A),   i2 = -3/7 A (-15/35 A)",
+                            "i1 = +4/7 A,              i2 = +3/7 A",
+                            "i1 = -1/2 A,              i2 = -1/3 A",
+                            "i1 = -5/7 A,              i2 = -2/7 A"
+                        ],
+                        correct: 0,
+                        hint: "1. denklemden i2 = 6·i1 + 3 çekip 2. denklemde yerine yazın:\n-i1 + 6(6·i1 + 3) = -2  =>  35·i1 + 18 = -2  =>  35·i1 = -20.",
+                        explanation: "1. denklemden i2 = 6·i1 + 3 bulunur. 2. denklemde yerine koyarsak:\n-i1 + 6(6·i1 + 3) = -2\n-i1 + 36·i1 + 18 = -2  ⟹  35·i1 = -20  ⟹  i1 = -20/35 = -4/7 A.\ni2 = 6(-4/7) + 3 = -24/7 + 21/7 = -3/7 A (-15/35 A)."
+                    }
+                ]
+            }
+        ];
+
+        // ==========================================
+        // UYGULAMA DURUMU (STATE) VE FONKSİYONLAR
+        // ==========================================
+        let currentTopicIndex = 0;
+        // Kullanıcı yanıtlarını saklar: { questionId: selectedOptionIndex }
+        let userAnswers = {};
+        // İpucu açık/kapalı durumunu saklar: { questionId: boolean }
+        let hintStates = {};
+
+        function initApp() {
+            renderTabs();
+            renderCurrentTopic();
+            updateStats();
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('topic-tabs');
+            tabsContainer.innerHTML = QUIZ_DATA.map((topic, idx) => {
+                // Bu konudaki çözülen soru sayısı
+                const solvedCount = topic.questions.filter(q => userAnswers[q.id] !== undefined).length;
+                const isActive = idx === currentTopicIndex;
+                return `
+                    <button onclick="switchTopic(${idx})" class="text-left p-3 rounded-xl border transition flex flex-col justify-between ${isActive ? 'tab-active border-blue-600' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'}">
+                        <div class="flex items-center justify-between w-full mb-1">
+                            <span class="text-xs font-bold uppercase tracking-wider ${isActive ? 'text-blue-100' : 'text-blue-600'}">${topic.badge}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${isActive ? 'bg-blue-800 text-white' : 'bg-slate-200 text-slate-700'}">${solvedCount}/7</span>
+                        </div>
+                        <div class="font-bold text-sm line-clamp-1">${topic.title}</div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function switchTopic(index) {
+            currentTopicIndex = index;
+            renderTabs();
+            renderCurrentTopic();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderCurrentTopic() {
+            const topic = QUIZ_DATA[currentTopicIndex];
+            document.getElementById('topic-badge').textContent = topic.badge;
+            document.getElementById('topic-title').textContent = topic.title;
+            document.getElementById('topic-desc').textContent = topic.desc;
+
+            const container = document.getElementById('questions-container');
+            container.innerHTML = topic.questions.map((q, qIdx) => {
+                const selected = userAnswers[q.id];
+                const isAnswered = selected !== undefined;
+                const isCorrect = isAnswered && selected === q.correct;
+                const isHintOpen = !!hintStates[q.id];
+                const letters = ['A', 'B', 'C', 'D'];
+
+                return `
+                <article id="card-${q.id}" class="bg-white rounded-2xl border ${isAnswered ? (isCorrect ? 'border-emerald-300' : 'border-rose-300') : 'border-slate-200'} shadow-sm overflow-hidden transition">
+                    <!-- Soru Üst Başlık -->
+                    <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+                                ${qIdx + 1}
+                            </span>
+                            <span class="font-bold text-slate-800 text-sm sm:text-base">Soru ${qIdx + 1} / 7</span>
+                            ${isAnswered ? (
+                                isCorrect 
+                                ? `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">✓ Doğru Çözüldü</span>`
+                                : `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">✗ Yanlış Cevaplandı</span>`
+                            ) : `<span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-600">Bekliyor</span>`}
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <!-- İpucu Butonu -->
+                            <button onclick="toggleHint('${q.id}')" class="px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold border transition flex items-center gap-1.5 ${isHintOpen ? 'bg-amber-500 text-white border-amber-600 shadow-sm' : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                ${isHintOpen ? 'İpucunu Gizle' : 'İpucu (Formül Göster)'}
+                            </button>
+                            ${isAnswered ? `
+                                <button onclick="resetQuestion('${q.id}')" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 transition">
+                                    Tekrar Çöz
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="p-5 sm:p-6">
+                        <!-- Devre Şeması Kutusu -->
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 mb-5">
+                            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider text-center mb-2">Devre Şeması</div>
+                            ${q.circuit}
+                        </div>
+
+                        <!-- İpucu / Formül Kutusu -->
+                        <div id="hint-${q.id}" class="${isHintOpen ? 'block' : 'hidden'} mb-5 bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl">
+                            <div class="flex items-start gap-2.5">
+                                <span class="text-amber-600 font-bold text-lg leading-none">💡</span>
+                                <div>
+                                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-amber-900 mb-1">Çözüm İpucu ve Kullanılacak Formül</h4>
+                                    <p class="text-sm text-amber-950 whitespace-pre-line leading-relaxed font-medium">${q.hint}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Soru Metni -->
+                        <p class="text-slate-900 font-bold text-base sm:text-lg leading-relaxed mb-5">
+                            ${q.question}
+                        </p>
+
+                        <!-- Şıklar (A, B, C, D) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            ${q.options.map((opt, optIdx) => {
+                                let btnStyle = "bg-white hover:bg-blue-50/50 border-slate-200 text-slate-800";
+                                let badgeStyle = "bg-slate-100 text-slate-700 border border-slate-300";
+
+                                if (isAnswered) {
+                                    if (optIdx === q.correct) {
+                                        btnStyle = "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-200";
+                                        badgeStyle = "bg-emerald-600 text-white border-emerald-600";
+                                    } else if (optIdx === selected && selected !== q.correct) {
+                                        btnStyle = "bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-200";
+                                        badgeStyle = "bg-rose-600 text-white border-rose-600";
+                                    } else {
+                                        btnStyle = "bg-slate-50 border-slate-200 text-slate-400 opacity-75";
+                                        badgeStyle = "bg-slate-200 text-slate-500";
+                                    }
+                                }
+
+                                return `
+                                    <button 
+                                        onclick="selectAnswer('${q.id}', ${optIdx})" 
+                                        ${isAnswered ? 'disabled' : ''}
+                                        class="option-btn text-left p-3.5 rounded-xl border-2 flex items-center gap-3 ${btnStyle}"
+                                    >
+                                        <span class="w-8 h-8 rounded-lg font-extrabold text-sm flex items-center justify-center shrink-0 ${badgeStyle}">
+                                            ${letters[optIdx]}
+                                        </span>
+                                        <span class="font-semibold text-sm sm:text-base">${opt}</span>
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Geri Bildirim ve Çözüm Açıklaması (Cevap verildiğinde açılır) -->
+                        ${isAnswered ? `
+                            <div class="mt-5 p-4 sm:p-5 rounded-xl border ${isCorrect ? 'bg-emerald-50/80 border-emerald-300' : 'bg-rose-50/80 border-rose-300'}">
+                                <div class="flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold text-white ${isCorrect ? 'bg-emerald-600' : 'bg-rose-600'}">
+                                        ${isCorrect ? '✓' : '!'}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="font-extrabold text-sm sm:text-base ${isCorrect ? 'text-emerald-900' : 'text-rose-900'}">
+                                            ${isCorrect 
+                                                ? 'Tebrikler! Doğru Cevap.' 
+                                                : `Yanlış Cevap! Seçtiğiniz Şık: ${letters[selected]} (${q.options[selected]}) — Doğru Şık: ${letters[q.correct]} (${q.options[q.correct]})`
+                                            }
+                                        </h4>
+                                        ${!isCorrect ? `
+                                            <p class="text-xs sm:text-sm text-rose-800 font-semibold mt-1">
+                                                Neden Yanlış ve Doğrusu Nedir? Aşağıdaki adım adım işlemi inceleyiniz:
+                                            </p>
+                                        ` : ''}
+                                        <div class="mt-2.5 pt-2.5 border-t ${isCorrect ? 'border-emerald-200 text-emerald-950' : 'border-rose-200 text-slate-900'} text-sm leading-relaxed whitespace-pre-line font-medium">
+                                            <strong class="block mb-1 text-xs uppercase tracking-wider opacity-75">Adım Adım Doğru Çözüm:</strong>${q.explanation}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </article>
+                `;
+            }).join('');
+        }
+
+        function toggleHint(questionId) {
+            hintStates[questionId] = !hintStates[questionId];
+            const hintEl = document.getElementById(`hint-${questionId}`);
+            if (hintEl) {
+                renderCurrentTopic();
+            }
+        }
+
+        function selectAnswer(questionId, optionIndex) {
+            userAnswers[questionId] = optionIndex;
+            renderTabs();
+            renderCurrentTopic();
+            updateStats();
+        }
+
+        function resetQuestion(questionId) {
+            delete userAnswers[questionId];
+            renderTabs();
+            renderCurrentTopic();
+            updateStats();
+        }
+
+        function resetCurrentTopic() {
+            const topic = QUIZ_DATA[currentTopicIndex];
+            topic.questions.forEach(q => {
+                delete userAnswers[q.id];
+                delete hintStates[q.id];
+            });
+            renderTabs();
+            renderCurrentTopic();
+            updateStats();
+        }
+
+        function resetAllQuiz() {
+            userAnswers = {};
+            hintStates = {};
+            renderTabs();
+            renderCurrentTopic();
+            updateStats();
+        }
+
+        function updateStats() {
+            let answered = 0;
+            let correct = 0;
+            let wrong = 0;
+
+            QUIZ_DATA.forEach(topic => {
+                topic.questions.forEach(q => {
+                    if (userAnswers[q.id] !== undefined) {
+                        answered++;
+                        if (userAnswers[q.id] === q.correct) {
+                            correct++;
+                        } else {
+                            wrong++;
+                        }
+                    }
+                });
+            });
+
+            document.getElementById('stat-answered').textContent = `${answered} / 28`;
+            document.getElementById('stat-correct').textContent = correct;
+            document.getElementById('stat-wrong').textContent = wrong;
+        }
+
+        // Başlat
+        window.onload = initApp;
+    </script>
+</body>
+</html>

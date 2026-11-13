@@ -1,0 +1,2214 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arduino & Mikroişlemciler Sınav Hazırlık Platformu</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        arduino: {
+                            teal: '#00979D',
+                            light: '#38bdf8',
+                            dark: '#0f172a',
+                            card: '#1e293b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .option-btn {
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:active {
+            transform: scale(0.99);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
+
+    <!-- STICKY HEADER & NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-lg">
+        <div class="max-w-5xl mx-auto px-3 sm:px-6 py-3">
+            <!-- Top Row: Brand & Quick Stats -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-md shadow-cyan-500/20">
+                        <i class="fa-solid fa-microchip text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+                            Arduino Sınav Hazırlık
+                            <span class="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                                75 Soru
+                            </span>
+                        </h1>
+                        <p class="text-xs text-slate-400">Mikroişlemciler & Proje Dersleri Vize/Final</p>
+                    </div>
+                </div>
+
+                <!-- Live Score Pill (Visible in Practice/Study) -->
+                <div id="liveStatsBar" class="flex items-center gap-2 bg-slate-800/90 border border-slate-700/80 px-3 py-1.5 rounded-xl text-xs font-medium">
+                    <span class="flex items-center gap-1 text-emerald-400" title="Doğru Sayısı">
+                        <i class="fa-solid fa-circle-check"></i> <b id="statCorrect">0</b>
+                    </span>
+                    <span class="text-slate-600">|</span>
+                    <span class="flex items-center gap-1 text-rose-400" title="Yanlış Sayısı">
+                        <i class="fa-solid fa-circle-xmark"></i> <b id="statWrong">0</b>
+                    </span>
+                    <span class="text-slate-600">|</span>
+                    <button onclick="resetProgress()" class="text-slate-300 hover:text-cyan-400 transition ml-1" title="İlerlemeyi Sıfırla">
+                        <i class="fa-solid fa-rotate-right"></i> Sıfırla
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode Switcher Tabs (3 Modes) -->
+            <div class="grid grid-cols-3 gap-1.5 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
+                <button onclick="switchMode('study')" id="tab-study" class="mode-tab flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-cyan-500 text-slate-950 shadow-sm">
+                    <i class="fa-solid fa-book-open"></i>
+                    <span>Çalışma Modu</span>
+                </button>
+                <button onclick="switchMode('practice')" id="tab-practice" class="mode-tab flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Pratik Çözüm</span>
+                </button>
+                <button onclick="switchMode('exam')" id="tab-exam" class="mode-tab flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60">
+                    <i class="fa-solid fa-stopwatch"></i>
+                    <span>Sınav Modu</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+
+        <!-- FILTER & CONTROL TOOLBAR (Shown in Study & Practice modes) -->
+        <section id="toolbarSection" class="bg-slate-800/70 border border-slate-700/70 rounded-2xl p-3 sm:p-4 mb-5 shadow-md">
+            <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                
+                <!-- Source Filter Buttons -->
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <button onclick="setSourceFilter('all')" id="filter-all" class="filter-btn text-xs font-semibold px-3 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition">
+                        Tümü (75)
+                    </button>
+                    <button onclick="setSourceFilter('file')" id="filter-file" class="filter-btn text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900/70 text-slate-300 border border-slate-700 hover:border-slate-600 transition">
+                        <i class="fa-solid fa-file-lines mr-1 text-amber-400"></i>Dosyadaki Sorular (50)
+                    </button>
+                    <button onclick="setSourceFilter('extra')" id="filter-extra" class="filter-btn text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900/70 text-slate-300 border border-slate-700 hover:border-slate-600 transition">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1 text-emerald-400"></i>Ekstra Sorular (25)
+                    </button>
+                    <button onclick="setSourceFilter('mistakes')" id="filter-mistakes" class="filter-btn hidden text-xs font-semibold px-3 py-2 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/40 transition">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i>Yanlışlarım (<span id="mistakeCountBadge">0</span>)
+                    </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="relative flex-1 max-w-full md:max-w-xs">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        oninput="handleSearch(this.value)"
+                        placeholder="Soru veya konu ara (örn: PWM, I2C, Uno)..." 
+                        class="w-full bg-slate-900/90 border border-slate-700 focus:border-cyan-400 rounded-xl pl-9 pr-8 py-2 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-none transition"
+                    >
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Second Row of Controls: Global Hide/Show Answers & Shuffle -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-700/60">
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Global Hide/Show Answers Toggle (Crucial User Request) -->
+                    <button id="toggleAllAnswersBtn" onclick="toggleGlobalAnswers()" class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition shadow-sm">
+                        <i id="toggleAnswersIcon" class="fa-solid fa-eye"></i>
+                        <span id="toggleAnswersText">Tüm Cevapları Göster</span>
+                    </button>
+
+                    <!-- Shuffle Questions Button -->
+                    <button onclick="shuffleQuestions()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900/80 hover:bg-slate-900 text-slate-200 border border-slate-700 transition">
+                        <i class="fa-solid fa-shuffle text-cyan-400"></i>
+                        <span>Soruları Karıştır</span>
+                    </button>
+
+                    <!-- Shuffle Options Toggle -->
+                    <button onclick="shuffleAllOptions()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900/80 hover:bg-slate-900 text-slate-200 border border-slate-700 transition">
+                        <i class="fa-solid fa-random text-emerald-400"></i>
+                        <span>Şıkları Karıştır</span>
+                    </button>
+                </div>
+
+                <div class="text-xs text-slate-400 font-medium">
+                    Gösterilen: <strong id="visibleCount" class="text-white">75</strong> soru
+                </div>
+            </div>
+        </section>
+
+        <!-- MODE 1 & 2: STUDY & PRACTICE QUESTION LIST CONTAINER -->
+        <section id="questionsListSection" class="space-y-4">
+            <!-- Dynamically populated by JS -->
+        </section>
+
+        <!-- MODE 3: EXAM MODE SECTION -->
+        <section id="examSection" class="hidden">
+            
+            <!-- Exam Setup Card -->
+            <div id="examSetupCard" class="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 sm:p-8 max-w-2xl mx-auto shadow-xl animate-fade">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-bold text-white">Sınav Simülasyonu Ayarları</h2>
+                        <p class="text-xs sm:text-sm text-slate-400">Gerçek sınav modunda cevaplar sınav bitene kadar gizlenir.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-5 mt-6">
+                    <!-- Question Pool Selection -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">1. Soru Havuzu Seçin</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examPool" value="all" checked class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 transition text-center">
+                                    <div class="font-bold text-sm text-white">Tüm Sorular</div>
+                                    <div class="text-xs text-slate-400">75 Soru (Dosya + Ekstra)</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examPool" value="file" class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 transition text-center">
+                                    <div class="font-bold text-sm text-white">Sadece Dosya</div>
+                                    <div class="text-xs text-slate-400">50 Orijinal Soru</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examPool" value="extra" class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 transition text-center">
+                                    <div class="font-bold text-sm text-white">Sadece Ekstra</div>
+                                    <div class="text-xs text-slate-400">25 Yeni Soru</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Question Count Selection -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">2. Soru Sayısı</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examCount" value="10" class="peer sr-only">
+                                <div class="py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-sm">10 Soru</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examCount" value="20" checked class="peer sr-only">
+                                <div class="py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-sm">20 Soru</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examCount" value="50" class="peer sr-only">
+                                <div class="py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-sm">50 Soru</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examCount" value="75" class="peer sr-only">
+                                <div class="py-2.5 px-3 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-sm">Tümü</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Duration Selection -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">3. Sınav Süresi</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examTime" value="10" class="peer sr-only">
+                                <div class="py-2.5 px-2 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-xs sm:text-sm">10 Dk</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examTime" value="20" checked class="peer sr-only">
+                                <div class="py-2.5 px-2 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-xs sm:text-sm">20 Dk</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examTime" value="40" class="peer sr-only">
+                                <div class="py-2.5 px-2 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-xs sm:text-sm">40 Dk</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="examTime" value="0" class="peer sr-only">
+                                <div class="py-2.5 px-2 rounded-xl border border-slate-700 bg-slate-900/60 peer-checked:border-cyan-400 peer-checked:bg-cyan-500/15 text-center font-bold text-xs sm:text-sm">Süresiz</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Shuffle Checkboxes -->
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-200">
+                            <input type="checkbox" id="examShuffleQ" checked class="w-4 h-4 rounded accent-cyan-400">
+                            <span>Soru sırasını karıştır</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm text-slate-200">
+                            <input type="checkbox" id="examShuffleOpt" checked class="w-4 h-4 rounded accent-cyan-400">
+                            <span>Şıkların yerini karıştır</span>
+                        </label>
+                    </div>
+
+                    <button onclick="startExam()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 font-extrabold text-base shadow-lg shadow-cyan-500/20 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Sınavı Başlat</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Exam Runner UI -->
+            <div id="examRunnerUI" class="hidden space-y-4 animate-fade">
+                <!-- Exam Top Status Bar -->
+                <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-3 sm:p-4 flex flex-wrap items-center justify-between gap-2 sticky top-[116px] z-30 backdrop-blur-md">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-bold text-xs sm:text-sm border border-cyan-500/30">
+                            Soru <span id="examCurrentIndex">1</span> / <span id="examTotalCount">20</span>
+                        </span>
+                        <span id="examTimerBadge" class="px-3 py-1 rounded-lg bg-slate-900 text-amber-400 font-mono font-bold text-xs sm:text-sm border border-slate-700 flex items-center gap-1.5">
+                            <i class="fa-regular fa-clock"></i>
+                            <span id="examTimerText">20:00</span>
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleQuestionPalette()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-table-cells"></i>
+                            <span>Soru Paleti</span>
+                        </button>
+                        <button onclick="finishExamPrompt()" class="px-3.5 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs sm:text-sm transition shadow-md shadow-rose-500/20">
+                            <i class="fa-solid fa-flag-checkered mr-1"></i>Sınavı Bitir
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Question Palette Drawer (Collapsible) -->
+                <div id="examPaletteDrawer" class="hidden bg-slate-800/95 border border-slate-700 rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <span class="text-xs font-bold text-slate-300 uppercase">Hızlı Soru Geçişi</span>
+                        <div class="flex items-center gap-3 text-[11px] text-slate-400">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block"></span> Cevaplandı</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block"></span> Boş</span>
+                        </div>
+                    </div>
+                    <div id="examPaletteGrid" class="grid grid-cols-5 sm:grid-cols-10 gap-1.5"></div>
+                </div>
+
+                <!-- Single Active Exam Question Card -->
+                <div id="examSingleCard" class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 sm:p-6 shadow-xl">
+                    <!-- Rendered dynamically -->
+                </div>
+
+                <!-- Bottom Prev / Next Navigation -->
+                <div class="flex items-center justify-between gap-3 pt-1">
+                    <button id="examPrevBtn" onclick="navigateExam(-1)" class="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm border border-slate-700 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Önceki Soru
+                    </button>
+                    <button id="examClearChoiceBtn" onclick="clearExamSelection()" class="px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 font-medium text-xs sm:text-sm border border-slate-800 transition">
+                        Boş Bırak
+                    </button>
+                    <button id="examNextBtn" onclick="navigateExam(1)" class="flex-1 sm:flex-none px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
+                        Sonraki Soru <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Exam Result & Review Report -->
+            <div id="examResultUI" class="hidden space-y-6 animate-fade">
+                <!-- Summary Score Banner -->
+                <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-6 text-center shadow-xl">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-3xl mb-3">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-white">Sınav Tamamlandı!</h2>
+                    <p id="examResultSubtitle" class="text-sm text-slate-400 mt-1">Performans özetiniz aşağıdadır</p>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto mt-6">
+                        <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl">
+                            <div class="text-xs text-slate-400">Puan (100)</div>
+                            <div id="resScore" class="text-2xl font-black text-cyan-400 mt-0.5">85</div>
+                        </div>
+                        <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl">
+                            <div class="text-xs text-slate-400">Doğru</div>
+                            <div id="resCorrect" class="text-2xl font-black text-emerald-400 mt-0.5">17</div>
+                        </div>
+                        <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl">
+                            <div class="text-xs text-slate-400">Yanlış</div>
+                            <div id="resWrong" class="text-2xl font-black text-rose-400 mt-0.5">2</div>
+                        </div>
+                        <div class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl">
+                            <div class="text-xs text-slate-400">Boş</div>
+                            <div id="resEmpty" class="text-2xl font-black text-amber-400 mt-0.5">1</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-center gap-3 mt-6">
+                        <button onclick="resetToExamSetup()" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-rotate"></i> Yeni Sınav Başlat
+                        </button>
+                        <button id="retryExamMistakesBtn" onclick="startExamFromMistakes()" class="hidden px-5 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold text-sm transition flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Sadece Yanlış/Boşları Çöz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detailed Question-by-Question Review -->
+                <div class="space-y-4">
+                    <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2 px-1">
+                        <i class="fa-solid fa-clipboard-check text-cyan-400"></i>
+                        Soru ve Cevap Anahtarı İncelemesi
+                    </h3>
+                    <div id="examReviewList" class="space-y-4"></div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- CUSTOM CONFIRMATION MODAL (No window.confirm/alert) -->
+    <div id="customModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl animate-fade">
+            <h3 id="modalTitle" class="text-lg font-bold text-white mb-2">Sınavı Bitir</h3>
+            <p id="modalMessage" class="text-sm text-slate-300 mb-6">Sınavı sonlandırmak ve sonuç karnesini görmek istediğinize emin misiniz?</p>
+            <div class="flex items-center justify-end gap-2.5">
+                <button onclick="closeModal()" class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-semibold transition">
+                    Vazgeç
+                </button>
+                <button id="modalConfirmBtn" class="px-5 py-2 rounded-xl bg-rose-500 hover:bg-rose-400 text-white text-sm font-bold transition">
+                    Evet, Bitir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800/80 py-5 mt-10 text-center text-xs text-slate-500">
+        <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span>Arduino & Mikroişlemciler Vize/Final Çalışma Rehberi</span>
+            <span>50 Dosya Sorusu + 25 Yeni Hazırlık Sorusu</span>
+        </div>
+    </footer>
+
+    <!-- APPLICATION LOGIC & QUESTION BANK -->
+    <script>
+        // ============================================================================
+        // 1. COMPLETE 75-QUESTION DATABASE (50 FROM USER FILE + 25 EXTRA QUESTIONS)
+        // ============================================================================
+        const RAW_QUESTIONS = [
+            // --- PART A: 50 EXACT QUESTIONS FROM USER'S STUDY FILE ---
+            {
+                id: 1,
+                source: 'file',
+                category: 'Temel Kavramlar',
+                q: "Arduino nedir?",
+                options: [
+                    "Bir programlama dili",
+                    "Bir mikrodenetleyici platformu",
+                    "Bir bilgisayar modeli",
+                    "Bir iletişim protokolü"
+                ],
+                correct: 1,
+                note: "Arduino, açık kaynaklı donanım ve yazılıma dayalı bir mikrodenetleyici geliştirme platformudur."
+            },
+            {
+                id: 2,
+                source: 'file',
+                category: 'Yazılım & IDE',
+                q: "Arduino IDE'nin kısaltması nedir?",
+                options: [
+                    "API",
+                    "ADE",
+                    "IDK",
+                    "Integrated Development Environment"
+                ],
+                correct: 3,
+                note: "IDE: Integrated Development Environment (Tümleşik Geliştirme Ortamı)."
+            },
+            {
+                id: 3,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Hangisi Arduino platformunda kullanılan bir dil değildir?",
+                options: [
+                    "C",
+                    "Python",
+                    "C++",
+                    "Assembly"
+                ],
+                correct: 1,
+                note: "Standart Arduino IDE derleyicisi (avr-gcc) C, C++ ve satır içi Assembly destekler; standart Arduino Uno doğrudan Python çalıştırmaz."
+            },
+            {
+                id: 4,
+                source: 'file',
+                category: 'Donanım & Kartlar',
+                q: "Arduino'nun hangi versiyonu daha küçük boyuttadır ve gömülü projeler için daha uygundur?",
+                options: [
+                    "Arduino Uno",
+                    "Arduino Mega",
+                    "Arduino Nano",
+                    "Arduino Due"
+                ],
+                correct: 2,
+                note: "Arduino Nano, Uno ile aynı ATmega328P işlemciyi kullanır ancak breadboard üzerine takılabilen çok daha küçük bir yapıdadır."
+            },
+            {
+                id: 5,
+                source: 'file',
+                category: 'Donanım & Pinler',
+                q: "Arduino'da (Uno) kullanılan analog girişlerin sayısı nedir?",
+                options: [
+                    "6",
+                    "8",
+                    "10",
+                    "12"
+                ],
+                correct: 0,
+                note: "Arduino Uno üzerinde A0'dan A5'e kadar toplam 6 adet analog giriş pini bulunur."
+            },
+            {
+                id: 6,
+                source: 'file',
+                category: 'Donanım & Kartlar',
+                q: "Hangi Arduino kartı daha fazla dijital giriş/çıkış pini sağlar?",
+                options: [
+                    "Arduino Uno",
+                    "Arduino Mega",
+                    "Arduino Nano",
+                    "Arduino Due"
+                ],
+                correct: 1,
+                note: "Arduino Mega 2560 kartında 54 adet dijital giriş/çıkış pini ve 16 analog giriş bulunur."
+            },
+            {
+                id: 7,
+                source: 'file',
+                category: 'Temel Fonksiyonlar',
+                q: "Arduino'da digitalWrite() fonksiyonu ne işe yarar?",
+                options: [
+                    "Analog sinyal üretir",
+                    "Dijital giriş/çıkış pini için düşük seviye sağlar",
+                    "Dijital giriş/çıkış pini için yüksek seviye sağlar",
+                    "Analog giriş/çıkış pini için düşük seviye sağlar"
+                ],
+                correct: 2,
+                note: "Çalışma notunda 'Dijital giriş/çıkış pini için yüksek seviye sağlar' şıkkı doğru işaretlenmiştir (HIGH/LOW lojik çıkış verir)."
+            },
+            {
+                id: 8,
+                source: 'file',
+                category: 'Temel Fonksiyonlar',
+                q: "Arduino'da analogRead() fonksiyonu ne işe yarar?",
+                options: [
+                    "Dijital sinyal üretir",
+                    "Analog girişten değer okur",
+                    "Dijital girişe yazma yapar",
+                    "Analog çıkışa değer yazar"
+                ],
+                correct: 1,
+                note: "analogRead(pin) fonksiyonu analog pinlerden (A0-A5) 0 ile 1023 arasında değer okur."
+            },
+            {
+                id: 9,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Hangisi Arduino'da kullanılan bir sensör türü değildir?",
+                options: [
+                    "Ultrasonik sensör",
+                    "LDR (ışık bağımlı direnç)",
+                    "Potansiyometre",
+                    "Bluetooth modülü"
+                ],
+                correct: 3,
+                note: "Bluetooth modülü (HC-05/06) bir algılayıcı (sensör) değil, kablosuz haberleşme modülüdür."
+            },
+            {
+                id: 10,
+                source: 'file',
+                category: 'Temel Fonksiyonlar',
+                q: "Arduino'da bir LED'i yakmak için hangi pin modu kullanılmalıdır?",
+                options: [
+                    "INPUT",
+                    "OUTPUT",
+                    "INPUT_PULLUP",
+                    "ANALOG"
+                ],
+                correct: 1,
+                note: "LED'e dışarıya akım/gerilim verileceği için pinMode(pin, OUTPUT); olarak ayarlanmalıdır."
+            },
+            {
+                id: 11,
+                source: 'file',
+                category: 'Kod Yapısı',
+                q: "Arduino kodunda loop() fonksiyonu ne zaman çalışır?",
+                options: [
+                    "Program başladığında",
+                    "Herhangi bir butona basıldığında",
+                    "Setup () fonksiyonu çalıştıktan sonra sürekli tekrarlanır",
+                    "Analog değer okunduğunda"
+                ],
+                correct: 2,
+                note: "setup() yalnızca başlangıçta 1 kez çalışır, hemen ardından loop() fonksiyonu enerji kesilene kadar sonsuz döngüde tekrarlanır."
+            },
+            {
+                id: 12,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Hangisi Arduino programlama dilindeki doğru bir ifade değildir?",
+                options: [
+                    "if (x == 5)",
+                    "while (true)",
+                    "for (int i = 0; i < 10; i++)",
+                    "switch (x)"
+                ],
+                correct: 3,
+                note: "Çalışma kağıdında 'switch (x)' doğru olmayan ifade olarak işaretlenmiştir."
+            },
+            {
+                id: 13,
+                source: 'file',
+                category: 'Kütüphaneler',
+                q: "Arduino'nun hangi kütüphanesi kullanılarak LCD ekran kontrol edilir?",
+                options: [
+                    "LCD.h",
+                    "LiquidCrystal.h",
+                    "Display.h",
+                    "Screen.h"
+                ],
+                correct: 1,
+                note: "Standart 16x2 karakter LCD ekranlar için #include <LiquidCrystal.h> kütüphanesi kullanılır."
+            },
+            {
+                id: 14,
+                source: 'file',
+                category: 'Bellek Türleri',
+                q: "Hangisi Arduino'da kullanılan bir dış/kalıcı bellek türü değildir?",
+                options: [
+                    "EEPROM",
+                    "RAM",
+                    "Flash bellek",
+                    "ROM"
+                ],
+                correct: 1,
+                note: "Çalışma notunda RAM (geçici çalışma belleği) işaretlenmiştir."
+            },
+            {
+                id: 15,
+                source: 'file',
+                category: 'PWM & Analog',
+                q: "Hangisi Arduino'nun bir dijital pini üzerinde PWM (Pulse Width Modulation) çıkışı sağlar?",
+                options: [
+                    "digitalRead()",
+                    "digitalWrite()",
+                    "analogRead()",
+                    "analogWrite()"
+                ],
+                correct: 3,
+                note: "analogWrite(pin, deger) fonksiyonu PWM destekli (~) dijital pinlerden 0-255 arası darbe genişlik modülasyonlu çıkış üretir."
+            },
+            {
+                id: 16,
+                source: 'file',
+                category: 'Zaman Fonksiyonları',
+                q: "Arduino'da kullanılan millis() fonksiyonu ne işe yarar?",
+                options: [
+                    "Geçen zamanı milisaniye cinsinden döndürür",
+                    "Analog değer okur",
+                    "Dijital girişe yazma yapar",
+                    "Analog çıkışa değer yazar"
+                ],
+                correct: 0,
+                note: "millis(), Arduino çalışmaya başladığından itibaren geçen süreyi milisaniye (ms) olarak döndürür."
+            },
+            {
+                id: 17,
+                source: 'file',
+                category: 'Donanım & Kartlar',
+                q: "Hangisi Arduino Uno'nun teknik özelliklerinden biri değildir?",
+                options: [
+                    "Mikrodenetleyici: ATmega328P",
+                    "Digital I/O Pin Sayısı: 20",
+                    "Analog Input Pin Sayısı: 6",
+                    "Flash Bellek: 512 KB"
+                ],
+                correct: 3,
+                note: "Arduino Uno'nun (ATmega328P) Flash belleği 32 KB'dır, 512 KB değildir (512 KB Arduino Due modelindedir)."
+            },
+            {
+                id: 18,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Arduino'da kullanılan potansiyometre hangi tip sensördür?",
+                options: [
+                    "Işık sensörü",
+                    "Hareket sensörü",
+                    "Sıcaklık sensörü",
+                    "Değişken direnç sensörü"
+                ],
+                correct: 3,
+                note: "Potansiyometre, döndürüldükçe direnci değişen ayarlı (değişken) direnç elemanıdır."
+            },
+            {
+                id: 19,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Hangisi Arduino'nun gerçek zamanlı saat (RTC) modülüdür?",
+                options: [
+                    "DS18B20",
+                    "MPU6050",
+                    "DS3231",
+                    "HC-SR04"
+                ],
+                correct: 2,
+                note: "DS3231 (ve DS1307) Real Time Clock (Gerçek Zamanlı Saat) modülüdür. (DS18B20: Sıcaklık, MPU6050: İvme/Jiroskop, HC-SR04: Ultrasonik mesafe)."
+            },
+            {
+                id: 20,
+                source: 'file',
+                category: 'Kütüphaneler',
+                q: "Arduino'nun hangi kütüphanesi kullanılarak WiFi modülleri kontrol edilir?",
+                options: [
+                    "Ethernet.h",
+                    "WiFi.h",
+                    "Bluetooth.h",
+                    "Wire.h"
+                ],
+                correct: 1,
+                note: "Kablosuz ağ bağlantıları için #include <WiFi.h> kütüphanesi kullanılır."
+            },
+            {
+                id: 21,
+                source: 'file',
+                category: 'Donanım & Kartlar',
+                q: "Arduino Uno'da kullanılan mikrodenetleyici hangisidir?",
+                options: [
+                    "ATmega328P",
+                    "ATmega2560",
+                    "ATmega32U4",
+                    "ESP8266"
+                ],
+                correct: 0,
+                note: "Arduino Uno ve Nano'da ATmega328P; Mega'da ATmega2560; Leonardo'da ATmega32U4 kullanılır."
+            },
+            {
+                id: 22,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Arduino ile Bluetooth iletişimi için hangi modül kullanılır genellikle?",
+                options: [
+                    "HC-SR04",
+                    "MPU6050",
+                    "HC-05/06",
+                    "DS18B20"
+                ],
+                correct: 2,
+                note: "HC-05 (Master/Slave) ve HC-06 (Slave) en yaygın Bluetooth seri haberleşme modülleridir."
+            },
+            {
+                id: 23,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Hangisi Arduino kodunda doğru bir döngü yapısıdır?",
+                options: [
+                    "for (int i = 0; i < 5; i++)",
+                    "loop (int i = 0; i < 5; i++)",
+                    "while (i < 5)",
+                    "if (i < 5)"
+                ],
+                correct: 0,
+                note: "Başlangıç, koşul ve artış değerlerini eksiksiz içeren standart C/C++ döngüsü: for (int i = 0; i < 5; i++)"
+            },
+            {
+                id: 24,
+                source: 'file',
+                category: 'Seri Haberleşme',
+                q: "Arduino kodunda Serial.begin() fonksiyonu ne işe yarar?",
+                options: [
+                    "Seri haberleşmeyi başlatır",
+                    "Dijital pin modunu belirler",
+                    "Analog pin modunu belirler",
+                    "Analog sinyal üretir"
+                ],
+                correct: 0,
+                note: "Serial.begin(9600); belirtilen baud hızında seri iletişimi başlatır."
+            },
+            {
+                id: 25,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Hangisi Arduino kodunda doğru bir değişken tanımlamasıdır?",
+                options: [
+                    "int myVar = \"Hello\";",
+                    "float x = 5.7;",
+                    "char y = 10;",
+                    "bool z = \"true\";"
+                ],
+                correct: 1,
+                note: "Ondalıklı sayılar float veri tipi ile tanımlanır: float x = 5.7;"
+            },
+            {
+                id: 26,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Arduino'da kullanılan bir ses sensörü hangisidir?",
+                options: [
+                    "LM35",
+                    "DHT11",
+                    "MQ-2",
+                    "KY-038"
+                ],
+                correct: 2,
+                note: "ÖNEMLİ SINAV NOTU: Çalışma dosyanızda 'MQ-2' koyu (doğru) olarak işaretlenmiştir; ancak normalde MQ-2 gaz/duman sensörüdür, KY-038 ise mikrofon/ses sensörüdür. Hocanızın cevap anahtarında MQ-2 işaretli olduğu için burada MQ-2 doğru kabul edilmiştir, sınavda ikisine de dikkat edin!"
+            },
+            {
+                id: 27,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Hangisi Arduino kodunda doğru bir koşul ifadesidir?",
+                options: [
+                    "if (x >= 10 || y <= 5)",
+                    "if (x = 5)",
+                    "if (x and y)",
+                    "if (not x)"
+                ],
+                correct: 0,
+                note: "C/C++ dilinde VEYA operatörü '||' ile gösterilir: if (x >= 10 || y <= 5)"
+            },
+            {
+                id: 28,
+                source: 'file',
+                category: 'Motorlar & Aktüatörler',
+                q: "Arduino ile programlanabilir robotik projelerde hangisi sıklıkla kullanılır?",
+                options: [
+                    "Servo motor",
+                    "Step motor",
+                    "DC motor",
+                    "Tümü"
+                ],
+                correct: 3,
+                note: "Robotik projelerde konum kontrolü için Servo ve Step motorlar, tekerlek tahriki için DC motorlar (Tümü) kullanılır."
+            },
+            {
+                id: 29,
+                source: 'file',
+                category: 'Bellek Türleri',
+                q: "Arduino Uno'da kullanılan EEPROM bellek boyutu nedir?",
+                options: [
+                    "256 bytes",
+                    "512 bytes",
+                    "1 KB",
+                    "2 KB"
+                ],
+                correct: 1,
+                note: "ÖNEMLİ NOT: Çalışma kağıdınızda '512 bytes' koyu işaretlenmiştir (Eski ATmega168 Uno'da 512B, ATmega328P Uno'da ise 1 KB EEPROM vardır). Dosya anahtarına sadık kalınarak 512 bytes seçilmiştir."
+            },
+            {
+                id: 30,
+                source: 'file',
+                category: 'Haberleşme Protokolleri',
+                q: "Hangisi Arduino Uno'da kullanılan bir (mikrodenetleyici içi/seri) iletişim protokolü değildir?",
+                options: [
+                    "SPI",
+                    "I2C",
+                    "UART",
+                    "USB"
+                ],
+                correct: 3,
+                note: "ATmega328P üzerinde donanımsal SPI, I2C ve UART bulunur; USB ise kart üzerindeki dönüştürücü çip (CH340/ATmega16U2) üzerinden UART'a çevrilir."
+            },
+            {
+                id: 31,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Arduino'da kullanılan programlama dili nedir?",
+                options: [
+                    "C/C++",
+                    "Python",
+                    "Java",
+                    "Assembly"
+                ],
+                correct: 0,
+                note: "Arduino IDE, Wiring tabanlı C/C++ dilini kullanır."
+            },
+            {
+                id: 32,
+                source: 'file',
+                category: 'Temel Fonksiyonlar',
+                q: "Hangi komut Arduino'da bir LED'i yakar?",
+                options: [
+                    "analogWrite()",
+                    "digitalWrite()",
+                    "pinMode()",
+                    "delay()"
+                ],
+                correct: 1,
+                note: "digitalWrite(ledPin, HIGH); komutu ilgili pine 5V vererek LED'i yakar."
+            },
+            {
+                id: 33,
+                source: 'file',
+                category: 'Kod Yapısı',
+                q: "Arduino kodunda setup() fonksiyonu ne işe yarar?",
+                options: [
+                    "Sürekli tekrarlanan işlemleri gerçekleştirir.",
+                    "Kesinti olaylarını yönetir.",
+                    "İlk kez çalıştığında bir kez çalışır, başlangıç ayarlarını yapar.",
+                    "Seri iletişim bağlantısını kurar."
+                ],
+                correct: 2,
+                note: "setup() fonksiyonu kart açıldığında veya resetlendiğinde yalnızca bir defa çalışır ve pinMode, Serial.begin gibi ön ayarları yapar."
+            },
+            {
+                id: 34,
+                source: 'file',
+                category: 'Seri Haberleşme',
+                q: "Hangi komut Arduino'da seri iletişimi başlatır?",
+                options: [
+                    "Serial.begin()",
+                    "Serial.print()",
+                    "Serial.available()",
+                    "Serial.read()"
+                ],
+                correct: 0,
+                note: "Serial.begin() seri port haberleşmesini başlatmak için kullanılır."
+            },
+            {
+                id: 35,
+                source: 'file',
+                category: 'Temel Fonksiyonlar',
+                q: "Bir potansiyometreyi okumak için hangi komut kullanılır?",
+                options: [
+                    "analogWrite()",
+                    "analogRead()",
+                    "digitalRead()",
+                    "digitalWrite()"
+                ],
+                correct: 1,
+                note: "Potansiyometre analog voltaj bölücü olarak çalıştığı için analogRead() ile okunur."
+            },
+            {
+                id: 36,
+                source: 'file',
+                category: 'Kod Yapısı',
+                q: "Arduino'da kullanılan ana döngü yapısı hangisidir?",
+                options: [
+                    "for loop",
+                    "while loop",
+                    "loop()",
+                    "repeat()"
+                ],
+                correct: 2,
+                note: "Arduino taslağının (sketch) ana sonsuz döngü fonksiyonu void loop() {} yapısıdır."
+            },
+            {
+                id: 37,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Hangisi doğru bir Arduino kodu (değişken atama) örneği değildir?",
+                options: [
+                    "int x == 10;",
+                    "float y = 3.14;",
+                    "char z = 'A';",
+                    "bool isActive = true;"
+                ],
+                correct: 0,
+                note: "Değişken tanımlarken atama yapmak için tek eşittir (=) kullanılır. '==' karşılaştırma operatörüdür."
+            },
+            {
+                id: 38,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Bir LDR (Işık Bağımlı Direnç) sensörü hangi pin tipine bağlanır?",
+                options: [
+                    "Digital pinler",
+                    "PWM pinler",
+                    "Analog pinler",
+                    "Interrupt pinler"
+                ],
+                correct: 2,
+                note: "LDR ışık şiddetine göre kesintisiz direnç/gerilim değişimi ürettiği için Analog pinlere (A0-A5) bağlanır."
+            },
+            {
+                id: 39,
+                source: 'file',
+                category: 'Motorlar & Aktüatörler',
+                q: "Hangi komut Arduino'da bir servomotoru kontrol etmek (pine tanımlamak) için kullanılır?",
+                options: [
+                    "Servo.write()",
+                    "Servo.attach()",
+                    "Servo.begin()",
+                    "Servo.stop()"
+                ],
+                correct: 1,
+                note: "Çalışma notunda 'Servo.attach()' işaretlenmiştir (Servoyu pine bağlar, Servo.write() ise açı gönderir)."
+            },
+            {
+                id: 40,
+                source: 'file',
+                category: 'PWM & Analog',
+                q: "Arduino Uno'da kaç tane PWM (Pulse Width Modulation) çıkışı vardır?",
+                options: [
+                    "2",
+                    "4",
+                    "6",
+                    "8"
+                ],
+                correct: 2,
+                note: "Arduino Uno'da 3, 5, 6, 9, 10 ve 11 numaralı pinler olmak üzere toplam 6 adet PWM (~) pini vardır."
+            },
+            {
+                id: 41,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Hangi komut Arduino'da bir röle modülünü açıp kapatmak (kontrol etmek) için kullanılır?",
+                options: [
+                    "analogWrite()",
+                    "digitalWrite()",
+                    "pinMode()",
+                    "delay()"
+                ],
+                correct: 1,
+                note: "Röle modülü açık/kapalı (HIGH/LOW) şeklinde dijital olarak tetiklendiği için digitalWrite() kullanılır."
+            },
+            {
+                id: 42,
+                source: 'file',
+                category: 'Bellek Türleri',
+                q: "Arduino ile kullanılan bir dış/kalıcı bellek türü hangisidir?",
+                options: [
+                    "RAM",
+                    "Flash bellek",
+                    "ROM",
+                    "EEPROM"
+                ],
+                correct: 3,
+                note: "Elektrik kesildiğinde verilerin silinmediği, okunup yazılabilen bellek türü EEPROM'dur."
+            },
+            {
+                id: 43,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Arduino kodunda kullanılan doğru bir eşitlik koşul ifadesi hangisidir?",
+                options: [
+                    "if (x == y)",
+                    "if (x = y)",
+                    "if (x && y)",
+                    "if (x || y)"
+                ],
+                correct: 0,
+                note: "İki değişkenin birbirine eşit olup olmadığını kontrol etmek için 'if (x == y)' kullanılır. (Not: if(x&&y) ve if(x||y) de mantıksal olarak geçerlidir ancak temel eşitlik sorulmuştur)."
+            },
+            {
+                id: 44,
+                source: 'file',
+                category: 'Motorlar & Aktüatörler',
+                q: "Bir DC motoru Arduino ile sürmek/kontrol etmek için hangi yarı iletken eleman kullanılır?",
+                options: [
+                    "Transistör",
+                    "Direnç",
+                    "LED",
+                    "Kapasitör"
+                ],
+                correct: 0,
+                note: "Arduino pinleri maksimum 20-40mA akım verebildiği için yüksek akım çeken DC motorlar Transistör (veya motor sürücü) ile sürülür."
+            },
+            {
+                id: 45,
+                source: 'file',
+                category: 'Donanım & Pinler',
+                q: "Hangisi Arduino Uno'nun güç kaynağına (Power) bağlanan pinlerden biridir?",
+                options: [
+                    "GND",
+                    "5V",
+                    "A0",
+                    "RX"
+                ],
+                correct: 0,
+                note: "GND (Ground - Toprak) ve 5V güç (Power) pin grubundadır. Çalışma sorularında A şıkkı (GND) güç/topraklama hattı pini olarak yer alır."
+            },
+            {
+                id: 46,
+                source: 'file',
+                category: 'Zaman Fonksiyonları',
+                q: "Hangisi Arduino'da zamanı milisaniye cinsinden ölçmek için kullanılır?",
+                options: [
+                    "delay()",
+                    "micros()",
+                    "seconds()",
+                    "millis()"
+                ],
+                correct: 3,
+                note: "millis() çalışma süresini milisaniye cinsinden ölçer; delay() ise programı bekletir."
+            },
+            {
+                id: 47,
+                source: 'file',
+                category: 'Temel Fonksiyonlar',
+                q: "Hangi komut Arduino'da bir ses modülünü (buzzer) belirli bir frekansta kontrol etmek için kullanılır?",
+                options: [
+                    "beep()",
+                    "tone()",
+                    "sound()",
+                    "play()"
+                ],
+                correct: 1,
+                note: "tone(pin, frekans) fonksiyonu buzzer üzerinden ses/nota üretmek için kullanılır, noTone() ile susturulur."
+            },
+            {
+                id: 48,
+                source: 'file',
+                category: 'Programlama Dili',
+                q: "Arduino kodunda kullanılan doğru bir döngü yapısı hangisidir?",
+                options: [
+                    "for (int i = 0; i < 10; i++)",
+                    "loop (int i = 0; i < 10; i++)",
+                    "while (i < 10)",
+                    "if (i < 10)"
+                ],
+                correct: 0,
+                note: "Standart for döngüsü sözdizimi: for (int i = 0; i < 10; i++)"
+            },
+            {
+                id: 49,
+                source: 'file',
+                category: 'Donanım & Pinler',
+                q: "Hangisi Arduino'da bir butona basıldığında alınan sinyalin doğru tipidir?",
+                options: [
+                    "Analog sinyal",
+                    "Dijital sinyal",
+                    "PWM sinyal",
+                    "Seri iletişim sinyali"
+                ],
+                correct: 1,
+                note: "Buton yalnızca iki durum (Basıldı: HIGH/1 veya Basılmadı: LOW/0) ürettiği için Dijital sinyaldir."
+            },
+            {
+                id: 50,
+                source: 'file',
+                category: 'Sensörler & Modüller',
+                q: "Arduino'da bir ultrasonik sensörden (HC-SR04) yankı süresini okumak için hangi komut kullanılır?",
+                options: [
+                    "pulseIn()",
+                    "analogRead()",
+                    "digitalRead()",
+                    "ultrasonicRead()"
+                ],
+                correct: 0,
+                note: "pulseIn(echoPin, HIGH) fonksiyonu Echo pininin HIGH seviyesinde kaldığı süreyi mikrosaniye cinsinden ölçer."
+            },
+
+            // --- PART B: 25 NEW CUSTOM QUESTIONS IN THE EXACT SAME STYLE ---
+            {
+                id: 51,
+                source: 'extra',
+                category: 'PWM & Analog',
+                q: "Arduino Uno'da analogRead() fonksiyonu ile okunan 10-bitlik analog değer hangi sayı aralığındadır?",
+                options: [
+                    "0 - 255",
+                    "0 - 512",
+                    "0 - 1023",
+                    "0 - 4095"
+                ],
+                correct: 2,
+                note: "Arduino Uno'nun ADC (Analog-Dijital Dönüştürücü) birimi 10-bit çözünürlüğe sahiptir (2^10 = 1024 adım, yani 0 ile 1023 arası)."
+            },
+            {
+                id: 52,
+                source: 'extra',
+                category: 'PWM & Analog',
+                q: "Arduino Uno'da analogWrite() fonksiyonuna (PWM) verilebilecek 8-bitlik parametre değeri hangi aralıktadır?",
+                options: [
+                    "0 - 100",
+                    "0 - 255",
+                    "0 - 1023",
+                    "0 - 5"
+                ],
+                correct: 1,
+                note: "PWM çıkışı 8-bitliktir (2^8 = 256 adım). analogWrite(pin, 0) %0 güç, analogWrite(pin, 255) %100 güç verir."
+            },
+            {
+                id: 53,
+                source: 'extra',
+                category: 'Motorlar & Aktüatörler',
+                q: "İki adet DC motorun hızını ve dönüş yönünü kontrol etmek için Arduino projelerinde en sık kullanılan motor sürücü modülü hangisidir?",
+                options: [
+                    "HC-SR04",
+                    "L298N",
+                    "ESP8266",
+                    "DS3231"
+                ],
+                correct: 1,
+                note: "L298N (veya L293D), çift H-Köprüsü (H-Bridge) barındıran popüler DC/Step motor sürücü kartıdır."
+            },
+            {
+                id: 54,
+                source: 'extra',
+                category: 'Sensörler & Modüller',
+                q: "Arduino projelerinde ses dalgaları ile mesafe ölçümü yapmak için kullanılan ultrasonik sensörün model kodu nedir?",
+                options: [
+                    "HC-06",
+                    "DHT11",
+                    "HC-SR04",
+                    "MPU6050"
+                ],
+                correct: 2,
+                note: "HC-SR04 üzerinde Trig ve Echo pinleri bulunan ultrasonik mesafe sensörüdür."
+            },
+            {
+                id: 55,
+                source: 'extra',
+                category: 'Sensörler & Modüller',
+                q: "Ortamın hem sıcaklık hem de bağıl nem değerini dijital olarak ölçmek için kullanılan popüler sensör hangisidir?",
+                options: [
+                    "LDR",
+                    "DHT11 / DHT22",
+                    "HC-SR04",
+                    "KY-038"
+                ],
+                correct: 1,
+                note: "DHT11 ve DHT22 hem sıcaklık hem de nem ölçümü yapan dijital sensörlerdir."
+            },
+            {
+                id: 56,
+                source: 'extra',
+                category: 'Donanım & Pinler',
+                q: "Arduino'da harici bir direnç kullanmadan mikrodenetleyici içindeki dahili çekme (pull-up) direncini aktif etmek için hangi pin modu kullanılır?",
+                options: [
+                    "INPUT_HIGH",
+                    "OUTPUT_PULLUP",
+                    "INPUT_PULLUP",
+                    "INTERNAL_PULL"
+                ],
+                correct: 2,
+                note: "pinMode(butonPin, INPUT_PULLUP); komutu 20k-50k Ohm'luk dahili pull-up direncini devreye sokar."
+            },
+            {
+                id: 57,
+                source: 'extra',
+                category: 'Seri Haberleşme',
+                q: "Serial.begin(9600); komutundaki 9600 sayısı neyi ifade eder?",
+                options: [
+                    "Kullanılacak RAM bellek boyutunu (Byte)",
+                    "Saniyedeki bit iletim hızını (Baud Rate)",
+                    "Programın bekleme süresini (Milisaniye)",
+                    "Seri portun bağlandığı pin numarasını"
+                ],
+                correct: 1,
+                note: "9600 baud rate, saniyede 9600 bit veri aktarım hızını belirtir."
+            },
+            {
+                id: 58,
+                source: 'extra',
+                category: 'Zaman Fonksiyonları',
+                q: "Arduino programının akışını 1 saniye (1000 milisaniye) boyunca tamamen duraklatmak için hangi komut kullanılır?",
+                options: [
+                    "wait(1000);",
+                    "stop(1000);",
+                    "delay(1000);",
+                    "millis(1000);"
+                ],
+                correct: 2,
+                note: "delay(ms) fonksiyonu parametresini milisaniye cinsinden alır; 1000 ms = 1 saniyedir."
+            },
+            {
+                id: 59,
+                source: 'extra',
+                category: 'Temel Fonksiyonlar',
+                q: "Bir sayı aralığını başka bir sayı aralığına (örneğin 0-1023 arasındaki potansiyometre değerini 0-180 derece servo açısına) orantılamak için hangi fonksiyon kullanılır?",
+                options: [
+                    "constrain()",
+                    "map()",
+                    "scale()",
+                    "convert()"
+                ],
+                correct: 1,
+                note: "map(deger, 0, 1023, 0, 180); fonksiyonu doğrusal orantılama yapar."
+            },
+            {
+                id: 60,
+                source: 'extra',
+                category: 'Haberleşme Protokolleri',
+                q: "Arduino Uno kartında I2C haberleşme protokolü için kullanılan SDA (Veri) ve SCL (Saat) pinleri hangi analog pinlerdir?",
+                options: [
+                    "A0 ve A1",
+                    "A2 ve A3",
+                    "A4 (SDA) ve A5 (SCL)",
+                    "D0 ve D1"
+                ],
+                correct: 2,
+                note: "Arduino Uno/Nano üzerinde A4 pini SDA, A5 pini ise SCL olarak görev yapar."
+            },
+            {
+                id: 61,
+                source: 'extra',
+                category: 'Seri Haberleşme',
+                q: "Arduino Uno'da donanımsal UART seri haberleşme için kullanılan RX (Alıcı) ve TX (Verici) pinleri hangileridir?",
+                options: [
+                    "Pin 0 (RX) ve Pin 1 (TX)",
+                    "Pin 2 ve Pin 3",
+                    "Pin 10 ve Pin 11",
+                    "Pin 12 ve Pin 13"
+                ],
+                correct: 0,
+                note: "Dijital 0 (RX) ve Dijital 1 (TX) pinleri seri haberleşme pinleridir. Kod yüklenirken bu pinlere modül takılı olmamalıdır."
+            },
+            {
+                id: 62,
+                source: 'extra',
+                category: 'Donanım & Pinler',
+                q: "Arduino Uno üzerinde harici kesme (External Interrupt) özelliğini destekleyen dijital pinler hangileridir?",
+                options: [
+                    "Pin 0 ve Pin 1",
+                    "Pin 2 ve Pin 3",
+                    "Pin 4 ve Pin 5",
+                    "Pin 9 ve Pin 10"
+                ],
+                correct: 1,
+                note: "Arduino Uno'da yalnızca Pin 2 (INT0) ve Pin 3 (INT1) harici donanım kesmesini destekler."
+            },
+            {
+                id: 63,
+                source: 'extra',
+                category: 'Kütüphaneler',
+                q: "I2C protokolü üzerinden sensör ve ekranlarla haberleşmek için Arduino IDE'de hangi standart kütüphane kullanılır?",
+                options: [
+                    "SPI.h",
+                    "Wire.h",
+                    "Serial.h",
+                    "EEPROM.h"
+                ],
+                correct: 1,
+                note: "I2C (TWI) haberleşmesi için #include <Wire.h> kütüphanesi kullanılır."
+            },
+            {
+                id: 64,
+                source: 'extra',
+                category: 'Donanım & Kartlar',
+                q: "Arduino Uno'nun standart çalışma ve dijital pin lojik HIGH gerilimi kaç Volttur?",
+                options: [
+                    "1.8V",
+                    "3.3V",
+                    "5V",
+                    "12V"
+                ],
+                correct: 2,
+                note: "Arduino Uno 5V lojik seviyesi ile çalışır."
+            },
+            {
+                id: 65,
+                source: 'extra',
+                category: 'Donanım & Pinler',
+                q: "Arduino Uno kartı üzerinde harici eleman bağlamadan test yapabilmek için dahili bir LED (LED_BUILTIN) bulunan dijital pin hangisidir?",
+                options: [
+                    "Pin 1",
+                    "Pin 7",
+                    "Pin 10",
+                    "Pin 13"
+                ],
+                correct: 3,
+                note: "Arduino Uno üzerinde 13 numaralı dijital pine bağlı yerleşik bir 'L' LED'i bulunur."
+            },
+            {
+                id: 66,
+                source: 'extra',
+                category: 'Sensörler & Modüller',
+                q: "Robotik ve dron projelerinde 3 eksenli ivmeölçer ve 3 eksenli jiroskop (eğim/hareket) verisi okumak için kullanılan modül hangisidir?",
+                options: [
+                    "MPU6050",
+                    "DS18B20",
+                    "LM35",
+                    "HC-05"
+                ],
+                correct: 0,
+                note: "MPU6050, I2C ile haberleşen 6 eksenli (3 eksen ivme + 3 eksen gyro) IMU sensörüdür."
+            },
+            {
+                id: 67,
+                source: 'extra',
+                category: 'Sensörler & Modüller',
+                q: "Analog sıcaklık ölçümü yapan ve her 1°C sıcaklık artışında çıkış voltajı doğrusal olarak 10 mV artan 3 bacaklı sensör hangisidir?",
+                options: [
+                    "LM35",
+                    "HC-SR04",
+                    "KY-038",
+                    "MPU6050"
+                ],
+                correct: 0,
+                note: "LM35 popüler bir analog sıcaklık sensörüdür."
+            },
+            {
+                id: 68,
+                source: 'extra',
+                category: 'Motorlar & Aktüatörler',
+                q: "Standart bir hobi servomotoruna (SG90 vb.) Servo.write(aci) komutu ile hangi açı aralığında konum değeri gönderilir?",
+                options: [
+                    "0 - 90 derece",
+                    "0 - 180 derece",
+                    "0 - 360 derece",
+                    "0 - 1023 derece"
+                ],
+                correct: 1,
+                note: "Standart servomotorlar 0 ile 180 derece arasındaki açılara konumlanır."
+            },
+            {
+                id: 69,
+                source: 'extra',
+                category: 'Seri Haberleşme',
+                q: "Seri Port Ekranına (Serial Monitor) bir metin veya değişken yazdırıp imleci bir alt satıra geçiren komut hangisidir?",
+                options: [
+                    "Serial.write()",
+                    "Serial.print()",
+                    "Serial.println()",
+                    "Serial.read()"
+                ],
+                correct: 2,
+                note: "Serial.println() veriyi yazdırdıktan sonra satır sonu (newline) karakteri ekler."
+            },
+            {
+                id: 70,
+                source: 'extra',
+                category: 'Temel Fonksiyonlar',
+                q: "Bir dijital pine bağlı buton veya dijital sensörün durumunu (HIGH veya LOW) okumak için hangi fonksiyon kullanılır?",
+                options: [
+                    "digitalWrite()",
+                    "digitalRead()",
+                    "analogRead()",
+                    "pinMode()"
+                ],
+                correct: 1,
+                note: "Dijital giriş okuması digitalRead(pin) fonksiyonu ile yapılır."
+            },
+            {
+                id: 71,
+                source: 'extra',
+                category: 'PWM & Analog',
+                q: "Arduino Uno kartı üzerinde hangi dijital pinlerin PWM desteklediğini belirtmek için pin numarasının yanında hangi sembol bulunur?",
+                options: [
+                    "* (Yıldız)",
+                    "~ (Dalga / Tilde işareti)",
+                    "# (Diyez)",
+                    "& (Ve işareti)"
+                ],
+                correct: 1,
+                note: "PWM destekleyen pinlerin (3, 5, 6, 9, 10, 11) yanında '~' (yaklaşık/dalga) işareti yer alır."
+            },
+            {
+                id: 72,
+                source: 'extra',
+                category: 'Temel Fonksiyonlar',
+                q: "Arduino'da bir harici kesme (interrupt) fonksiyonunu ilgili pine bağlamak için hangi komut kullanılır?",
+                options: [
+                    "startInterrupt()",
+                    "attachInterrupt()",
+                    "pinInterrupt()",
+                    "enableIRQ()"
+                ],
+                correct: 1,
+                note: "attachInterrupt(digitalPinToInterrupt(pin), ISR_fonksiyonu, mod); şeklinde kullanılır."
+            },
+            {
+                id: 73,
+                source: 'extra',
+                category: 'Bellek Türleri',
+                q: "Arduino'da değişkenlerin çalışma esnasında geçici olarak tutulduğu ve enerji kesildiğinde içeriği silinen bellek hangisidir?",
+                options: [
+                    "SRAM (Statik RAM)",
+                    "EEPROM",
+                    "Flash Bellek",
+                    "Bootloader"
+                ],
+                correct: 0,
+                note: "Değişkenler çalışma anında SRAM'de (Uno'da 2 KB) tutulur ve güç kesilince silinir."
+            },
+            {
+                id: 74,
+                source: 'extra',
+                category: 'Motorlar & Aktüatörler',
+                q: "L298N motor sürücü kartında motorların dönüş yönünü IN1-IN4 pinleri belirlerken, hızını PWM ile ayarlamak için hangi pinler kullanılır?",
+                options: [
+                    "VCC ve GND",
+                    "ENA ve ENB",
+                    "SDA ve SCL",
+                    "TX ve RX"
+                ],
+                correct: 1,
+                note: "ENA (A motoru aktif/hız) ve ENB (B motoru aktif/hız) pinlerine Arduino'nun PWM pinlerinden sinyal uygulanarak hız kontrolü yapılır."
+            },
+            {
+                id: 75,
+                source: 'extra',
+                category: 'Donanım & Kartlar',
+                q: "Arduino Mega 2560 kartında kullanılan mikrodenetleyici aşağıdakilerden hangisidir?",
+                options: [
+                    "ATmega328P",
+                    "ATmega2560",
+                    "ATmega32U4",
+                    "ESP32"
+                ],
+                correct: 1,
+                note: "Arduino Mega 2560, adını üzerindeki ATmega2560 mikrodenetleyicisinden alır."
+            }
+        ];
+
+        // ============================================================================
+        // 2. APPLICATION STATE
+        // ============================================================================
+        let appState = {
+            mode: 'study',             // 'study' | 'practice' | 'exam'
+            sourceFilter: 'all',       // 'all' | 'file' | 'extra' | 'mistakes'
+            searchQuery: '',
+            globalShowAnswers: false,  // VARSAYILAN OLARAK CEVAPLAR GİZLİ BAŞLAR!
+            individualRevealed: {},    // { questionId: boolean }
+            userAnswers: {},           // { questionId: selectedOptionIndex } for Study/Practice
+            mistakesSet: new Set(),    // Set of question IDs answered wrong
+            questions: [],             // Working copy of questions (allows shuffling)
+            
+            // Exam Mode State
+            examActive: false,
+            examQuestions: [],
+            examCurrentIdx: 0,
+            examAnswers: {},           // { questionId: selectedOptionIndex }
+            examTimerSeconds: 0,
+            examInterval: null
+        };
+
+        // Initialize working questions copy
+        function initQuestions() {
+            appState.questions = RAW_QUESTIONS.map(q => ({
+                ...q,
+                options: [...q.options]
+            }));
+        }
+
+        // ============================================================================
+        // 3. MODE SWITCHING & FILTERING
+        // ============================================================================
+        function switchMode(newMode) {
+            appState.mode = newMode;
+
+            // Update active tab styling
+            ['study', 'practice', 'exam'].forEach(m => {
+                const btn = document.getElementById(`tab-${m}`);
+                if (m === newMode) {
+                    btn.className = "mode-tab flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-cyan-500 text-slate-950 shadow-sm";
+                } else {
+                    btn.className = "mode-tab flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-300 hover:text-white hover:bg-slate-800/60";
+                }
+            });
+
+            const toolbar = document.getElementById('toolbarSection');
+            const listSection = document.getElementById('questionsListSection');
+            const examSection = document.getElementById('examSection');
+            const toggleAllBtn = document.getElementById('toggleAllAnswersBtn');
+            const liveStatsBar = document.getElementById('liveStatsBar');
+
+            if (newMode === 'exam') {
+                toolbar.classList.add('hidden');
+                listSection.classList.add('hidden');
+                examSection.classList.remove('hidden');
+                liveStatsBar.classList.add('hidden');
+            } else {
+                toolbar.classList.remove('hidden');
+                listSection.classList.remove('hidden');
+                examSection.classList.add('hidden');
+                liveStatsBar.classList.remove('hidden');
+
+                // In Practice mode, answers should be hidden until clicked
+                if (newMode === 'practice') {
+                    toggleAllBtn.classList.add('hidden');
+                } else {
+                    toggleAllBtn.classList.remove('hidden');
+                }
+                renderQuestionsList();
+            }
+        }
+
+        function setSourceFilter(filter) {
+            appState.sourceFilter = filter;
+            ['all', 'file', 'extra', 'mistakes'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (!btn) return;
+                if (f === filter) {
+                    btn.className = "filter-btn text-xs font-semibold px-3 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 transition";
+                } else if (f === 'mistakes') {
+                    btn.className = `${appState.mistakesSet.size > 0 ? '' : 'hidden'} filter-btn text-xs font-semibold px-3 py-2 rounded-xl bg-rose-500/15 text-rose-300 border border-rose-500/30 hover:bg-rose-500/25 transition`;
+                } else {
+                    btn.className = "filter-btn text-xs font-semibold px-3 py-2 rounded-xl bg-slate-900/70 text-slate-300 border border-slate-700 hover:border-slate-600 transition";
+                }
+            });
+            renderQuestionsList();
+        }
+
+        function handleSearch(val) {
+            appState.searchQuery = val.trim().toLowerCase();
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (appState.searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+            renderQuestionsList();
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            handleSearch('');
+        }
+
+        function getFilteredQuestions() {
+            return appState.questions.filter(q => {
+                if (appState.sourceFilter === 'file' && q.source !== 'file') return false;
+                if (appState.sourceFilter === 'extra' && q.source !== 'extra') return false;
+                if (appState.sourceFilter === 'mistakes' && !appState.mistakesSet.has(q.id)) return false;
+
+                if (appState.searchQuery) {
+                    const inQ = q.q.toLowerCase().includes(appState.searchQuery);
+                    const inCat = q.category.toLowerCase().includes(appState.searchQuery);
+                    const inOpt = q.options.some(o => o.toLowerCase().includes(appState.searchQuery));
+                    return inQ || inCat || inOpt;
+                }
+                return true;
+            });
+        }
+
+        // ============================================================================
+        // 4. GLOBAL HIDE/SHOW ANSWERS & SHUFFLE UTILITIES
+        // ============================================================================
+        function toggleGlobalAnswers() {
+            appState.globalShowAnswers = !appState.globalShowAnswers;
+            appState.individualRevealed = {}; // Reset individual overrides
+            updateGlobalToggleButtonUI();
+            renderQuestionsList();
+        }
+
+        function updateGlobalToggleButtonUI() {
+            const icon = document.getElementById('toggleAnswersIcon');
+            const text = document.getElementById('toggleAnswersText');
+            const btn = document.getElementById('toggleAllAnswersBtn');
+
+            if (appState.globalShowAnswers) {
+                icon.className = "fa-solid fa-eye-slash";
+                text.textContent = "Cevapları Gizle (Kendini Dene)";
+                btn.className = "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition shadow-sm";
+            } else {
+                icon.className = "fa-solid fa-eye";
+                text.textContent = "Tüm Cevapları Göster";
+                btn.className = "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 transition shadow-sm";
+            }
+        }
+
+        function toggleSingleAnswer(qId) {
+            appState.individualRevealed[qId] = !appState.individualRevealed[qId];
+            renderQuestionsList();
+        }
+
+        function shuffleQuestions() {
+            for (let i = appState.questions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [appState.questions[i], appState.questions[j]] = [appState.questions[j], appState.questions[i]];
+            }
+            renderQuestionsList();
+        }
+
+        function shuffleAllOptions() {
+            appState.questions.forEach(q => {
+                const correctText = q.options[q.correct];
+                const userSelectedText = appState.userAnswers[q.id] !== undefined ? q.options[appState.userAnswers[q.id]] : null;
+
+                for (let i = q.options.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
+                }
+
+                q.correct = q.options.indexOf(correctText);
+                if (userSelectedText !== null) {
+                    appState.userAnswers[q.id] = q.options.indexOf(userSelectedText);
+                }
+            });
+            renderQuestionsList();
+        }
+
+        function resetProgress() {
+            appState.userAnswers = {};
+            appState.individualRevealed = {};
+            appState.globalShowAnswers = false;
+            appState.mistakesSet.clear();
+            updateGlobalToggleButtonUI();
+            updateStatsBar();
+            if (appState.sourceFilter === 'mistakes') {
+                setSourceFilter('all');
+            } else {
+                renderQuestionsList();
+            }
+        }
+
+        function updateStatsBar() {
+            let correctCount = 0;
+            let wrongCount = 0;
+
+            Object.keys(appState.userAnswers).forEach(qIdStr => {
+                const qId = parseInt(qIdStr);
+                const qObj = appState.questions.find(item => item.id === qId);
+                if (!qObj) return;
+                if (appState.userAnswers[qId] === qObj.correct) {
+                    correctCount++;
+                } else {
+                    wrongCount++;
+                }
+            });
+
+            document.getElementById('statCorrect').textContent = correctCount;
+            document.getElementById('statWrong').textContent = wrongCount;
+
+            const mistakeBtn = document.getElementById('filter-mistakes');
+            const mistakeBadge = document.getElementById('mistakeCountBadge');
+            mistakeBadge.textContent = appState.mistakesSet.size;
+
+            if (appState.mistakesSet.size > 0) {
+                mistakeBtn.classList.remove('hidden');
+            } else {
+                mistakeBtn.classList.add('hidden');
+            }
+        }
+
+        // ============================================================================
+        // 5. RENDERING QUESTIONS FOR STUDY & PRACTICE MODES
+        // ============================================================================
+        function handleOptionClick(qId, optIdx) {
+            const qObj = appState.questions.find(item => item.id === qId);
+            if (!qObj) return;
+
+            appState.userAnswers[qId] = optIdx;
+            if (optIdx !== qObj.correct) {
+                appState.mistakesSet.add(qId);
+            } else {
+                appState.mistakesSet.delete(qId);
+            }
+
+            updateStatsBar();
+            renderQuestionsList();
+        }
+
+        function renderQuestionsList() {
+            const container = document.getElementById('questionsListSection');
+            const filtered = getFilteredQuestions();
+            document.getElementById('visibleCount').textContent = filtered.length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-slate-800/60 border border-slate-700 rounded-2xl p-8 text-center">
+                        <i class="fa-solid fa-magnifying-glass text-3xl text-slate-500 mb-3"></i>
+                        <h3 class="text-base font-bold text-white">Eşleşen Soru Bulunamadı</h3>
+                        <p class="text-xs text-slate-400 mt-1">Arama filtrenizi değiştirmeyi veya tüm sorulara dönmeyi deneyin.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const letters = ['A', 'B', 'C', 'D'];
+
+            container.innerHTML = filtered.map((item, idx) => {
+                const userChoice = appState.userAnswers[item.id];
+                const hasAnswered = userChoice !== undefined;
+
+                // Determine if the answer is currently revealed
+                let isAnswerShown = false;
+                if (appState.mode === 'study') {
+                    isAnswerShown = appState.globalShowAnswers ? !appState.individualRevealed[item.id] : !!appState.individualRevealed[item.id];
+                    if (hasAnswered) isAnswerShown = true;
+                } else if (appState.mode === 'practice') {
+                    isAnswerShown = hasAnswered || !!appState.individualRevealed[item.id];
+                }
+
+                const sourceBadge = item.source === 'file'
+                    ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30"><i class="fa-solid fa-file-lines mr-1"></i>Dosya Sorusu #${item.id}</span>`
+                    : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Yeni Soru #${item.id}</span>`;
+
+                const optionsHTML = item.options.map((optText, optIdx) => {
+                    const isCorrectOpt = optIdx === item.correct;
+                    const isUserSelected = userChoice === optIdx;
+
+                    let btnStyle = "bg-slate-900/75 hover:bg-slate-900 border-slate-700/80 text-slate-200";
+                    let badgeStyle = "bg-slate-800 text-slate-300 border-slate-700";
+                    let rightIcon = "";
+
+                    if (isAnswerShown) {
+                        if (isCorrectOpt) {
+                            btnStyle = "bg-emerald-500/15 border-emerald-500/60 text-emerald-200 font-semibold shadow-sm shadow-emerald-500/10";
+                            badgeStyle = "bg-emerald-500 text-slate-950 border-emerald-400 font-bold";
+                            rightIcon = `<i class="fa-solid fa-circle-check text-emerald-400 text-base ml-auto"></i>`;
+                        } else if (isUserSelected && !isCorrectOpt) {
+                            btnStyle = "bg-rose-500/15 border-rose-500/60 text-rose-200";
+                            badgeStyle = "bg-rose-500 text-white border-rose-400 font-bold";
+                            rightIcon = `<i class="fa-solid fa-circle-xmark text-rose-400 text-base ml-auto"></i>`;
+                        }
+                    }
+
+                    return `
+                        <button 
+                            onclick="handleOptionClick(${item.id}, ${optIdx})"
+                            class="option-btn w-full text-left p-3 sm:p-3.5 rounded-xl border ${btnStyle} flex items-center gap-3 text-xs sm:text-sm"
+                        >
+                            <span class="w-7 h-7 shrink-0 rounded-lg border ${badgeStyle} flex items-center justify-center text-xs font-mono">
+                                ${letters[optIdx]}
+                            </span>
+                            <span class=" leading-snug break-words">${escapeHtml(optText)}</span>
+                            ${rightIcon}
+                        </button>
+                    `;
+                }).join('');
+
+                const explanationBox = (isAnswerShown && item.note) ? `
+                    <div class="mt-3 p-3 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-xs text-slate-300 flex items-start gap-2.5">
+                        <i class="fa-solid fa-lightbulb text-cyan-400 mt-0.5 shrink-0"></i>
+                        <div><strong class="text-cyan-300">Açıklama / Not:</strong> ${escapeHtml(item.note)}</div>
+                    </div>
+                ` : '';
+
+                return `
+                    <article class="bg-slate-800/75 border border-slate-700/80 rounded-2xl p-4 sm:p-5 shadow-md transition hover:border-slate-600/80">
+                        <!-- Card Header -->
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="w-7 h-7 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-bold text-xs flex items-center justify-center">
+                                    ${idx + 1}
+                                </span>
+                                ${sourceBadge}
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] bg-slate-900 text-slate-400 border border-slate-700">
+                                    ${escapeHtml(item.category)}
+                                </span>
+                            </div>
+
+                            <!-- Individual Reveal/Hide Button -->
+                            <button 
+                                onclick="toggleSingleAnswer(${item.id})" 
+                                class="text-xs font-semibold px-2.5 py-1 rounded-lg border transition flex items-center gap-1.5 ${isAnswerShown ? 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white' : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/25'}"
+                            >
+                                <i class="fa-solid ${isAnswerShown ? 'fa-eye-slash' : 'fa-eye'}"></i>
+                                <span>${isAnswerShown ? 'Cevabı Gizle' : 'Cevabı Göster'}</span>
+                            </button>
+                        </div>
+
+                        <!-- Question Text -->
+                        <h3 class="text-sm sm:text-base font-bold text-white mb-3.5 leading-relaxed">
+                            ${escapeHtml(item.q)}
+                        </h3>
+
+                        <!-- Options Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            ${optionsHTML}
+                        </div>
+
+                        ${explanationBox}
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // ============================================================================
+        // 6. EXAM MODE ENGINE
+        // ============================================================================
+        function startExam(customPool = null) {
+            let pool = [];
+
+            if (customPool) {
+                pool = customPool.map(q => ({ ...q, options: [...q.options] }));
+            } else {
+                const selectedPool = document.querySelector('input[name="examPool"]:checked').value;
+                const selectedCount = parseInt(document.querySelector('input[name="examCount"]:checked').value);
+                const selectedTimeMin = parseInt(document.querySelector('input[name="examTime"]:checked').value);
+                const shuffleQ = document.getElementById('examShuffleQ').checked;
+                const shuffleOpt = document.getElementById('examShuffleOpt').checked;
+
+                pool = RAW_QUESTIONS.filter(q => {
+                    if (selectedPool === 'file') return q.source === 'file';
+                    if (selectedPool === 'extra') return q.source === 'extra';
+                    return true;
+                }).map(q => ({ ...q, options: [...q.options] }));
+
+                if (shuffleQ) {
+                    for (let i = pool.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [pool[i], pool[j]] = [pool[j], pool[i]];
+                    }
+                }
+
+                pool = pool.slice(0, Math.min(selectedCount, pool.length));
+
+                if (shuffleOpt) {
+                    pool.forEach(q => {
+                        const correctText = q.options[q.correct];
+                        for (let i = q.options.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
+                        }
+                        q.correct = q.options.indexOf(correctText);
+                    });
+                }
+
+                appState.examTimerSeconds = selectedTimeMin * 60;
+            }
+
+            appState.examQuestions = pool;
+            appState.examCurrentIdx = 0;
+            appState.examAnswers = {};
+            appState.examActive = true;
+
+            document.getElementById('examSetupCard').classList.add('hidden');
+            document.getElementById('examResultUI').classList.add('hidden');
+            document.getElementById('examRunnerUI').classList.remove('hidden');
+
+            startExamTimer();
+            renderActiveExamQuestion();
+            renderExamPalette();
+        }
+
+        function startExamTimer() {
+            if (appState.examInterval) clearInterval(appState.examInterval);
+            const timerText = document.getElementById('examTimerText');
+
+            if (appState.examTimerSeconds <= 0) {
+                timerText.textContent = "Süresiz";
+                return;
+            }
+
+            updateTimerDisplay();
+            appState.examInterval = setInterval(() => {
+                appState.examTimerSeconds--;
+                updateTimerDisplay();
+                if (appState.examTimerSeconds <= 0) {
+                    clearInterval(appState.examInterval);
+                    finalizeExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(appState.examTimerSeconds / 60);
+            const secs = appState.examTimerSeconds % 60;
+            document.getElementById('examTimerText').textContent =
+                `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function renderActiveExamQuestion() {
+            const q = appState.examQuestions[appState.examCurrentIdx];
+            const total = appState.examQuestions.length;
+
+            document.getElementById('examCurrentIndex').textContent = appState.examCurrentIdx + 1;
+            document.getElementById('examTotalCount').textContent = total;
+
+            const userSelected = appState.examAnswers[q.id];
+            const letters = ['A', 'B', 'C', 'D'];
+
+            const optionsHTML = q.options.map((optText, idx) => {
+                const isSelected = userSelected === idx;
+                const btnClass = isSelected
+                    ? "bg-cyan-500/20 border-cyan-400 text-white font-semibold shadow-md shadow-cyan-500/10"
+                    : "bg-slate-900/80 hover:bg-slate-900 border-slate-700 text-slate-200";
+                const letterClass = isSelected
+                    ? "bg-cyan-400 text-slate-950 border-cyan-300 font-bold"
+                    : "bg-slate-800 text-slate-300 border-slate-700";
+
+                return `
+                    <button 
+                        onclick="selectExamOption(${q.id}, ${idx})"
+                        class="option-btn w-full text-left p-3.5 sm:p-4 rounded-xl border ${btnClass} flex items-center gap-3.5 text-sm sm:text-base"
+                    >
+                        <span class="w-8 h-8 shrink-0 rounded-lg border ${letterClass} flex items-center justify-center text-xs sm:text-sm font-mono">
+                            ${letters[idx]}
+                        </span>
+                        <span class="leading-snug">${escapeHtml(optText)}</span>
+                    </button>
+                `;
+            }).join('');
+
+            document.getElementById('examSingleCard').innerHTML = `
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 border border-slate-700">
+                        ${escapeHtml(q.category)}
+                    </span>
+                    <span class="text-xs text-slate-400">
+                        ${userSelected !== undefined ? '<span class="text-cyan-400 font-semibold"><i class="fa-solid fa-check mr-1"></i>İşaretlendi</span>' : 'Henüz işaretlenmedi'}
+                    </span>
+                </div>
+                <h3 class="text-base sm:text-lg font-bold text-white mb-5 leading-relaxed">
+                    ${appState.examCurrentIdx + 1}. ${escapeHtml(q.q)}
+                </h3>
+                <div class="space-y-2.5">
+                    ${optionsHTML}
+                </div>
+            `;
+
+            // Update Prev/Next button states
+            document.getElementById('examPrevBtn').disabled = appState.examCurrentIdx === 0;
+            document.getElementById('examPrevBtn').classList.toggle('opacity-40', appState.examCurrentIdx === 0);
+
+            const nextBtn = document.getElementById('examNextBtn');
+            if (appState.examCurrentIdx === total - 1) {
+                nextBtn.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> Sınavı Bitir`;
+                nextBtn.onclick = () => finishExamPrompt();
+            } else {
+                nextBtn.innerHTML = `Sonraki Soru <i class="fa-solid fa-arrow-right"></i>`;
+                nextBtn.onclick = () => navigateExam(1);
+            }
+
+            renderExamPalette();
+        }
+
+        function selectExamOption(qId, optIdx) {
+            appState.examAnswers[qId] = optIdx;
+            renderActiveExamQuestion();
+        }
+
+        function clearExamSelection() {
+            const q = appState.examQuestions[appState.examCurrentIdx];
+            delete appState.examAnswers[q.id];
+            renderActiveExamQuestion();
+        }
+
+        function navigateExam(delta) {
+            const nextIdx = appState.examCurrentIdx + delta;
+            if (nextIdx >= 0 && nextIdx < appState.examQuestions.length) {
+                appState.examCurrentIdx = nextIdx;
+                renderActiveExamQuestion();
+            }
+        }
+
+        function jumpToExamQuestion(idx) {
+            appState.examCurrentIdx = idx;
+            renderActiveExamQuestion();
+        }
+
+        function toggleQuestionPalette() {
+            document.getElementById('examPaletteDrawer').classList.toggle('hidden');
+        }
+
+        function renderExamPalette() {
+            const grid = document.getElementById('examPaletteGrid');
+            grid.innerHTML = appState.examQuestions.map((q, idx) => {
+                const isAnswered = appState.examAnswers[q.id] !== undefined;
+                const isCurrent = idx === appState.examCurrentIdx;
+                let cls = "bg-slate-900 text-slate-400 border-slate-700";
+                if (isAnswered) cls = "bg-cyan-500 text-slate-950 font-bold border-cyan-400";
+                if (isCurrent) cls += " ring-2 ring-white";
+
+                return `
+                    <button onclick="jumpToExamQuestion(${idx})" class="py-2 rounded-lg border text-xs font-mono transition ${cls}">
+                        ${idx + 1}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function finishExamPrompt() {
+            const total = appState.examQuestions.length;
+            const answeredCount = Object.keys(appState.examAnswers).length;
+            const emptyCount = total - answeredCount;
+
+            const modal = document.getElementById('customModal');
+            const msg = document.getElementById('modalMessage');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+
+            msg.innerHTML = `Toplam <b>${total}</b> sorudan <b>${answeredCount}</b> tanesini cevapladınız${emptyCount > 0 ? ` (<b class="text-amber-400">${emptyCount} boş</b>)` : ''}. Sınavı bitirip sonuçları görmek istiyor musunuz?`;
+            confirmBtn.onclick = () => {
+                closeModal();
+                finalizeExam();
+            };
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('customModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function finalizeExam() {
+            if (appState.examInterval) clearInterval(appState.examInterval);
+            appState.examActive = false;
+
+            let correct = 0;
+            let wrong = 0;
+            let empty = 0;
+            const wrongOrEmptyQuestions = [];
+
+            appState.examQuestions.forEach(q => {
+                const ans = appState.examAnswers[q.id];
+                if (ans === undefined) {
+                    empty++;
+                    wrongOrEmptyQuestions.push(q);
+                } else if (ans === q.correct) {
+                    correct++;
+                    appState.mistakesSet.delete(q.id);
+                } else {
+                    wrong++;
+                    appState.mistakesSet.add(q.id);
+                    wrongOrEmptyQuestions.push(q);
+                }
+            });
+
+            updateStatsBar();
+
+            const total = appState.examQuestions.length;
+            const score = Math.round((correct / total) * 100);
+
+            document.getElementById('resScore').textContent = score;
+            document.getElementById('resCorrect').textContent = correct;
+            document.getElementById('resWrong').textContent = wrong;
+            document.getElementById('resEmpty').textContent = empty;
+
+            const retryBtn = document.getElementById('retryExamMistakesBtn');
+            if (wrongOrEmptyQuestions.length > 0) {
+                retryBtn.classList.remove('hidden');
+                retryBtn.dataset.mistakeIds = JSON.stringify(wrongOrEmptyQuestions.map(q => q.id));
+            } else {
+                retryBtn.classList.add('hidden');
+            }
+
+            // Render review cards
+            const letters = ['A', 'B', 'C', 'D'];
+            document.getElementById('examReviewList').innerHTML = appState.examQuestions.map((q, idx) => {
+                const userAns = appState.examAnswers[q.id];
+                const isCorrect = userAns === q.correct;
+                const isEmpty = userAns === undefined;
+
+                let statusBadge = '';
+                if (isEmpty) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">Boş Bırakıldı</span>`;
+                } else if (isCorrect) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"><i class="fa-solid fa-check mr-1"></i>Doğru</span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/40"><i class="fa-solid fa-xmark mr-1"></i>Yanlış</span>`;
+                }
+
+                const optsHTML = q.options.map((opt, oIdx) => {
+                    let cls = "bg-slate-900/60 border-slate-800 text-slate-400";
+                    let icon = "";
+                    if (oIdx === q.correct) {
+                        cls = "bg-emerald-500/15 border-emerald-500/50 text-emerald-200 font-semibold";
+                        icon = `<span class="ml-auto text-xs text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Doğru Cevap</span>`;
+                    } else if (oIdx === userAns && !isCorrect) {
+                        cls = "bg-rose-500/15 border-rose-500/50 text-rose-200";
+                        icon = `<span class="ml-auto text-xs text-rose-400 font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i>Senin Seçimin</span>`;
+                    }
+
+                    return `
+                        <div class="p-3 rounded-xl border ${cls} flex items-center gap-2.5 text-xs sm:text-sm">
+                            <span class="font-mono font-bold">${letters[oIdx]})</span>
+                            <span>${escapeHtml(opt)}</span>
+                            ${icon}
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 sm:p-5">
+                        <div class="flex items-center justify-between gap-2 mb-2.5">
+                            <span class="text-xs font-bold text-slate-400">Soru ${idx + 1}</span>
+                            ${statusBadge}
+                        </div>
+                        <h4 class="text-sm sm:text-base font-bold text-white mb-3">${escapeHtml(q.q)}</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            ${optsHTML}
+                        </div>
+                        ${q.note ? `<div class="mt-3 p-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-xs text-slate-300"><i class="fa-solid fa-circle-info text-cyan-400 mr-1.5"></i>${escapeHtml(q.note)}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('examRunnerUI').classList.add('hidden');
+            document.getElementById('examResultUI').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetToExamSetup() {
+            document.getElementById('examResultUI').classList.add('hidden');
+            document.getElementById('examRunnerUI').classList.add('hidden');
+            document.getElementById('examSetupCard').classList.remove('hidden');
+        }
+
+        function startExamFromMistakes() {
+            const btn = document.getElementById('retryExamMistakesBtn');
+            const ids = JSON.parse(btn.dataset.mistakeIds || '[]');
+            const mistakeQuestions = RAW_QUESTIONS.filter(q => ids.includes(q.id));
+            if (mistakeQuestions.length > 0) {
+                appState.examTimerSeconds = 0; // untimed retry
+                startExam(mistakeQuestions);
+            }
+        }
+
+        // Helper for safe HTML rendering
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // ============================================================================
+        // 7. INITIALIZE ON LOAD
+        // ============================================================================
+        window.onload = function () {
+            initQuestions();
+            updateGlobalToggleButtonUI();
+            renderQuestionsList();
+        };
+    </script>
+</body>
+</html>

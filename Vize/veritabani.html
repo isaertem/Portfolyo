@@ -1,0 +1,3007 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veritabanı & MS Access - 160 Soru İnteraktif Çalışma Platformu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        pre, code { font-family: 'JetBrains Mono', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 9999px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.7); }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Üst Menü (Header) -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-500/20">
+                    DB
+                </div>
+                <div>
+                    <h1 class="font-bold text-base sm:text-lg leading-tight">Veritabanı & Access Çalışma Sistemi</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">2 PDF Birleşik • Eksiksiz 160 Soru & Çözüm</p>
+                </div>
+            </div>
+
+            <!-- İstatistikler -->
+            <div class="hidden md:flex items-center gap-3 bg-slate-100 dark:bg-slate-700/60 px-4 py-1.5 rounded-xl border border-slate-200 dark:border-slate-600">
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    Doğru: <span id="stat-correct">0</span>
+                </div>
+                <span class="text-slate-300 dark:text-slate-600">|</span>
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400">
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                    Yanlış: <span id="stat-wrong">0</span>
+                </div>
+                <span class="text-slate-300 dark:text-slate-600">|</span>
+                <div class="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Boş: <span id="stat-unanswered">80</span>
+                </div>
+                <span class="text-slate-300 dark:text-slate-600">|</span>
+                <div class="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                    Başarı: <span id="stat-percent">%0</span>
+                </div>
+            </div>
+
+            <!-- Kontroller -->
+            <div class="flex items-center gap-2">
+                <button id="btn-shuffle" onclick="toggleShuffle()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition flex items-center gap-1.5" title="Soruların sırasını rastgele karıştır">
+                    <span>🔀 Karıştır</span>
+                </button>
+                <button onclick="openResetModal()" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 transition" title="Bu testi sıfırla">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+                <button onclick="toggleTheme()" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-600 transition" title="Tema Değiştir">
+                    <svg id="icon-sun" class="w-5 h-5 hidden dark:block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg id="icon-moon" class="w-5 h-5 block dark:hidden text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Veri Seti (PDF) Seçici Sekmeler -->
+    <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between py-2.5 gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+                <button id="tab-set1" onclick="switchDataset('set1')" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm">
+                    <span>📄 1. Test (80 Soru)</span>
+                </button>
+                <button id="tab-set2" onclick="switchDataset('set2')" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600">
+                    <span>📘 2. Test: Vize (80 Soru)</span>
+                </button>
+                <button id="tab-all" onclick="switchDataset('all')" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600">
+                    <span>🔥 Tüm Sorular (160 Soru)</span>
+                </button>
+                <button id="tab-exam" onclick="startExamMode()" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-rose-600/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-600 hover:text-white">
+                    <span>⏱️ 30 Soruluk Sınav Modu</span>
+                </button>
+            </div>
+
+            <!-- Görünüm Modu: Tek Tek vs Liste -->
+            <div class="flex items-center bg-slate-100 dark:bg-slate-700 p-1 rounded-xl border border-slate-200 dark:border-slate-600">
+                <button id="view-single-btn" onclick="setViewMode('single')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition">
+                    Tek Tek Çöz
+                </button>
+                <button id="view-list-btn" onclick="setViewMode('list')" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition">
+                    Liste Görünümü
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ana İçerik -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+        <!-- Sol / Ana Bölüm: Soru Alanı -->
+        <div class="lg:col-span-8 xl:col-span-9 flex flex-col gap-4">
+
+            <!-- Mobil İstatistik Çubuğu -->
+            <div class="flex md:hidden items-center justify-between bg-white dark:bg-slate-800 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+                <span class="text-emerald-600 dark:text-emerald-400">Doğru: <b id="m-stat-correct">0</b></span>
+                <span class="text-rose-600 dark:text-rose-400">Yanlış: <b id="m-stat-wrong">0</b></span>
+                <span class="text-slate-500 dark:text-slate-400">Boş: <b id="m-stat-unanswered">80</b></span>
+                <span class="text-indigo-600 dark:text-indigo-400">Başarı: <b id="m-stat-percent">%0</b></span>
+            </div>
+
+            <!-- SINAV MODU BİLGİ VE KONTROL BARI -->
+            <div id="exam-banner" class="hidden bg-gradient-to-r from-rose-600 to-indigo-600 text-white rounded-2xl p-4 shadow-md flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl font-bold">⏱️</div>
+                    <div>
+                        <div class="font-bold text-sm sm:text-base flex items-center gap-2">
+                            <span>30 Soruluk Deneme Sınavı</span>
+                            <span id="exam-status-pill" class="px-2 py-0.5 text-[11px] rounded-full bg-white/20 font-semibold">Devam Ediyor</span>
+                        </div>
+                        <p id="exam-subtext" class="text-xs text-white/80">160 soru içinden rastgele seçilmiş 30 soru. Şıkkı işaretlediğinizde doğru/yanlış ve açıklama gösterilir.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="bg-slate-900/40 px-3.5 py-1.5 rounded-xl border border-white/20 text-center">
+                        <span class="text-[10px] uppercase tracking-wider block text-white/70">Geçen Süre</span>
+                        <span id="exam-timer" class="font-mono font-bold text-sm sm:text-base">00:00</span>
+                    </div>
+                    <button onclick="regenerateExam()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/15 hover:bg-white/25 border border-white/25 transition">
+                        🔄 Yeni 30 Soru Çek
+                    </button>
+                    <button id="btn-finish-exam" onclick="finishExam()" class="px-4 py-2 rounded-xl text-xs font-bold bg-white text-rose-600 hover:bg-rose-50 shadow-sm transition">
+                        🏁 Sınavı Bitir & Sonucu Gör
+                    </button>
+                </div>
+            </div>
+
+            <!-- TEK TEK ÇÖZÜM EKRANI -->
+            <div id="single-view-container" class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col">
+                
+                <!-- Soru Üst Bilgi Barı -->
+                <div class="px-5 py-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <span id="q-badge" class="px-3 py-1 rounded-lg bg-indigo-600 text-white font-bold text-sm">
+                            Soru 1 / 80
+                        </span>
+                        <span id="q-source-badge" class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium">
+                            Veritabanı 80 Soru
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="revealCurrentQuestion()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 transition">
+                            👁️ Doğru Cevabı Göster
+                        </button>
+                        <button onclick="clearCurrentAnswer()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition">
+                            ↺ Seçimi Temizle
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Soru Gövdesi -->
+                <div class="p-5 sm:p-7 flex-1 flex flex-col justify-between gap-6">
+                    <div>
+                        <!-- Soru Metni -->
+                        <div id="q-text" class="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-100 leading-relaxed mb-4"></div>
+
+                        <!-- Kod / Diyagram / QBE Kutusu (Varsa) -->
+                        <div id="q-code-wrapper" class="hidden mb-6">
+                            <div class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                                <span>💻 Tablo / Sorgu / Diyagram Görünümü:</span>
+                            </div>
+                            <pre id="q-code" class="bg-slate-900 text-emerald-400 p-4 rounded-xl text-xs sm:text-sm overflow-x-auto border border-slate-700 leading-relaxed shadow-inner"></pre>
+                        </div>
+
+                        <!-- Şıklar -->
+                        <div id="q-options" class="flex flex-col gap-3"></div>
+                    </div>
+
+                    <!-- Çözüm ve Açıklama Kutusu -->
+                    <div id="q-feedback" class="hidden rounded-xl p-4 border text-sm leading-relaxed transition-all"></div>
+                </div>
+
+                <!-- Alt Gezinme Butonları -->
+                <div class="px-5 py-4 bg-slate-50 dark:bg-slate-800/60 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                    <button id="btn-prev" onclick="prevQuestion()" class="px-4 py-2.5 rounded-xl font-semibold text-sm bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 transition flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                        <span>Önceki Soru</span>
+                    </button>
+
+                    <span class="text-xs text-slate-400 hidden sm:inline">Klavye Kısayolu: ⬅️ ➡️ ok tuşları ve A, B, C, D, E</span>
+
+                    <button id="btn-next" onclick="nextQuestion()" class="px-5 py-2.5 rounded-xl font-semibold text-sm bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-500/20 transition flex items-center gap-2 disabled:opacity-40 disabled:pointer-events-none">
+                        <span>Sonraki Soru</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- LİSTE GÖRÜNÜMÜ EKRANI -->
+            <div id="list-view-container" class="hidden flex-col gap-4"></div>
+
+        </div>
+
+        <!-- Sağ Bölüm: Soru Haritası & Filtreleme -->
+        <aside class="lg:col-span-4 xl:col-span-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 sticky top-20 flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+                <h2 class="font-bold text-sm text-slate-800 dark:text-slate-100">Soru Gezgini</h2>
+                <span id="nav-progress-text" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">0 / 80 Çözüldü</span>
+            </div>
+
+            <!-- Arama Kutusu -->
+            <div class="relative">
+                <input id="search-input" type="text" oninput="handleSearch()" placeholder="Soru veya kelime ara (örn: JOIN)..." class="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100">
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+
+            <!-- Durum Filtreleri -->
+            <div class="grid grid-cols-4 gap-1.5 text-[11px] font-semibold">
+                <button onclick="setFilterStatus('all')" id="flt-all" class="py-1.5 rounded-lg bg-indigo-600 text-white">Tümü</button>
+                <button onclick="setFilterStatus('unanswered')" id="flt-unanswered" class="py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Boş</button>
+                <button onclick="setFilterStatus('correct')" id="flt-correct" class="py-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">Doğru</button>
+                <button onclick="setFilterStatus('wrong')" id="flt-wrong" class="py-1.5 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400">Yanlış</button>
+            </div>
+
+            <!-- Soru Numaraları Grid -->
+            <div id="question-grid" class="grid grid-cols-5 sm:grid-cols-8 lg:grid-cols-5 gap-1.5 max-h-[380px] overflow-y-auto custom-scrollbar pr-1"></div>
+
+            <!-- Renk Açıklamaları -->
+            <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500 inline-block"></span> Doğru</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-rose-500 inline-block"></span> Yanlış</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-indigo-600 inline-block"></span> Aktif</span>
+                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-200 dark:bg-slate-700 inline-block"></span> Boş</span>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- Sıfırlama Onay Modalı (Alert yerine özel modal) -->
+    <div id="reset-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700 shadow-xl">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">İlerlemeyi Sıfırla</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mb-6">Şu an görüntülediğiniz soru setindeki tüm işaretlediğiniz cevaplar temizlenecek. Emin misiniz?</p>
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeResetModal()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 transition">Vazgeç</button>
+                <button onclick="confirmReset()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 transition">Evet, Sıfırla</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // 1. VERİ SETİ: Veritabani_80_Soru_çalışma (80 Soru Eksiksiz)
+        // ============================================================================
+        const questionsSet1 = [
+            {
+                id: "s1_1", num: 1, set: "Veritabanı 80 Soru",
+                q: "MS Access veritabanı motorunun (ACE/JET) çok kullanıcılı ağ ortamında dosya kilitlenmesini ve eşzamanlı erişimi yönetmek için otomatik oluşturduğu geçici kilit dosyası uzantısı aşağıdakilerden hangisidir?",
+                options: [".accdb", ".laccdb", ".tmp", ".ldb", ".accde"],
+                ans: 1,
+                exp: "Modern Access (.accdb) dosyaları açıldığında aynı dizinde otomatik olarak '.laccdb' (Lock ACCDB) uzantılı geçici kilit dosyası oluşturulur (Eski .mdb formatında .ldb idi, güncel motor .laccdb kullanır)."
+            },
+            {
+                id: "s1_2", num: 2, set: "Veritabanı 80 Soru",
+                q: "Tablo tasarımında bir alanın 'Giriş Maskesi' (Input Mask) özelliğine '00000\\-9999;0;_' ifadesi yazılmıştır. Bu maske ile ilgili aşağıdakilerden hangisi DOĞRUDUR?",
+                options: [
+                    "İlk 5 hane harf, son 4 hane sayı olmak zorundadır.",
+                    "İlk 5 hane zorunlu rakam, tire sonrasındaki 4 hane isteğe bağlı rakamdır.",
+                    "Tüm haneler isteğe bağlı harflerden oluşur.",
+                    "Sadece metin girişine izin verir.",
+                    "Girilen veriyi otomatik olarak büyük harfe çevirir."
+                ],
+                ans: 1,
+                exp: "Access Giriş Maskesinde '0' zorunlu rakam (0-9), '9' ise isteğe bağlı rakam veya boşluk anlamına gelir."
+            },
+            {
+                id: "s1_3", num: 3, set: "Veritabanı 80 Soru",
+                q: "Tablo Tasarımında bir alanın 'Geçerlilik Kuralı' (Validation Rule) özelliğine yazılan aşağıdaki ifadelerden hangisi 'Sadece Ocak, Şubat veya Mart aylarında doğanları' kabul eder?",
+                options: [
+                    "In (1, 2, 3)",
+                    "Month([Dogum Tarihi]) In (1, 2, 3)",
+                    "Like '*Ocak*' Or '*Şubat*'",
+                    "Between 1 And 31",
+                    "Date() < #01/04/2026#"
+                ],
+                ans: 1,
+                exp: "Month([Dogum Tarihi]) fonksiyonu tarihin ay bilgisini (1-12) döndürür. In (1, 2, 3) ise 1. (Ocak), 2. (Şubat) ve 3. (Mart) ayları filtreler."
+            },
+            {
+                id: "s1_4", num: 4, set: "Veritabanı 80 Soru",
+                q: "Access'te iki tablo arasında Bire-Çok ilişki kurulup 'Bilgi Bütünlüğünü Zorla' seçildiğinde, 'İlişkili Alanları İkinci Derecede Güncelle' (Cascade Update) aktif edilirse ne olur?",
+                options: [
+                    "Ana tablodaki Birincil Anahtar (PK) değeri değiştirildiğinde, detay tablodaki tüm bağlı Yabancı Anahtar (FK) değerleri otomatik güncellenir.",
+                    "Detay tablodaki kayıt silindiğinde ana tablodaki kayıt da silinir.",
+                    "Ana tabloya yeni kayıt eklenmesini engeller.",
+                    "Detay tablonun veri tipi otomatik olarak metne dönüşür.",
+                    "Veritabanı salt okunur hale gelir."
+                ],
+                ans: 0,
+                exp: "Cascade Update (İlişkili Alanları İkinci Derecede Güncelle), ana tablodaki birincil anahtar güncellendiğinde ilişkili alt tablodaki yabancı anahtarları da otomatik olarak günceller."
+            },
+            {
+                id: "s1_5", num: 5, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki İlişkiler diyagramında yer alan 'Musteriler' ve 'Siparisler' tabloları arasındaki ilişki durumu incelendiğinde hangisi YANLIŞTIR?",
+                code: "İlişkiler Ekranı:\n+------------------+          +------------------+\n| Musteriler       | 1      ∞ | Siparisler       |\n+------------------+----------+------------------+\n| MusteriID (PK)   |          | SiparisID (PK)   |\n| MusteriAd        |          | MusteriID (FK)   |\n+------------------+          +------------------+",
+                options: [
+                    "Bir müşterinin birden fazla siparişi olabilir.",
+                    "Siparişler tablosundaki MusteriID alanı bir Yabancı Anahtardır (FK).",
+                    "Musteriler tablosunda var olmayan bir MusteriID ile Siparisler tablosuna kayıt eklenebilir.",
+                    "Musteriler tablosu 'Ana Tablo', Siparisler tablosu 'Detay Tablodur'.",
+                    "İki tablo arasında 1-N (Bire-Çok) ilişki bulunmaktadır."
+                ],
+                ans: 2,
+                exp: "1-∞ (Bire-Çok) bilgi bütünlüğü olan bir ilişkide, Ana tabloda (Musteriler) bulunmayan bir MusteriID ile Siparisler tablosuna kayıt EKLENEMEZ."
+            },
+            {
+                id: "s1_6", num: 6, set: "Veritabanı 80 Soru",
+                q: "Görsel Sorgu Tasarımcısında (QBE Grid) bir süzgeç kurulurken aşağıdaki gibi karmaşık bir yapı tasarlanmıştır. Bu sorgunun sonucu nedir?",
+                code: "QBE Izgarası:\n| Alan:  | BolumAdi     | GNO    | Sehir     |\n| Ölçüt: | 'Bilgisayar' | >= 3.0 | 'Kütahya' |\n| Veya:  | 'Bilgisayar' |        | 'Bursa'   |",
+                options: [
+                    "Yalnızca Kütahya'daki GNO>=3.0 olan Bilgisayar öğrencileri listelenir.",
+                    "Bilgisayar bölümünde okuyup Kütahya'da yaşayan GNO>=3.0 öğrenciler İLE Bilgisayar bölümünde okuyup Bursa'da yaşayan TÜM öğrenciler listelenir.",
+                    "Bursa'da yaşayan GNO>=3.0 olan tüm öğrenciler listelenir.",
+                    "Tüm şehirlerdeki GNO>=3.0 olan öğrenciler gelir.",
+                    "Sorgu sözdizim hatası verir."
+                ],
+                ans: 1,
+                exp: "QBE'de aynı satırdaki koşullar AND ile, alt satırdaki (Veya) koşullar OR ile bağlanır. 2. satırda GNO boş bırakıldığı için Bursa'daki tüm Bilgisayar öğrencileri (GNO şartı aranmaksızın) listeye dahil edilir."
+            },
+            {
+                id: "s1_7", num: 7, set: "Veritabanı 80 Soru",
+                q: "QBE ızgarasında bir alanın 'Ölçüt' satırına 'Not Between 50 And 80' yazılmıştır. Bu ifade hangisine DENKTİR?",
+                options: [
+                    "< 50 Or > 80",
+                    ">= 50 And <= 80",
+                    "= 50 Or = 80",
+                    "> 50 And < 80",
+                    "<> 50 And <> 80"
+                ],
+                ans: 0,
+                exp: "Between 50 And 80 ifadesi 50 ile 80 arasını (sınırlar dahil) alır. Başına NOT geldiğinde 50'den küçük VEYA 80'den büyük (< 50 Or > 80) değerleri alır."
+            },
+            {
+                id: "s1_8", num: 8, set: "Veritabanı 80 Soru",
+                q: "QBE ızgarasında AdSoyad sütununun Ölçüt satırına yazılan 'Like \"A[a-m]*\"' ifadesi hangi isimleri süzmektedir?",
+                options: [
+                    "A ile başlayıp ikinci harfi 'a' ile 'm' arasındaki alfabetik harflerden biri olan isimleri",
+                    "A veya M harfi ile başlayan isimleri getirir",
+                    "İçinde 'a' ve 'm' harfi geçen isimleri",
+                    "Sadece 'Aam' isimli kayıtları filtreleyip listeler",
+                    "A harfi ile başlamayan isimleri"
+                ],
+                ans: 0,
+                exp: "'A' ilk harfin A olmasını, '[a-m]' ikinci karakterin a'dan m'ye kadar bir harf olmasını, '*' ise devamında her şeyin gelebileceğini belirtir."
+            },
+            {
+                id: "s1_9", num: 9, set: "Veritabanı 80 Soru",
+                q: "QBE ızgarasında Tarih alanının Ölçüt satırına 'Year([SiparisTarihi]) = Year(Date())' yazılırsa sorgu nasıl çalışır?",
+                options: [
+                    "Sadece bugünün tarihine ait siparişleri getirir.",
+                    "İçinde bulunduğumuz yıla ait tüm siparişleri filtreler.",
+                    "Geçen yıla ait siparişleri getirir.",
+                    "Gelecek yıla ait siparişleri getirir.",
+                    "Tüm yılları listeler."
+                ],
+                ans: 1,
+                exp: "Date() bugünün tarihini, Year(Date()) ise içinde bulunduğumuz yılı verir. Sipariş tarihinin yılı mevcut yıla eşit olan tüm kayıtları filtreler."
+            },
+            {
+                id: "s1_10", num: 10, set: "Veritabanı 80 Soru",
+                q: "Özet sorguda (Totals Query) 'Group By' modunda çalışırken, 'GNO' sütununun 'Ölçüt' satırına '> (SELECT AVG(GNO) FROM Ogrenciler)' yazılırsa bu yapı neyi ifade eder?",
+                options: [
+                    "Tabloyu ikiye böler",
+                    "Sorgu hata verir, QBE içinde alt sorgu yazılamaz.",
+                    "Sadece ortalaması 2.0 olanları getirir.",
+                    "Tüm öğrencileri siler.",
+                    "Ana sorguda alt sorgu (Subquery) kullanarak genel not ortalamasının üzerinde olan öğrencileri filtreler."
+                ],
+                ans: 4,
+                exp: "QBE ölçüt satırına parantez içinde SELECT yazılarak alt sorgu (Subquery) oluşturulabilir ve genel ortalamanın üstündeki öğrenciler filtrelenir."
+            },
+            {
+                id: "s1_11", num: 11, set: "Veritabanı 80 Soru",
+                q: "Form Tasarımında veritabanı tablosundaki belirli bir sütun ile doğrudan ilişkilendirilmiş metin kutusuna ne ad verilir?",
+                options: [
+                    "Unbound Control (Bağsız Denetim)",
+                    "Bound Control (Bağlı Denetim)",
+                    "Calculated Control (Hesaplanmış Denetim)",
+                    "Static Label (Sabit Etiket)",
+                    "Dynamic Master Control"
+                ],
+                ans: 1,
+                exp: "Bir tablo veya sorgudaki alana doğrudan bağlı olan denetimlere Bound Control (Bağlı Denetim) denir."
+            },
+            {
+                id: "s1_12", num: 12, set: "Veritabanı 80 Soru",
+                q: "Form üzerinde hesaba dayalı bir veri göstermek için Metin Kutusunun 'Denetim Kaynağı' (Control Source) özelliğine ne yazılmalıdır?",
+                options: [
+                    "[Fiyat] * [Adet]",
+                    "= [Fiyat] * [Adet]",
+                    "SUM(Fiyat * Adet)",
+                    "Fiyat x Adet",
+                    "Calculated: Fiyat * Adet"
+                ],
+                ans: 1,
+                exp: "Form ve raporlarda hesaplanmış denetim oluştururken Denetim Kaynağı (Control Source) ifadesi mutlaka '=' (eşittir) işareti ile başlamalıdır: = [Fiyat] * [Adet]"
+            },
+            {
+                id: "s1_13", num: 13, set: "Veritabanı 80 Soru",
+                q: "Form Tasarımında yer alan bir Açılır Kutunun (Combo Box) seçeneklerini başka bir tablodan dinamik olarak çekmesi için hangi özelliği ayarlanmalıdır?",
+                options: [
+                    "Row Source Type (Satır Kaynak Türü) = Tablo/Sorgu ve Row Source (Satır Kaynağı) = Tablo Adı",
+                    "Control Source = Text",
+                    "Default Value = Combo",
+                    "Format = List",
+                    "Input Mask = Lookup"
+                ],
+                ans: 0,
+                exp: "Combo Box'ın verileri bir tablodan alması için Row Source Type = Table/Query ve Row Source = İlgili Tablo/Sorgu olarak seçilir."
+            },
+            {
+                id: "s1_14", num: 14, set: "Veritabanı 80 Soru",
+                q: "Bir Form üzerindeki birden fazla denetimi (Etiket ve Metin Kutusu) 'Tablo Şeklinde' (Tabular) düzene soktuğumuzda aşağıdakilerden hangisi gerçekleşir?",
+                options: [
+                    "Form otomatik kapatılır.",
+                    "Tüm denetimler üst üste biner.",
+                    "Denetimler dairesel olarak dizilir.",
+                    "Etiketler en üstte sütun başlıkları halinde, metin kutuları ise altında satırlar halinde hizalanır.",
+                    "Tüm veriler silinir."
+                ],
+                ans: 3,
+                exp: "Tabular (Tablo Şeklinde) düzende etiketler bir tablonun sütun başlıkları gibi üst kısma, metin kutuları ise alt satıra yan yana dizilir."
+            },
+            {
+                id: "s1_15", num: 15, set: "Veritabanı 80 Soru",
+                q: "Form Tasarım görünümünde 'Sekme Sırası' (Tab Order) ayarı ne işe yarar?",
+                options: [
+                    "Formdaki butonların renk sırasını değiştirir.",
+                    "Kullanıcı klavyeden TAB tuşuna bastığında imlecin hangi denetimden hangisine geçeceğini belirler.",
+                    "Verilerin alfabetik sıralamasını ayarlar.",
+                    "Tablolar arası geçiş sağlar.",
+                    "Formun boyutunu ayarlar."
+                ],
+                ans: 1,
+                exp: "Tab Order (Sekme Sırası), form üzerinde Tab tuşuna basıldığında odaklanmanın (focus) hangi sırayla kutular arasında gezeceğini belirler."
+            },
+            {
+                id: "s1_16", num: 16, set: "Veritabanı 80 Soru",
+                q: "Form üzerine eklenen bir Düğmenin 'Tıklandığında' olayına 'Sorgu Çalıştır' (OpenQuery) eylemi bağlandığında çalıştırılan sorgu bir 'Eylem Sorgusu' (Delete/Update) ise Access'in güvenlik uyarısını engellemek için makroda hangi eylem önceden çağrılmalıdır?",
+                options: [
+                    "SetWarnings (Uyarıları Ayarla) = Hayır (False)",
+                    "Close Window",
+                    "MessageBox",
+                    "Requery",
+                    "Echo = False"
+                ],
+                ans: 0,
+                exp: "SetWarnings = No (Uyarıları Ayarla = Hayır), eylem sorgularının '... satır silinecek/güncellenecek' şeklindeki sistem onay kutularını bastırır."
+            },
+            {
+                id: "s1_17", num: 17, set: "Veritabanı 80 Soru",
+                q: "Rapor Tasarımında 'Grup Üst Bilgisi' (Group Header) bölümü ne zaman ve ne amaçla kullanılır?",
+                options: [
+                    "Sadece raporun en başında bir kez görünür.",
+                    "Belirtilen alana göre (örneğin Bölüm) veriler gruplandığında, her yeni grup başladığında o gruba ait başlığı basmak için kullanılır.",
+                    "Her sayfanın en altında basılır.",
+                    "Rapor kapatılırken çalışır.",
+                    "Sadece sayfa numarası eklemek için kullanılır."
+                ],
+                ans: 1,
+                exp: "Group Header (Grup Üst Bilgisi), gruplanan her yeni kategori/bölüm başladığında grup başlığını yazdırmak için kullanılır."
+            },
+            {
+                id: "s1_18", num: 18, set: "Veritabanı 80 Soru",
+                q: "Bir raporda 'Rapor Alt Bilgisi' (Report Footer) bölümüne eklenen '=Sum([Tutar])' metin kutusu neyi hesaplar?",
+                options: [
+                    "Sayfadaki tutarların toplamını",
+                    "İlk kaydın tutarını",
+                    "Gruptaki ortalama tutarı",
+                    "En yüksek tutarı",
+                    "Tüm rapordaki tüm kayıtların genel Tutar toplamını"
+                ],
+                ans: 4,
+                exp: "Report Footer (Rapor Alt Bilgisi) raporun en sonunda yer alır ve buradaki =Sum([Tutar]) tüm rapordaki kayıtların genel toplamını hesaplar."
+            },
+            {
+                id: "s1_19", num: 19, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki makro yapısında 'If' koşul bloğu kullanılmıştır. Bu makro ne yapar?",
+                code: "Makro Akışı:\nIf [GNO] < 2.0 Then\n    MesajKutusu (\"Öğrenci akademik başarısızlık riski taşımaktadır!\")\nEnd If",
+                options: [
+                    "Hata verir.",
+                    "GNO'su 2.0'dan büyük olanları siler.",
+                    "Formu otomatik kapatır.",
+                    "GNO alanını 2.0 yapar.",
+                    "GNO'su 2.0'dan küçük olan kayıt ekranda görüntülendiğinde uyarı mesajı verir."
+                ],
+                ans: 4,
+                exp: "Koşul [GNO] < 2.0 olduğunda MesajKutusu eylemini tetikleyerek ekrana uyarı mesajı çıkarır."
+            },
+            {
+                id: "s1_20", num: 20, set: "Veritabanı 80 Soru",
+                q: "Form kapatılırken yapılan değişikliklerin kaydedilmesini kullanıcıya sormadan otomatik onaylamak için 'PencereKapat' (Close Window) makro eyleminin 'Kaydet' parametresi ne olmalıdır?",
+                options: [
+                    "Sor (Prompt)",
+                    "Evet (Yes) / Save acSaveYes",
+                    "Hayır (No)",
+                    "İptal (Cancel)",
+                    "Otomatik (Auto)"
+                ],
+                ans: 1,
+                exp: "PencereKapat (CloseWindow) eyleminde Kaydet (Save) parametresi 'Evet (Yes)' seçilirse tasarım/veri değişiklikleri sorulmadan kaydedilir."
+            },
+            {
+                id: "s1_21", num: 21, set: "Veritabanı 80 Soru",
+                q: "Bir Form açıldığında otomatik olarak son eklenen boş kayda gitmesini sağlamak için hangi makro eylemi ve parametresi kullanılır?",
+                options: [
+                    "KayıtaGit (GoToRecord) -> Kayıt: Yeni (New)",
+                    "FormAç -> Veri Modu: Salt Okunur",
+                    "KayıtBul -> İlk",
+                    "Yenile",
+                    "PencereKapat"
+                ],
+                ans: 0,
+                exp: "GoToRecord (KayıtaGit) eyleminde Kayıt türü 'Yeni (New)' seçildiğinde form doğrudan yeni veri girişine hazır boş kayda odaklanır."
+            },
+            {
+                id: "s1_22", num: 22, set: "Veritabanı 80 Soru",
+                q: "Form üzerindeki bir metin kutusuna değer girilip ENTER'a basıldıktan hemen sonra başka bir denetimin içeriğini güncellemek için kullanılan makro eylemi hangisidir?",
+                options: [
+                    "Requery",
+                    "Close Window",
+                    "DeleteRecord",
+                    "OpenReport",
+                    "RunSQL"
+                ],
+                ans: 0,
+                exp: "Requery (Yeniden Sorgula) eylemi, form veya üzerindeki bir denetimin veri kaynağını yeniden çalıştırarak güncel verileri gösterir."
+            },
+            {
+                id: "s1_23", num: 23, set: "Veritabanı 80 Soru",
+                q: "Access veritabanı açıldığında özel olarak oluşturulmuş ve ismi 'AutoExec' olan bir makro varsa ne gerçekleşir?",
+                options: [
+                    "Makro silinir.",
+                    "Veritabanı dosyası açılır açılmaz hiçbir kullanıcı müdahalesi olmadan bu makro otomatik çalışır.",
+                    "Makro salt okunur olur.",
+                    "Access güvenlik hatası verip kapanır.",
+                    "Yalnızca Shift tuşuna basılırsa çalışır."
+                ],
+                ans: 1,
+                exp: "AutoExec ismi Access'te özel bir makro adıdır; veritabanı açıldığında ilk olarak otomatik çalıştırılır."
+            },
+            {
+                id: "s1_24", num: 24, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki ifadelerden hangisi Access Özellik Sayfasında 'Geçerlilik Metni' (Validation Text) özelliğinin işlevini açıklar?",
+                options: [
+                    "Tablo başlığıdır.",
+                    "Alanın veritabanındaki adıdır.",
+                    "Metin kutusunun arka plan rengidir.",
+                    "Arama kutusundaki ipucudur.",
+                    "Kullanıcı Geçerlilik Kuralına (Validation Rule) uymayan bir veri girdiğinde ekranda belirecek özel hata mesajıdır."
+                ],
+                ans: 4,
+                exp: "Validation Text (Geçerlilik Metni), Validation Rule ihlal edildiğinde kullanıcıya gösterilecek özel uyarı mesajını belirler."
+            },
+            {
+                id: "s1_25", num: 25, set: "Veritabanı 80 Soru",
+                q: "Form Özellik Sayfasında 'Açılır Pencere' (Pop Up) özelliği 'Evet' yapılırsa form nasıl davranır?",
+                options: [
+                    "Form ana Access penceresinden bağımsız, üstte yüzen bağımsız bir pencere olarak açılır.",
+                    "Form tamamen gizlenir.",
+                    "Form salt okunur olur.",
+                    "Form alt forma dönüşür.",
+                    "Form kapatılamaz."
+                ],
+                ans: 0,
+                exp: "Pop Up (Açılır Pencere) özelliği Evet yapıldığında form sekme yerine üstte duran bağımsız bir iletişim penceresi olarak açılır."
+            },
+            {
+                id: "s1_26", num: 26, set: "Veritabanı 80 Soru",
+                q: "Tablo Tasarımında 'Arama Sihirbazı' (Lookup Wizard) kullanılarak başka bir tablodan veri çekildiğinde arka planda oluşturulan alanın gerçek veri tipi ne olur?",
+                options: [
+                    "Sayı",
+                    "Metin",
+                    "Tarih/Saat",
+                    "Mantıksal",
+                    "Nesne"
+                ],
+                ans: 0,
+                exp: "Arama Sihirbazı genellikle diğer tablonun Birincil Anahtarını (AutoNumber) bağladığı için alanın gerçek veri tipi Sayı (Number - Long Integer) olur."
+            },
+            {
+                id: "s1_27", num: 27, set: "Veritabanı 80 Soru",
+                q: "Access'te alt form (Subform) oluşturulurken Ana Form ile Alt Formun senkronize çalışmasını sağlayan özellikler hangileridir?",
+                options: [
+                    "Link Master Fields (Üst Alanları Bağla) ve Link Child Fields (Alt Alanları Bağla)",
+                    "Source Object ve Control Source",
+                    "On Click ve On Open",
+                    "Width ve Height",
+                    "Filter ve Order By"
+                ],
+                ans: 0,
+                exp: "Ana formdaki kayıt değiştikçe alt formun da güncellenmesi Link Master Fields ve Link Child Fields özellikleri ile sağlanır."
+            },
+            {
+                id: "s1_28", num: 28, set: "Veritabanı 80 Soru",
+                q: "Bir tabloda 'Birincil Anahtar' (PK) olarak birden fazla sütunun birlikte seçilmesiyle oluşan yapıya ne ad verilir?",
+                options: [
+                    "Foreign Key",
+                    "Composite Key",
+                    "Candidate Key",
+                    "Surrogate Key",
+                    "Unique Index"
+                ],
+                ans: 1,
+                exp: "İki veya daha fazla sütunun birleşerek oluşturduğu birincil anahtara Composite Key (Birleşik Anahtar) denir."
+            },
+            {
+                id: "s1_29", num: 29, set: "Veritabanı 80 Soru",
+                q: "Access Sorgu Tasarımında hesaplanmış bir alan oluştururken metinleri birleştirmek (String Concatenation) için kullanılan operatör hangisidir?",
+                options: [
+                    "+ veya &",
+                    ".",
+                    "->",
+                    "CONCAT()",
+                    "||"
+                ],
+                ans: 0,
+                exp: "MS Access ifadelerinde metin birleştirme işlemi için '&' (veya '+') operatörü kullanılır (Örn: [Ad] & ' ' & [Soyad])."
+            },
+            {
+                id: "s1_30", num: 30, set: "Veritabanı 80 Soru",
+                q: "Bir Formun 'Kayıt Seçicileri' (Record Selectors) özelliği 'Hayır' yapılırsa formda ne değişir?",
+                options: [
+                    "Formun sol tarafında duran gri dikey kayıt seçme çubuğu gizlenir.",
+                    "Formdaki veriler silinir.",
+                    "Form gezinme butonları silinir.",
+                    "Form başlığı değişir.",
+                    "Form düzenlenemez."
+                ],
+                ans: 0,
+                exp: "Record Selectors (Kayıt Seçicileri), formun sol kenarındaki satır/kayıt seçme alanını gizler veya gösterir."
+            },
+            {
+                id: "s1_31", num: 31, set: "Veritabanı 80 Soru",
+                q: "QBE ızgarasında Fiyat alanına 'Is Null' yazılırsa ne tür kayıtlar süzülür?",
+                options: [
+                    "Fiyatı 0 olanlar",
+                    "Fiyatı henüz girilmemiş (boş/tanımsız) olan kayıtlar",
+                    "Fiyatı negatif olanlar",
+                    "Fiyatı en yüksek olanlar",
+                    "Tüm kayıtlar"
+                ],
+                ans: 1,
+                exp: "Is Null kriteri, değeri 0 olanları değil, hiç veri girilmemiş (boş/NULL) olan kayıtları filtreler."
+            },
+            {
+                id: "s1_32", num: 32, set: "Veritabanı 80 Soru",
+                q: "Özet Sorguda 'Sum' fonksiyonu kullanıldığında metin (String) türündeki bir sütun için Sum seçilirse Access nasıl bir tepki verir?",
+                options: [
+                    "Metinleri birleştirir.",
+                    "Veri türü uyumsuzluğu hatası verir (Metin toplanamaz).",
+                    "0 sonucunu döner.",
+                    "Metinlerin uzunluğunu toplar.",
+                    "Tabloyu siler."
+                ],
+                ans: 1,
+                exp: "Sum() matematiksel toplama yapar. Metin (Short Text) veri tipinde kullanıldığında 'Ölçüt ifadesinde veri türü uyuşmazlığı' (Data type mismatch) hatası verir."
+            },
+            {
+                id: "s1_33", num: 33, set: "Veritabanı 80 Soru",
+                q: "Bir Sorgunun 'Top Values' (Üst Değerler) özelliğine '10' yazılırsa sorgu nasıl çalışır?",
+                options: [
+                    "Sorgu sonucunda sadece ilk 10 kayıt listelenir.",
+                    "Son 10 kayıt listelenir.",
+                    "10. kaydı siler.",
+                    "Fiyatı 10 olanları getirir.",
+                    "Sorguyu 10 kez çalıştırır."
+                ],
+                ans: 0,
+                exp: "Üst Değerler (Top Values) özelliği SQL'deki SELECT TOP 10 karşılığıdır ve sadece ilk 10 kaydı döndürür."
+            },
+            {
+                id: "s1_34", num: 34, set: "Veritabanı 80 Soru",
+                q: "Makro eylemlerinden 'SetProperty' (ÖzellikAyarla) ne işe yarar?",
+                options: [
+                    "Rapor yazdırır.",
+                    "Veritabanı şifresini değiştirir.",
+                    "Yeni tablo oluşturur.",
+                    "Çalışma anında formdaki bir denetimin rengini, görünürlüğünü (Visible) veya etkinliğini (Enabled) değiştirmeyi sağlar.",
+                    "Access'i kapatır."
+                ],
+                ans: 3,
+                exp: "SetProperty makrosu, form üzerindeki denetimlerin Visible, Enabled, BackColor, Caption gibi özelliklerini dinamik olarak değiştirmeye yarar."
+            },
+            {
+                id: "s1_35", num: 35, set: "Veritabanı 80 Soru",
+                q: "Bir form üzerindeki 'MetinKutusu1' değiştiğinde otomatik çalışan bir makroda 'SüzgeçUygula' (ApplyFilter) eyleminin Where şartına [MusteriAd] Like [Forms]![frmAna]![MetinKutusu1] & \"*\" yazılırsa ne yapılmış olur?",
+                options: [
+                    "Yazıldığı anda canlı arama/filtreleme (Anlık Arama) yapılması sağlanır.",
+                    "Tüm kayıtlar silinir.",
+                    "Form kapatılır.",
+                    "Veriler veritabanına kaydedilir.",
+                    "Rapor oluşturulur."
+                ],
+                ans: 0,
+                exp: "Metin kutusundaki metin değiştikçe sonuna '*' joker karakteri ekleyerek o harflerle başlayan müşterileri dinamik olarak filtreler."
+            },
+            {
+                id: "s1_36", num: 36, set: "Veritabanı 80 Soru",
+                q: "Access'te bir sorgunun SQL görünümüne geçip koda 'PARAMETERS [MinimumGNO] Double;' ifadesi eklenirse bu yapı ne kazandırır?",
+                options: [
+                    "Sorguyu siler.",
+                    "Sorguyu sabitler.",
+                    "Sorgu çalıştırıldığında kullanıcıdan dinamik parametre isteyen bir girdi penceresi açılmasını sağlar.",
+                    "Sorguyu rapora dönüştürür.",
+                    "Hata verir."
+                ],
+                ans: 2,
+                exp: "PARAMETERS bildirimi, sorgu çalıştırıldığında kullanıcıdan belirtilen veri tipinde (Double) bir parametre değeri isteyen iletişim kutusu açar."
+            },
+            {
+                id: "s1_37", num: 37, set: "Veritabanı 80 Soru",
+                q: "Tablo tasarımında 'Biçim' (Format) özelliğine '>' yazılırsa girilen metin nasıl görünür?",
+                options: [
+                    "Hepsi büyük harfe dönüştürülerek gösterilir.",
+                    "Hepsi küçük harfe dönüştürülür.",
+                    "Gizlenir.",
+                    "Sağa hizalanır.",
+                    "Rakam olarak gösterilir."
+                ],
+                ans: 0,
+                exp: "Access Format özelliğinde '>' sembolü tüm harfleri BÜYÜK harfe, '<' sembolü ise küçük harfe dönüştürerek görüntüler."
+            },
+            {
+                id: "s1_38", num: 38, set: "Veritabanı 80 Soru",
+                q: "Formun 'Ayrıntı' (Detail) bölümünün yüksekliği Tasarım görünümünde küçültülürse Form Görünümünde ne değişir?",
+                options: [
+                    "Veriler silinir.",
+                    "Sürekli Form (Continuous Forms) modunda kayıtlar arasındaki dikey boşluk azalır, daha fazla kayıt ekrana sığar.",
+                    "Yazı tipi küçülür.",
+                    "Butonlar kaybolur.",
+                    "Form penceresi küçülür."
+                ],
+                ans: 1,
+                exp: "Ayrıntı (Detail) bölümü her bir kayıt için tekrarlanır. Yüksekliği azaltıldığında sürekli formlarda satırlar birbirine yaklaşır ve ekrana daha çok kayıt sığar."
+            },
+            {
+                id: "s1_39", num: 39, set: "Veritabanı 80 Soru",
+                q: "İlişkiler penceresinde iki tablo birleştirilirken 'Birleştirme Türü' (Join Type) olarak 2. Seçenek (Musteriler tablosundaki tüm kayıtları ve sadece eşleşen Siparişleri getir) seçilirse bu yapının SQL karşılığı nedir?",
+                options: [
+                    "INNER JOIN",
+                    "LEFT JOIN (veya RIGHT JOIN)",
+                    "CROSS JOIN",
+                    "UNION",
+                    "FULL JOIN"
+                ],
+                ans: 1,
+                exp: "Bir tablodaki tüm kayıtları ve diğer tablodaki yalnızca eşleşen kayıtları getiren birleştirme türü Dış Birleştirmedir (LEFT JOIN / RIGHT JOIN)."
+            },
+            {
+                id: "s1_40", num: 40, set: "Veritabanı 80 Soru",
+                q: "Access veritabanı dosyasının boyutunu küçültmek, bozulmaları önlemek ve indeksleri optimize etmek için kullanılan araç hangisidir?",
+                options: [
+                    "Veritabanını Sıkıştır ve Onar (Compact and Repair Database)",
+                    "Makro Derleyici",
+                    "İlişki Temizleyici",
+                    "Tablo Bölücü",
+                    "Veri Dışa Aktar"
+                ],
+                ans: 0,
+                exp: "Compact and Repair Database (Veritabanını Sıkıştır ve Onar), silinen nesnelerden kalan boş alanları temizler, dosya boyutunu küçültür ve bozulmaları onarır."
+            },
+            {
+                id: "s1_41", num: 41, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL sorgusunda geçen 'HAVING' ifadesi ile ilgili verilen bilgilerden hangisi KESİNLİKLE DOĞRUDUR?",
+                code: "SELECT BolumID, AVG(GNO)\nFROM Ogrenciler\nWHERE Sehir = 'Kütahya'\nGROUP BY BolumID\nHAVING AVG(GNO) > 2.50;",
+                options: [
+                    "WHERE satırından önce yazılmak zorundadır.",
+                    "Gruplama yapıldıktan sonra ortaya çıkan özet/kümeleşmiş (aggregate) verilere filtre uygulamak için kullanılır.",
+                    "Satır bazlı filtreleme yapar, GROUP BY olmadan da WHERE yerine kullanılır.",
+                    "Tablodaki verileri siler.",
+                    "Sıralama yapar."
+                ],
+                ans: 1,
+                exp: "HAVING, GROUP BY ile gruplanmış sonuçlar üzerinde AVG, COUNT, SUM gibi toplulaştırma (aggregate) fonksiyonlarına koşul koymak için kullanılır."
+            },
+            {
+                id: "s1_42", num: 42, set: "Veritabanı 80 Soru",
+                q: "Bir e-ticaret veritabanında en az bir kez sipariş vermiş müşterilerin Adını ve Sipariş Tutarlarını getiren, siparişi olmayan müşterileri ise SONUÇ KÜMESİNE DAHİL ETMEYEN doğru JOIN sorgusu hangisidir?",
+                options: [
+                    "SELECT M.MusteriAd, S.Tutar FROM Musteriler M INNER JOIN Siparisler S ON M.MusteriID = S.MusteriID;",
+                    "SELECT M.MusteriAd, S.Tutar FROM Musteriler M LEFT JOIN Siparisler S ON M.MusteriID = S.MusteriID;",
+                    "SELECT M.MusteriAd, S.Tutar FROM Musteriler M FULL JOIN Siparisler S ON M.MusteriID = S.MusteriID;",
+                    "SELECT * FROM Musteriler, Siparisler;",
+                    "SELECT M.MusteriAd FROM Musteriler M WHERE MusteriID = NULL;"
+                ],
+                ans: 0,
+                exp: "INNER JOIN yalnızca her iki tabloda da eşleşen (yani en az bir siparişi bulunan) kayıtları getirir."
+            },
+            {
+                id: "s1_43", num: 43, set: "Veritabanı 80 Soru",
+                q: "Hiç siparişi olmayan (Siparisler tablosunda kaydı bulunmayan) müşterileri bulmak için kullanılan doğru LEFT JOIN sorgusu hangisidir?",
+                options: [
+                    "SELECT M.MusteriAd FROM Musteriler M LEFT JOIN Siparisler S ON M.MusteriID = S.MusteriID WHERE S.SiparisID IS NULL;",
+                    "SELECT M.MusteriAd FROM Musteriler M LEFT JOIN Siparisler S ON M.MusteriID = S.MusteriID WHERE S.SiparisID IS NOT NULL;",
+                    "SELECT M.MusteriAd FROM Musteriler M INNER JOIN Siparisler S ON M.MusteriID = S.MusteriID WHERE S.SiparisID = 0",
+                    "SELECT M.MusteriAd FROM Musteriler M WHERE M.MusteriID <> S.MusteriID;",
+                    "SELECT * FROM Musteriler WHERE SiparisID = NULL;"
+                ],
+                ans: 0,
+                exp: "Musteriler tablosuna Siparisler LEFT JOIN ile bağlandığında siparişi olmayan müşterilerin SiparisID alanı NULL gelir. WHERE S.SiparisID IS NULL ile sadece siparişi olmayanlar süzülür."
+            },
+            {
+                id: "s1_44", num: 44, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL sorgusunun mantıksal çalışma sırası (Logical Query Processing Order) dikkate alındığında ilk olarak hangi blok işlenir?",
+                code: "SELECT Sehir, COUNT(*)\nFROM Ogrenciler\nWHERE GNO > 2.0\nGROUP BY Sehir\nHAVING COUNT(*) > 5\nORDER BY Sehir ASC;",
+                options: [
+                    "SELECT",
+                    "FROM",
+                    "WHERE",
+                    "GROUP BY",
+                    "ORDER BY"
+                ],
+                ans: 1,
+                exp: "SQL motorunda mantıksal işleme sırası her zaman FROM (ve JOIN) ile başlar: FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY."
+            },
+            {
+                id: "s1_45", num: 45, set: "Veritabanı 80 Soru",
+                q: "Alt sorgu (Subquery) içeren aşağıdaki SQL sorgusu neyi bulmaktadır?",
+                code: "SELECT Ad, Soyad, GNO\nFROM Ogrenciler\nWHERE GNO > (SELECT AVG(GNO) FROM Ogrenciler);",
+                options: [
+                    "Tüm öğrencilerin not ortalamasını",
+                    "Genel not ortalamasının üzerinde puana sahip olan öğrencilerin Ad, Soyad ve GNO bilgilerini",
+                    "En düşük notu alan öğrenciyi",
+                    "Notu 2.0'dan büyük olan ilk öğrenciyi",
+                    "Hata verir, alt sorguda AVG kullanılamaz."
+                ],
+                ans: 1,
+                exp: "İçteki sorgu genel GNO ortalamasını hesaplar; dıştaki sorgu ise GNO'su bu ortalamadan büyük olan öğrencileri listeler."
+            },
+            {
+                id: "s1_46", num: 46, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL sorgusundaki 'IN' operatörlü yapı hangi 'EXISTS' yapısına DENKTİR?",
+                code: "SELECT * FROM Bolumler\nWHERE BolumID IN (SELECT DISTINCT BolumID FROM Ogrenciler);",
+                options: [
+                    "SELECT * FROM Bolumler B WHERE EXISTS (SELECT 1 FROM Ogrenciler O WHERE O.BolumID = B.BolumID);",
+                    "SELECT * FROM Bolumler B WHERE NOT EXISTS (SELECT 1 FROM Ogrenciler);",
+                    "SELECT * FROM Bolumler WHERE EXISTS (BolumID);",
+                    "SELECT * FROM Bolumler WHERE BolumID = EXISTS();",
+                    "SELECT * FROM Bolumler B INNER JOIN Ogrenciler O ON B.BolumID = O.BolumID;"
+                ],
+                ans: 0,
+                exp: "EXISTS ile ilişkili alt sorgu (Correlated Subquery) kurularak O.BolumID = B.BolumID eşitliği kontrol edilir ve öğrencisi olan bölümler listelenir."
+            },
+            {
+                id: "s1_47", num: 47, set: "Veritabanı 80 Soru",
+                q: "Bir tablodaki verileri silerken, silme işlemini Log kaydı tutmadan (unlogged) çok hızlı bir şekilde gerçekleştiren ve tablonun kimlik (AutoIncrement) sıfırlamasını da yapan komut hangisidir?",
+                options: [
+                    "DELETE FROM Tablo;",
+                    "DROP TABLE Tablo;",
+                    "TRUNCATE TABLE Tablo;",
+                    "ALTER TABLE Tablo DROP;",
+                    "REMOVE ALL FROM Tablo;"
+                ],
+                ans: 2,
+                exp: "TRUNCATE TABLE, tablodaki tüm satırları hızlıca boşaltan ve otomatik artan sayaçları (Identity) sıfırlayan DDL komutudur."
+            },
+            {
+                id: "s1_48", num: 48, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki UPDATE sorgusu çalıştırıldığında veritabanında ne gerçekleşir?",
+                code: "UPDATE Personeller\nSET Maas = Maas * 1.20;",
+                options: [
+                    "Sadece maaşı düşük olan personellerin maaşı artar.",
+                    "WHERE şartı yazılmadığı için tablodaki TÜM personellerin maaşına %20 zam yapılır.",
+                    "Hata verir, WHERE yazılmak zorundadır.",
+                    "Tabloyu siler.",
+                    "Maas sütununu siler."
+                ],
+                ans: 1,
+                exp: "UPDATE sorgularında WHERE koşulu unutulursa veya yazılmazsa tablodaki tüm kayıtlar güncellenir."
+            },
+            {
+                id: "s1_49", num: 49, set: "Veritabanı 80 Soru",
+                q: "'Ogrenciler' tablosunda 'Sehir' ve 'GNO' sütunları üzerine birlikte benzersizlik/hızlandırma amacıyla oluşturulacak indeks komutu hangisidir?",
+                options: [
+                    "CREATE INDEX idx_sehir_gno ON Ogrenciler (Sehir, GNO);",
+                    "ADD INDEX ON Ogrenciler (Sehir, GNO);",
+                    "CREATE TABLE INDEX (Sehir, GNO);",
+                    "MAKE INDEX ON Ogrenciler;",
+                    "ALTER TABLE Ogrenciler INDEX (Sehir);"
+                ],
+                ans: 0,
+                exp: "SQL'de indeks oluşturmak için standart sözdizimi: CREATE INDEX indeks_adi ON TabloAdi (Sutun1, Sutun2);"
+            },
+            {
+                id: "s1_50", num: 50, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki sorguda yer alan 'LIKE' ifadesi hangi şartı aramaktadır?",
+                code: "SELECT * FROM Ogrenciler\nWHERE Ad LIKE '_a%n';",
+                options: [
+                    "İkinci harfi 'a' olan ve 'n' harfi ile biten tüm isimleri",
+                    "'a' ile başlayıp 'n' ile biten isimleri",
+                    "3 harfli isimleri",
+                    "İçinde 'a' ve 'n' geçen isimleri",
+                    "'n' harfi ile başlayan isimleri"
+                ],
+                ans: 0,
+                exp: "'_' tek bir karakteri, '%' ise sıfır veya daha fazla karakteri temsil eder. '_a%n' -> 1. harfi herhangi bir harf, 2. harfi 'a' olan ve 'n' ile biten isimleri bulur."
+            },
+            {
+                id: "s1_51", num: 51, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL sorgusu çalıştırıldığında ekrana kaç satır veri gelir?",
+                code: "SELECT DISTINCT Sehir FROM Ogrenciler;\nVeriler: ['Kütahya', 'Ankara', 'Kütahya', 'Bursa', 'Kütahya', NULL]",
+                options: [
+                    "6",
+                    "3",
+                    "4 (Kütahya, Ankara, Bursa ve NULL)",
+                    "5",
+                    "2"
+                ],
+                ans: 2,
+                exp: "DISTINCT tekrar eden değerleri teke indirir ve NULL değerini de ayrı bir benzersiz grup olarak dahil eder: Kütahya, Ankara, Bursa, NULL (Toplam 4 satır)."
+            },
+            {
+                id: "s1_52", num: 52, set: "Veritabanı 80 Soru",
+                q: "Veritabanında 'Ogrenciler' tablosundaki 'GNO' sütununun veri tipini 'FLOAT' olarak değiştiren DDL komutu hangisidir?",
+                options: [
+                    "ALTER TABLE Ogrenciler ALTER COLUMN GNO FLOAT; (veya MODIFY COLUMN)",
+                    "UPDATE Ogrenciler SET GNO FLOAT;",
+                    "CHANGE Ogrenciler GNO FLOAT;",
+                    "ALTER Ogrenciler GNO FLOAT;",
+                    "CONVERT Ogrenciler GNO TO FLOAT;"
+                ],
+                ans: 0,
+                exp: "Mevcut bir sütunun veri tipini değiştirmek için ALTER TABLE TabloAdi ALTER COLUMN SutunAdi YeniVeriTipi; kullanılır."
+            },
+            {
+                id: "s1_53", num: 53, set: "Veritabanı 80 Soru",
+                q: "SQL'de 'CASE WHEN' yapısı ne amaçla kullanılır?",
+                options: [
+                    "Sorgu sonucunda şartlara göre dinamik/koşullu sütun değerleri üretmek (If-Else mantığı)",
+                    "Tabloyu silmek",
+                    "Verileri sıralamak",
+                    "Verileri gruplamak",
+                    "Döngü kurmak"
+                ],
+                ans: 0,
+                exp: "CASE WHEN ... THEN ... ELSE ... END yapısı SQL içinde If-Else karar mekanizması kurarak koşullu değerler döndürmeyi sağlar."
+            },
+            {
+                id: "s1_54", num: 54, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki 'CASE WHEN' sorgusunun çıktısında GNO'su 3.20 olan bir öğrenci için 'Durum' sütununda ne yazar?",
+                code: "SELECT Ad, GNO,\nCASE\n    WHEN GNO >= 3.50 THEN 'Onur'\n    WHEN GNO >= 3.00 THEN 'Başarılı'\n    WHEN GNO >= 2.00 THEN 'Geçti'\n    ELSE 'Kaldı'\nEND AS Durum\nFROM Ogrenciler;",
+                options: [
+                    "Onur",
+                    "Başarılı",
+                    "Geçti",
+                    "Kaldı",
+                    "NULL"
+                ],
+                ans: 1,
+                exp: "3.20 değeri ilk koşulu (>=3.50) sağlamaz, ikinci koşulu (>=3.00) sağladığı için 'Başarılı' sonucunu döndürür ve CASE bloğundan çıkar."
+            },
+            {
+                id: "s1_55", num: 55, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki sorguda iki küme birleştirilmektedir. 'UNION' yerine 'UNION ALL' kullanılırsa ne değişir?",
+                code: "SELECT Ad FROM Ogrenciler_Örgün\nUNION ALL\nSELECT Ad FROM Ogrenciler_İkinciÖğretim;",
+                options: [
+                    "İki tabloda ortak olan mükerrer (tekrar eden) isimler de ayıklanmadan listeye dâhil edilir.",
+                    "Mükerrer kayıtlar silinir.",
+                    "Hata verir.",
+                    "Yalnızca kesişim kümesini getirir.",
+                    "Tablolar birleşmez."
+                ],
+                ans: 0,
+                exp: "UNION tekrar eden kayıtları elerken, UNION ALL tekrar eden (mükerrer) kayıtları elemeksizin tüm satırları alt alta birleştirir."
+            },
+            {
+                id: "s1_56", num: 56, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL ifadesi ne tür bir işlem yapmaktadır?",
+                code: "SELECT Sehir, COUNT(*)\nFROM Ogrenciler\nGROUP BY Sehir\nORDER BY COUNT(*) DESC;",
+                options: [
+                    "Şehirleri öğrenci sayısına göre en çok öğrencisi olandan en aza doğru sıralayarak gruplar.",
+                    "Öğrencileri alfabetik sıralar.",
+                    "En az öğrencisi olan şehri siler.",
+                    "Hata verir.",
+                    "Rastgele sıralar."
+                ],
+                ans: 0,
+                exp: "GROUP BY Sehir ile şehir bazında öğrenci sayılarını bulur, ORDER BY COUNT(*) DESC ile en kalabalık şehirden en az öğrenci olan şehre doğru azalan sıralar."
+            },
+            {
+                id: "s1_57", num: 57, set: "Veritabanı 80 Soru",
+                q: "SQL standartlarında 'FOREIGN KEY' kısıtlaması (Constraint) eklenirken kullanılan doğru DDL kalıbı hangisidir?",
+                options: [
+                    "ALTER TABLE Siparisler ADD CONSTRAINT FK_Musteri FOREIGN KEY (MusteriID) REFERENCES Musteriler(MusteriID);",
+                    "CREATE FOREIGN KEY MusteriID IN Siparisler;",
+                    "ADD LINK Siparisler TO Musteriler;",
+                    "ALTER TABLE Siparisler SET FOREIGN KEY MusteriID;",
+                    "MAKE FK (MusteriID);"
+                ],
+                ans: 0,
+                exp: "Mevcut tabloya yabancı anahtar kısıtlaması ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY (...) REFERENCES AnaTablo(PK) kalıbıyla eklenir."
+            },
+            {
+                id: "s1_58", num: 58, set: "Veritabanı 80 Soru",
+                q: "Veritabanındaki bir tablodan belirli kolonları seçerek oluşturulan, fiziksel olarak veri tutmayan sanal tabloya (Virtual Table) ne ad verilir?",
+                options: [
+                    "View",
+                    "Stored Procedure",
+                    "Trigger",
+                    "Index",
+                    "Function"
+                ],
+                ans: 0,
+                exp: "View (Görünüm), bir SQL sorgusunun kaydedilmesiyle oluşan ve fiziksel veri barındırmayan sanal tablodur."
+            },
+            {
+                id: "s1_59", num: 59, set: "Veritabanı 80 Soru",
+                q: "Veritabanında bir 'VIEW' oluşturmak için kullanılan doğru SQL kalıbı hangisidir?",
+                options: [
+                    "CREATE VIEW v_BasariliOgrenciler AS SELECT * FROM Ogrenciler WHERE GNO >= 3.0;",
+                    "MAKE VIEW v_BasariliOgrenciler SELECT * FROM Ogrenciler;",
+                    "CREATE TABLE VIEW v_BasariliOgrenciler;",
+                    "NEW VIEW v_BasariliOgrenciler AS SELECT;",
+                    "ADD VIEW v_BasariliOgrenciler;"
+                ],
+                ans: 0,
+                exp: "View oluşturmak için CREATE VIEW ViewAdi AS SELECT ... kalıbı kullanılır."
+            },
+            {
+                id: "s1_60", num: 60, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki sorguda yer alan 'COALESCE(Eposta, 'E-posta Yok')' fonksiyonu ne iş yapar?",
+                options: [
+                    "Eposta sütunundaki değer NULL ise yerine 'E-posta Yok' metnini yazar, NULL değilse gerçek e-postayı gösterir.",
+                    "E-postaları siler.",
+                    "E-postayı büyük harfe çevirir.",
+                    "Geçersiz e-postaları ayıklar.",
+                    "Hata verir."
+                ],
+                ans: 0,
+                exp: "COALESCE fonksiyonu kendisine verilen parametrelerden NULL olmayan ilk değeri döndürür; NULL olan alanlara varsayılan metin basmak için kullanılır."
+            },
+            {
+                id: "s1_61", num: 61, set: "Veritabanı 80 Soru",
+                q: "Bir tabloda 'BirimFiyat' ve 'Miktar' sütunları bulunmaktadır. Toplam Tutar değeri 5000'den büyük olan satırları getiren doğru WHERE koşulu hangisidir?",
+                options: [
+                    "WHERE BirimFiyat * Miktar > 5000",
+                    "HAVING BirimFiyat * Miktar > 5000",
+                    "WHERE SUM(BirimFiyat * Miktar) > 5000",
+                    "WHERE BirimFiyat AND Miktar > 5000",
+                    "WHERE Total > 5000"
+                ],
+                ans: 0,
+                exp: "Satır bazlı matematiksel çarpım doğrudan WHERE koşulunda yapılabilir: WHERE BirimFiyat * Miktar > 5000."
+            },
+            {
+                id: "s1_62", num: 62, set: "Veritabanı 80 Soru",
+                q: "Veritabanında bir tabloya yeni bir kayıt eklendiğinde (INSERT), güncellendiğinde (UPDATE) veya silindiğinde (DELETE) otomatik olarak tetiklenen ve çalışan SQL kod bloğuna ne ad verilir?",
+                options: [
+                    "Trigger (Tetikleyici)",
+                    "Stored Procedure",
+                    "View",
+                    "Function",
+                    "Cursor"
+                ],
+                ans: 0,
+                exp: "Tablo üzerindeki DML olaylarında (INSERT, UPDATE, DELETE) otomatik devreye giren yapılara Trigger (Tetikleyici) denir."
+            },
+            {
+                id: "s1_63", num: 63, set: "Veritabanı 80 Soru",
+                q: "SQL'de veritabanı işlemlerinde (Transaction) yapılan değişiklikleri kalıcı olarak veritabanına kaydetmek için kullanılan komut hangisidir?",
+                options: [
+                    "COMMIT",
+                    "ROLLBACK",
+                    "SAVEPOINT",
+                    "CHECKPOINT",
+                    "END"
+                ],
+                ans: 0,
+                exp: "Transaction içindeki işlemleri onaylayıp kalıcı hale getiren TCL komutu COMMIT'tir."
+            },
+            {
+                id: "s1_64", num: 64, set: "Veritabanı 80 Soru",
+                q: "Bir Transaction (İşlem) bloğunda hata oluştuğunda yapılan tüm değişiklikleri işlem öncesi güvenli duruma geri almak/iptal etmek için hangi komut kullanılır?",
+                options: [
+                    "ROLLBACK",
+                    "COMMIT",
+                    "UNDO",
+                    "RESTORE",
+                    "ESCAPE"
+                ],
+                ans: 0,
+                exp: "ROLLBACK komutu, transaction başlangıcından itibaren yapılan tüm değişiklikleri geri alır."
+            },
+            {
+                id: "s1_65", num: 65, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL sorgusunda 'NOT IN' kullanılmıştır. Eğer alt sorgudan tek bir 'NULL' değer dönerse sorgunun sonucu ne olur?",
+                code: "SELECT * FROM Musteriler\nWHERE MusteriID NOT IN (SELECT MusteriID FROM Siparisler);",
+                options: [
+                    "NOT IN yapısı NULL ile karşılaştırıldığında UNKNOWN ürettiği için sorgu HİÇBİR SATIR DÖNDÜRMEZ.",
+                    "Tüm müşterileri getirir.",
+                    "Sadece NULL olanları getirir.",
+                    "Sorgu hata verir.",
+                    "İlk kaydı getirir."
+                ],
+                ans: 0,
+                exp: "SQL'de x NOT IN (1, 2, NULL) ifadesi x<>1 AND x<>2 AND x<>NULL demektir. x<>NULL her zaman UNKNOWN döndüğünden tüm AND bloğu yanlış olur ve 0 satır döner."
+            },
+            {
+                id: "s1_66", num: 66, set: "Veritabanı 80 Soru",
+                q: "Tablodaki metin alanlarını birleştirmek için ANSI SQL standardında kullanılan fonksiyon hangisidir?",
+                options: [
+                    "CONCAT",
+                    "ADD",
+                    "COMBINE()",
+                    "JOIN_STR()",
+                    "MERGE()"
+                ],
+                ans: 0,
+                exp: "CONCAT(metin1, metin2) fonksiyonu metinleri birleştirmek için kullanılan standart SQL fonksiyonudur."
+            },
+            {
+                id: "s1_67", num: 67, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL sorgusu çalıştırıldığında 'Ad' ve 'Soyad' sütunundaki isimlerin nasıl görünmesini sağlar?",
+                code: "SELECT UPPER(Ad), LOWER(Soyad) FROM Ogrenciler;",
+                options: [
+                    "Hata verir.",
+                    "Adı küçük harf yapar, Soyadı tamamen büyük harf yapar.",
+                    "Sadece ilk harfleri büyüterek getirir.",
+                    "Değişiklik yapmaz.",
+                    "Adı tamamen büyük harf, Soyadı tamamen küçük harf yapar."
+                ],
+                ans: 4,
+                exp: "UPPER() metni büyük harfe, LOWER() ise küçük harfe çevirir."
+            },
+            {
+                id: "s1_68", num: 68, set: "Veritabanı 80 Soru",
+                q: "Bir SQL sorgusunda 'WHERE 1=1' ifadesinin yazılmasının pratik yazılım geliştirme (dinamik sorgu oluşturma) açısından temel amacı nedir?",
+                options: [
+                    "Dinamik olarak arkasına 'AND ...' koşullarını kolayca ekleyebilmek için her zaman Doğru dönen nötr bir başlangıç koşulu oluşturmak.",
+                    "Sorguyu hızlandırmak.",
+                    "Tabloyu kilitlemek.",
+                    "İlk satırı seçmek.",
+                    "Hataları engellemek."
+                ],
+                ans: 0,
+                exp: "WHERE 1=1 daima doğru olduğu için yazılımda dinamik filtre eklerken 'ilk koşul mu değil mi' kontrolü yapmadan doğrudan 'AND kosul' eklenmesini kolaylaştırır."
+            },
+            {
+                id: "s1_69", num: 69, set: "Veritabanı 80 Soru",
+                q: "Bir tablodaki benzersiz sütun değerlerine sahip kayıtların sayılarını sıralı olarak getiren doğru SQL yapısı hangisidir?",
+                options: [
+                    "SELECT Sütun, COUNT(*) FROM Tablo GROUP BY Sütun ORDER BY COUNT(*) DESC;",
+                    "SELECT Sütun FROM Tablo GROUP BY Sütun ORDER BY COUNT(*) ASC;",
+                    "SELECT DISTINCT Sütun FROM Tablo WHERE COUNT(*);",
+                    "SELECT Sütun, SUM(*) FROM Tablo;",
+                    "SELECT COUNT(*) FROM Tablo;"
+                ],
+                ans: 0,
+                exp: "Sütuna göre gruplayıp (GROUP BY), her grubun eleman sayısını (COUNT(*)) seçerek sıralamak için A seçeneğindeki yapı kullanılır."
+            },
+            {
+                id: "s1_70", num: 70, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki sorguda kullanılan 'BETWEEN' ifadesi tarih aralıklarında nasıl davranır?",
+                code: "SELECT * FROM Siparisler\nWHERE SiparisTarihi BETWEEN '2026-01-01' AND '2026-01-31';",
+                options: [
+                    "1 Ocak'tan 31 Ocak dahil tarihler",
+                    "1 Ocak-31 Ocak arası tarihler (sınırlar hariç)",
+                    "Sadece 1 Ocak'ı kapsar.",
+                    "Sadece 31 Ocak'ı kapsar.",
+                    "Yanlış sözdizimidir."
+                ],
+                ans: 0,
+                exp: "SQL'de BETWEEN operatörü alt ve üst sınır değerlerini sonuca DAHİL eder (>= '2026-01-01' AND <= '2026-01-31')."
+            },
+            {
+                id: "s1_71", num: 71, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL komut gruplarından hangisi veritabanı kullanıcı yetkilerini yöneten DCL (Data Control Language) komutlarındandır?",
+                options: [
+                    "GRANT / REVOKE",
+                    "INSERT / UPDATE",
+                    "CREATE / DROP",
+                    "COMMIT / ROLLBACK",
+                    "SELECT / WHERE"
+                ],
+                ans: 0,
+                exp: "GRANT (yetki verme) ve REVOKE (yetki geri alma) Veri Kontrol Dili (DCL) komutlarıdır."
+            },
+            {
+                id: "s1_72", num: 72, set: "Veritabanı 80 Soru",
+                q: "Veritabanında kayıtlı bir saklı yordamı (Stored Procedure) çalıştırmak/yürütmek için hangi SQL komutu kullanılır?",
+                options: [
+                    "OPEN",
+                    "RUN",
+                    "START",
+                    "EXEC / EXECUTE",
+                    "DO"
+                ],
+                ans: 3,
+                exp: "Saklı yordamları (Stored Procedure) çalıştırmak için EXEC veya EXECUTE komutu kullanılır."
+            },
+            {
+                id: "s1_73", num: 73, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki sorguda kullanılan 'CROSS JOIN' ne tür bir sonuç kümesi üretir?",
+                code: "SELECT * FROM Renkler CROSS JOIN Bedenler;",
+                options: [
+                    "İki tablonun tüm olasılıklarını (Kartezyen Çarpım) üretir.",
+                    "Yalnızca eşleşenleri getirir.",
+                    "Boş küme döner.",
+                    "İki tabloyu dikey birleştirir.",
+                    "Hata verir."
+                ],
+                ans: 0,
+                exp: "CROSS JOIN iki tablonun Kartezyen çarpımını (tüm olası satır kombinasyonlarını) üretir."
+            },
+            {
+                id: "s1_74", num: 74, set: "Veritabanı 80 Soru",
+                q: "Bir tablodaki verileri alfabetik olarak Z'den A'ya doğru sıralamak için sıralama sütununun yanına ne yazılmalıdır?",
+                options: [
+                    "ZTOA",
+                    "ASC",
+                    "DESC",
+                    "REVERSE",
+                    "DOWN"
+                ],
+                ans: 2,
+                exp: "DESC (Descending) azalan, yani Z'den A'ya veya büyükten küçüğe sıralama yapar."
+            },
+            {
+                id: "s1_75", num: 75, set: "Veritabanı 80 Soru",
+                q: "SQL'de mevcut tarih ve saat bilgisini getirmek için standart/sistem fonksiyonu olarak ne kullanılır?",
+                options: [
+                    "GETDATE()",
+                    "DATE()",
+                    "TODAY()",
+                    "SYSTEMDATE()",
+                    "TIME()"
+                ],
+                ans: 0,
+                exp: "SQL Server (T-SQL) tarafında sistemin anlık tarih ve saat bilgisini almak için GETDATE() fonksiyonu kullanılır."
+            },
+            {
+                id: "s1_76", num: 76, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki sorguda yer alan 'SUBSTRING(Ad, 1, 3)' (veya MID) fonksiyonu ne çıktı üretir?",
+                options: [
+                    "3. Karakteri siler.",
+                    "Son 3 karakteri alır.",
+                    "Ad sütunundaki metnin ilk 3 karakterini alır.",
+                    "Adı 3 kez tekrarlar ve ekrana numaralı şekilde isimi yazdırır.",
+                    "Hata verir."
+                ],
+                ans: 2,
+                exp: "SUBSTRING(Ad, 1, 3) metnin 1. karakterinden başlayarak 3 karakter uzunluğunda alt metin (ilk 3 harf) alır."
+            },
+            {
+                id: "s1_77", num: 77, set: "Veritabanı 80 Soru",
+                q: "Veritabanında bir sütundaki metinlerin başındaki ve sonundaki gereksiz boşluk karakterlerini temizlemek için hangi SQL fonksiyonu kullanılır?",
+                options: [
+                    "CLEAN()",
+                    "TRIM()",
+                    "REMOVE()",
+                    "STRIP()",
+                    "CLEAR()"
+                ],
+                ans: 1,
+                exp: "TRIM() fonksiyonu metnin başındaki ve sonundaki boşlukları temizler."
+            },
+            {
+                id: "s1_78", num: 78, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki SQL sorgusunda 'Self Join' (Tablonun kendisiyle birleştirilmesi) yapılmıştır. Bu sorgu neyi bulmaktadır?",
+                code: "SELECT P1.AdSoyad AS Personel, P2.AdSoyad AS Yonetici\nFROM Personeller P1\nLEFT JOIN Personeller P2 ON P1.YoneticiID = P2.PersonelID;",
+                options: [
+                    "Tüm personelleri yönetici yapar.",
+                    "Aynı ada sahip personelleri bulur.",
+                    "Yöneticisi olmayan personelleri siler.",
+                    "Hata verir, tablo kendisiyle birleştirilemez.",
+                    "Her personelin ve yöneticisinin adını eşleştirerek getirir."
+                ],
+                ans: 4,
+                exp: "Self Join ile aynı tablodaki YoneticiID ve PersonelID eşleştirilerek her çalışanın karşısına yöneticisinin adı yazdırılır."
+            },
+            {
+                id: "s1_79", num: 79, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki sorguda 'GROUP BY' kullanılmadan yapılan toplulaştırmada dönen sonuç kaç satırdır?",
+                code: "SELECT COUNT(*), AVG(GNO), MAX(GNO) FROM Ogrenciler;",
+                options: [
+                    "Boş sonuç",
+                    "Öğrenci sayısı kadar satır",
+                    "3 satır",
+                    "Tek bir satır",
+                    "Hata verir."
+                ],
+                ans: 3,
+                exp: "GROUP BY olmadan sadece aggregate fonksiyonları çağrıldığında tüm tablo tek bir grup kabul edilir ve sonuç olarak tek bir özet satırı döner."
+            },
+            {
+                id: "s1_80", num: 80, set: "Veritabanı 80 Soru",
+                q: "Aşağıdaki ifadeden hangisi ilişkisel veritabanı yönetim sistemlerinde 'ACID' prensiplerinin açılımında yer ALMAZ?",
+                options: [
+                    "Atomicity (Bütünlük/Bölünemezlik)",
+                    "Consistency (Tutarlılık)",
+                    "Isolation (Yalıtım/İzolasyon)",
+                    "Durability (Dayanıklılık)",
+                    "Algorithmicity (Algoritmalık)"
+                ],
+                ans: 4,
+                exp: "ACID prensipleri: Atomicity, Consistency, Isolation ve Durability'dir. Algorithmicity diye bir kavram yoktur."
+            }
+        ];
+
+        // ============================================================================
+        // 2. VERİ SETİ: Access_Dersi_Vize_çalışmaSorulari (80 Soru Eksiksiz)
+        // ============================================================================
+        const questionsSet2 = [
+            {
+                id: "s2_1", num: 1, set: "Access Vize Soruları",
+                q: "MS Access'te yeni bir veri tabanı dosyası oluşturulduğunda dosya uzantısı aşağıdakilerden hangisi olur?",
+                options: [".docx", ".xlsx", ".accdb", ".sql", ".pptx"],
+                ans: 2,
+                exp: "MS Access 2007 ve sonrası sürümlerde standart veritabanı dosya uzantısı .accdb (Access Database) şeklindedir."
+            },
+            {
+                id: "s2_2", num: 2, set: "Access Vize Soruları",
+                q: "Tablo Tasarım Görünümünde (Design View) bir öğrencinin T.C. Kimlik Numarası için en uygun veri tipi aşağıdakilerden hangisidir?",
+                options: [
+                    "Sayı (Number)",
+                    "Kısa Metin (Short Text)",
+                    "Otomatik Sayı (AutoNumber)",
+                    "Hesaplanmış (Calculated)",
+                    "Para Birimi (Currency)"
+                ],
+                ans: 1,
+                exp: "T.C. Kimlik No, Telefon Numarası gibi kendisiyle matematiksel işlem yapılmayacak 11 haneli sabit diziler Kısa Metin (Short Text) olarak tutulmalıdır."
+            },
+            {
+                id: "s2_3", num: 3, set: "Access Vize Soruları",
+                q: "İlişkisel veri tabanlarında bir tablodaki her kaydı benzersiz kılmak için tanımlanan alana ne ad verilir?",
+                options: [
+                    "Foreign Key",
+                    "Index",
+                    "Primary Key",
+                    "Lookup Wizard",
+                    "Validation Rule"
+                ],
+                ans: 2,
+                exp: "Tablodaki her kaydı benzersiz (tekil) olarak tanımlayan alana Primary Key (Birincil Anahtar) denir."
+            },
+            {
+                id: "s2_4", num: 4, set: "Access Vize Soruları",
+                q: "Ogrenciler tablosundaki GNO (Genel Not Ortalaması) alanına 0 ile 4 dışında değer girilmesini engellemek için hangi alan özelliği kullanılmalıdır?",
+                options: [
+                    "Input Mask (Giriş Maskesi)",
+                    "Required (Gerekli)",
+                    "Default Value (Varsayılan Değer)",
+                    "Validation Rule (Geçerlilik Kuralı)",
+                    "Format (Biçim)"
+                ],
+                ans: 3,
+                exp: "Girilecek veriyi belirli bir koşula veya aralığa (>=0 And <=4) sınırlandırmak için Validation Rule (Geçerlilik Kuralı) kullanılır."
+            },
+            {
+                id: "s2_5", num: 5, set: "Access Vize Soruları",
+                q: "Aşağıdaki İlişkiler (Relationships) ekranı diyagramına göre aşağıdakilerden hangisi DOĞRUDUR?",
+                code: "Görsel Diyagram:\n+------------------+          +------------------+\n| [Kategoriler]    | 1      ∞ | [Kitaplar]       |\n+------------------+----------+------------------+\n| KategoriID (PK)  |          | KitapID (PK)     |\n| KategoriAdi      |          | KitapAdi         |\n+------------------+          | KategoriID (FK)  |\n                              +------------------+",
+                options: [
+                    "Bir kitabın birden fazla kategorisi olabilir.",
+                    "Kategoriler tablosundaki KategoriID bir Yabancı Anahtar (Foreign Key)'dır.",
+                    "Kitaplar tablosundaki KategoriID alanına, Kategoriler tablosunda olmayan bir ID değeri girilemez.",
+                    "İki tablo arasında Bire-Bir (1-1) ilişki kurulmuştur.",
+                    "Kitaplar tablosu ana tablodur."
+                ],
+                ans: 2,
+                exp: "1-∞ (Bire-Çok) ilişkide Bilgi Bütünlüğü korunduğundan, Ana tabloda (Kategoriler) bulunmayan bir KategoriID değeri Kitaplar tablosuna girilemez."
+            },
+            {
+                id: "s2_6", num: 6, set: "Access Vize Soruları",
+                q: "Görsel Sorgu Tasarımcısında (QBE Grid) aynı satıra (Ölçüt / Criteria) yazılan iki farklı koşul hangi mantıksal operatör ile bağlanmış olur?",
+                options: ["OR", "AND", "NOT", "LIKE", "BETWEEN"],
+                ans: 1,
+                exp: "QBE ızgarasında aynı Ölçüt (Criteria) satırına yan yana yazılan koşullar mantıksal VE (AND) operatörü ile bağlanır."
+            },
+            {
+                id: "s2_7", num: 7, set: "Access Vize Soruları",
+                q: "Görsel Sorgu Tasarımcısında (QBE) koşulların farklı alt satırlara (Ölçüt ve Veya satırlarına) yazılması ne anlama gelir?",
+                options: [
+                    "Koşulların hepsinin aynı anda sağlanması gerektiğini gösterir (AND).",
+                    "Koşullardan en az birinin sağlanmasının yeterli olduğunu gösterir (OR).",
+                    "Sorgunun hata vereceğini gösterir.",
+                    "Verilerin alfabetik sıralanacağını gösterir.",
+                    "Tabloların silineceğini gösterir."
+                ],
+                ans: 1,
+                exp: "Alt alta (Ölçüt ve Veya satırlarına) yazılan kriterler VEYA (OR) bağlacı ile birleştirilir."
+            },
+            {
+                id: "s2_8", num: 8, set: "Access Vize Soruları",
+                q: "Aşağıdaki sorgu tasarımı çalıştırıldığında hangi sonuç elde edilir?",
+                code: "QBE Sorgu Izgarası:\n| Alan (Field):     | KitapAdi | Fiyat    | KategoriAdi |\n| Tablo (Table):    | Kitaplar | Kitaplar | Kategoriler |\n| Ölçüt (Criteria): |          | > 150    | \"Tarih\"     |",
+                options: [
+                    "Fiyatı 150 ₺'den büyük olan VEYA kategorisi Tarih olan kitaplar",
+                    "Fiyatı 150 ₺'den küçük olan Tarih kitapları",
+                    "Fiyatı 150 ₺'den büyük olan VE kategorisi Tarih olan kitaplar",
+                    "Tüm Tarih kitapları",
+                    "Sadece fiyatı 150 ₺ olan kitaplar"
+                ],
+                ans: 2,
+                exp: "> 150 ve \"Tarih\" kriterleri aynı Ölçüt satırında olduğu için AND ile bağlanır: Fiyatı 150'den büyük olan VE kategorisi Tarih olan kitaplar."
+            },
+            {
+                id: "s2_9", num: 9, set: "Access Vize Soruları",
+                q: "Aşağıdaki QBE ızgarasına göre aşağıdakilerden hangisi söylenebilir?",
+                code: "QBE Sorgu Izgarası:\n| Alan (Field):     | OgrenciNo  | AdSoyad    | Sehir       |\n| Tablo (Table):    | Ogrenciler | Ogrenciler | Ogrenciler  |\n| Ölçüt (Criteria): |            |            | \"Kütahya\"   |\n| Veya (Or):        |            |            | \"Eskişehir\" |",
+                options: [
+                    "Sadece hem Kütahya hem Eskişehir'de aynı anda yaşayanlar listelenir.",
+                    "Şehri Kütahya VEYA Eskişehir olan öğrenciler listelenir.",
+                    "Şehri Kütahya olmayan öğrenciler listelenir.",
+                    "Sorgu hatalıdır, aynı alana iki şehir yazılamaz.",
+                    "Eskişehir dışındaki tüm şehirler listelenir."
+                ],
+                ans: 1,
+                exp: "Ölçüt ve Veya satırlarına alt alta yazıldığı için Şehri Kütahya VEYA Eskişehir olan öğrenciler listelenir."
+            },
+            {
+                id: "s2_10", num: 10, set: "Access Vize Soruları",
+                q: "Access'te içinde 'Bilgisayar' ifadesi geçen tüm kitap isimlerini aratmak için Ölçüt satırına yazılması gereken doğru joker karakterli ifade hangisidir?",
+                options: [
+                    "=\"Bilgisayar\"",
+                    "Like \"Bilgisayar*\"",
+                    "Like \"*Bilgisayar\"",
+                    "Like \"*Bilgisayar*\"",
+                    "In (\"Bilgisayar\")"
+                ],
+                ans: 3,
+                exp: "Access'te başında ve sonunda ne olursa olsun içinde 'Bilgisayar' geçen metinleri bulmak için Like \"*Bilgisayar*\" kullanılır."
+            },
+            {
+                id: "s2_11", num: 11, set: "Access Vize Soruları",
+                q: "Kullanıcıların veri tabanındaki verileri kolayca girmesini, düzenlemesini ve görüntülemesini sağlayan nesne aşağıdakilerden hangisidir?",
+                options: [
+                    "Tablo (Table)",
+                    "Sorgu (Query)",
+                    "Form (Form)",
+                    "Rapor (Report)",
+                    "Makro (Macro)"
+                ],
+                ans: 2,
+                exp: "Formlar, kullanıcıların veritabanı tablolarına görsel bir arayüz üzerinden kolayca veri girmesini ve düzenlemesini sağlar."
+            },
+            {
+                id: "s2_12", num: 12, set: "Access Vize Soruları",
+                q: "Form tasarımında veri tabanından gelen dinamik veriyi gösteren (Metin Kutusu) araç yukarıdaki numaralandırılmış simgelerden hangisidir?",
+                code: "Form Araç Çubuğu:\n+------------------------------------------------+\n|  [ab|]    [Aa]    [Button]  [Image] [Hyperlink]|\n|   (1)     (2)       (3)       (4)       (5)    |\n+------------------------------------------------+",
+                options: ["1", "2", "3", "4", "5"],
+                ans: 0,
+                exp: "Access form kontrollerinde '[ab|]' (1 numaralı simge) Metin Kutusunu (Text Box), 'Aa' (2 numaralı simge) ise sabit Etiketi (Label) temsil eder."
+            },
+            {
+                id: "s2_13", num: 13, set: "Access Vize Soruları",
+                q: "Form tasarımında veri tabanına bağlı olmayan, sadece sabit başlık ve metinleri göstermek için kullanılan denetim (Control) hangisidir?",
+                options: [
+                    "Metin Kutusu (Text Box)",
+                    "Etiket (Label)",
+                    "Açılır Kutu (Combo Box)",
+                    "Komut Düğmesi (Command Button)",
+                    "Onay Kutusu (Check Box)"
+                ],
+                ans: 1,
+                exp: "Sabit başlıkları ve açıklama metinlerini göstermek için Etiket (Label) denetimi kullanılır."
+            },
+            {
+                id: "s2_14", num: 14, set: "Access Vize Soruları",
+                q: "Form tasarımında Etiket ve Metin Kutusunun dikey olarak alt alta hizalanıp gruplanmasını sağlayan Düzenle (Arrange) seçeneği hangisidir?",
+                code: "Form Düzeni Görünümü:\n+----------+-------------------+\n| Ad       | [ Ad            ] |\n+----------+-------------------+\n| Soyad    | [ Soyad         ] |\n+----------+-------------------+",
+                options: [
+                    "Tablo Şeklinde (Tabular)",
+                    "Yığınlı (Stacked)",
+                    "Serbest (Float)",
+                    "Izgara (Grid)",
+                    "Hizala > Sağ"
+                ],
+                ans: 1,
+                exp: "Etiketlerin solda, metin kutularının sağda olduğu ve satırların alt alta yığıldığı form düzenine Yığınlı (Stacked) düzen denir."
+            },
+            {
+                id: "s2_15", num: 15, set: "Access Vize Soruları",
+                q: "Form üzerindeki denetimlerin (kutuların) boyutlandırma ve hizalama özelliklerini topluca yönetmek için kullanılan sekme hangisidir?",
+                options: [
+                    "Oluştur (Create)",
+                    "Dış Veri (External Data)",
+                    "Düzenle (Arrange)",
+                    "Veritabanı Araçları",
+                    "Yardım"
+                ],
+                ans: 2,
+                exp: "Form Tasarım Araçları altındaki Düzenle (Arrange) sekmesi hizalama, boyutlandırma ve tablo/yığın düzeni araçlarını barındırır."
+            },
+            {
+                id: "s2_16", num: 16, set: "Access Vize Soruları",
+                q: "Form üzerine eklenen bir Düğmeye (Button) tıklandığında otomatik olarak 'Yeni Kayıt Açması' için kullanılan hazır sihirbaz kategorisi hangisidir?",
+                options: [
+                    "Form İşlemleri",
+                    "Kayıt Gezinmesi",
+                    "Kayıt İşlemleri",
+                    "Rapor İşlemleri",
+                    "Uygulama"
+                ],
+                ans: 2,
+                exp: "Komut Düğmesi Sihirbazında 'Yeni Kayıt Ekle', 'Kaydı Sil', 'Kaydı Kaydet' gibi eylemler 'Kayıt İşlemleri' (Record Operations) kategorisinde yer alır."
+            },
+            {
+                id: "s2_17", num: 17, set: "Access Vize Soruları",
+                q: "Veri tabanında tutulan verilerin düzenli bir biçimde kağıda basılması veya PDF olarak dışa aktarılması için kullanılan Access nesnesi hangisidir?",
+                options: ["Form", "Rapor", "Makro", "Modül", "Tablo"],
+                ans: 1,
+                exp: "Raporlar (Reports), verileri özetlemek, biçimlendirmek ve yazdırmak/PDF'e aktarmak için kullanılan nesnelerdir."
+            },
+            {
+                id: "s2_18", num: 18, set: "Access Vize Soruları",
+                q: "Rapor Tasarım görünümünde tüm sayfaların en altında (örneğin sayfa numarası veya tarih) görünecek alan nerede yer alır?",
+                options: [
+                    "Rapor Üst Bilgisi (Report Header)",
+                    "Sayfa Üst Bilgisi (Page Header)",
+                    "Detay (Detail)",
+                    "Sayfa Alt Bilgisi (Page Footer)",
+                    "Rapor Alt Bilgisi (Report Footer)"
+                ],
+                ans: 3,
+                exp: "Her sayfanın en altında tekrar eden bilgiler (sayfa numarası vb.) Sayfa Alt Bilgisi (Page Footer) bölümüne yerleştirilir."
+            },
+            {
+                id: "s2_19", num: 19, set: "Access Vize Soruları",
+                q: "Access'te kod yazmadan (VBA kullanmadan) otomatik işlemler zinciri oluşturmayı sağlayan yapı aşağıdakilerden hangisidir?",
+                options: ["Modül", "Makro", "İlişki", "Sorgu", "Özellik Sayfası"],
+                ans: 1,
+                exp: "Makrolar, VBA kodu yazmaya gerek kalmadan hazır eylem bloklarıyla otomasyon kurmayı sağlar."
+            },
+            {
+                id: "s2_20", num: 20, set: "Access Vize Soruları",
+                q: "Bir makronun form açıldığında otomatik çalışması için formun hangi olayına (Event) bağlanması gerekir?",
+                options: [
+                    "Tıklandığında (On Click)",
+                    "Açıldığında (On Open)",
+                    "Odaklandığında (On Got Focus)",
+                    "Değiştiğinde (On Change)",
+                    "Çift Tıklandığında (On Dbl Click)"
+                ],
+                ans: 1,
+                exp: "Form açılırken tetiklenen olay 'Açıldığında' (On Open) veya 'Yüklendiğinde' (On Load) olayıdır."
+            },
+            {
+                id: "s2_21", num: 21, set: "Access Vize Soruları",
+                q: "Makro oluşturucuda başka bir formu filtreleyerek açmak için FormAç (OpenForm) eyleminin hangi parametresi kullanılır?",
+                options: [
+                    "Form Adı",
+                    "Görünüm",
+                    "Where Koşulu",
+                    "Veri Modu",
+                    "Pencere Modu"
+                ],
+                ans: 2,
+                exp: "OpenForm (FormAç) eyleminde 'Where Koşulu' (Where Condition) parametresi açılacak formu belirli bir kritere göre filtreler."
+            },
+            {
+                id: "s2_22", num: 22, set: "Access Vize Soruları",
+                q: "Tıklandığında ekrana onay/uyarı pencereleri çıkarmak için kullanılan makro eylemi aşağıdakilerden hangisidir?",
+                options: [
+                    "FormAç",
+                    "Mesaj Kutusu (MessageBox)",
+                    "KayıtBul",
+                    "PencereKapat",
+                    "Rapor Yazdır"
+                ],
+                ans: 1,
+                exp: "Kullanıcıya bilgi veya uyarı penceresi göstermek için MesajKutusu (MessageBox) eylemi kullanılır."
+            },
+            {
+                id: "s2_23", num: 23, set: "Access Vize Soruları",
+                q: "Aşağıdaki ayar yapıldığında veri tabanı dosyasında ne gerçekleşir?",
+                code: "Ayar Ekranı:\n| Access Seçenekleri > Geçerli Veritabanı |\n| Formu Görüntüle: [ frmAnaMenu        v] |",
+                options: [
+                    "frmAnaMenu formu silinir.",
+                    "Veri tabanı her açıldığında ekrana ilk olarak frmAnaMenu formu gelir.",
+                    "frmAnaMenu formu arka planda gizlenir.",
+                    "Yalnızca raporlar açılır.",
+                    "Makrolar devre dışı kalır."
+                ],
+                ans: 1,
+                exp: "'Formu Görüntüle' (Display Form) ayarı, veritabanı dosyası açıldığında karşılama ekranı olarak hangi formun otomatik açılacağını belirler."
+            },
+            {
+                id: "s2_24", num: 24, set: "Access Vize Soruları",
+                q: "Bir form üzerindeki butonun rengini, yazı tipini veya tıklandığında çalışacak olayını ayarlamak için kullanılan panel aşağıdakilerden hangisidir?",
+                options: [
+                    "Gezinme Bölmesi",
+                    "Özellik Sayfası (Property Sheet)",
+                    "Alan Listesi",
+                    "Şerit Menü",
+                    "İlişkiler Penceresi"
+                ],
+                ans: 1,
+                exp: "Denetimlerin biçim, veri ve olay ayarları Özellik Sayfası (Property Sheet) panelinden yapılır."
+            },
+            {
+                id: "s2_25", num: 25, set: "Access Vize Soruları",
+                q: "Tasarım görünümünde ekranda F4 tuşuna basıldığında Access'te hangi panel açılır/kapanır?",
+                options: [
+                    "Makro Oluşturucu",
+                    "Özellik Sayfası",
+                    "Tablo Tasarımı",
+                    "SQL Görünümü",
+                    "İlişkiler Diyagramı"
+                ],
+                ans: 1,
+                exp: "Access tasarım görünümünde F4 (veya Alt+Enter) kısayolu Özellik Sayfasını (Property Sheet) açıp kapatır."
+            },
+            {
+                id: "s2_26", num: 26, set: "Access Vize Soruları",
+                q: "Tablo tasarımında metin kutusuna tıklanabilir bir internet adresi eklemek için seçilmesi gereken veri tipi hangisidir?",
+                options: [
+                    "Kısa Metin",
+                    "Uzun Metin",
+                    "Ek (Attachment)",
+                    "Köprü (Hyperlink)",
+                    "Arama Sihirbazı"
+                ],
+                ans: 3,
+                exp: "Tıklanabilir web siteleri veya e-posta bağlantıları saklamak için Köprü (Hyperlink) veri tipi kullanılır."
+            },
+            {
+                id: "s2_27", num: 27, set: "Access Vize Soruları",
+                q: "Access'te form üzerine canlı bir internet sayfasını gömmek için kullanılan denetim simgesi hangisidir?",
+                options: [
+                    "Web Tarayıcısı Denetimi (Web Browser Control)",
+                    "Onay Kutusu",
+                    "Liste Kutusu",
+                    "Alt Form",
+                    "Grafikler"
+                ],
+                ans: 0,
+                exp: "Form içine canlı web sayfası yerleştirmek için Web Tarayıcısı Denetimi kullanılır."
+            },
+            {
+                id: "s2_28", num: 28, set: "Access Vize Soruları",
+                q: "İki tablo arasında 'Bilgi Bütünlüğünü Zorla' (Enforce Referential Integrity) seçeneği işaretlendiğinde aşağıdakilerden hangisi ENGELLENİR?",
+                options: [
+                    "Detay tabloya yeni kayıt eklenmesi",
+                    "Ana tabloda olmayan bir ID değerinin detay tabloya girilmesi",
+                    "Tablo isimlerinin değiştirilmesi",
+                    "Form oluşturulması",
+                    "Sorgu yazılması"
+                ],
+                ans: 1,
+                exp: "Bilgi Bütünlüğü (Referential Integrity), ana tabloda karşılığı bulunmayan (yetim/orphan) bir yabancı anahtar değerinin alt tabloya girilmesini engeller."
+            },
+            {
+                id: "s2_29", num: 29, set: "Access Vize Soruları",
+                q: "Tablo tasarımında bir alanın 'Gerekli' (Required) özelliği 'Evet' yapılırsa ne olur?",
+                options: [
+                    "O alana sadece sayı girilebilir.",
+                    "O alan boş bırakılarak yeni kayıt kaydedilemez.",
+                    "O alan otomatik sayı olur.",
+                    "O alan gizlenir.",
+                    "O alana varsayılan değer atanır."
+                ],
+                ans: 1,
+                exp: "Required (Gerekli) = Evet yapıldığında o sütuna veri girilmesi zorunlu olur (NOT NULL)."
+            },
+            {
+                id: "s2_30", num: 30, set: "Access Vize Soruları",
+                q: "Veri girişini belirli bir şablona zorlamak (örneğin telefon numarasını (05XX) XXX-XX-XX şeklinde aldırmak) için hangi alan özelliği kullanılır?",
+                options: [
+                    "Default Value",
+                    "Validation Text",
+                    "Input Mask",
+                    "Caption",
+                    "Smart Tags"
+                ],
+                ans: 2,
+                exp: "Telefon, tarih, posta kodu gibi verileri belirli bir format şablonunda girmeye zorlayan özellik Input Mask (Giriş Maskesi)'dir."
+            },
+            {
+                id: "s2_31", num: 31, set: "Access Vize Soruları",
+                q: "Aşağıdaki süzgeç kriteri çalıştırıldığında hangisi listelenir?",
+                code: "QBE Sorgu Izgarası:\n| Alan (Field):     | OgrenciNo  | AdSoyad    | GNO              |\n| Tablo (Table):    | Ogrenciler | Ogrenciler | Ogrenciler       |\n| Ölçüt (Criteria): |            |            | >= 2.0 And <= 3.5|",
+                options: [
+                    "GNO'su 2.0'dan küçük olanlar",
+                    "GNO'su 2.0 ile 3.5 arasında olan öğrenciler",
+                    "Sadece GNO'su 3.5 olanlar",
+                    "GNO'su 3.5'ten büyük olanlar",
+                    "Tüm öğrenciler"
+                ],
+                ans: 1,
+                exp: ">= 2.0 And <= 3.5 ifadesi GNO değeri 2.0 ile 3.5 arasında (sınırlar dahil) olan öğrencileri listeler."
+            },
+            {
+                id: "s2_32", num: 32, set: "Access Vize Soruları",
+                q: "Access'te yapılan bir özet sorguda (Totals Query), COUNT (Say) fonksiyonu ne işe yarar?",
+                options: [
+                    "Seçilen alandaki değerlerin toplamını alır.",
+                    "Seçilen alandaki ortalamayı bulur.",
+                    "Belirtilen kritere uyan kayıtların sayısını verir.",
+                    "En büyük değeri bulur.",
+                    "En küçük değeri bulur."
+                ],
+                ans: 2,
+                exp: "Count (Say) fonksiyonu ilgili gruptaki kayıt/satır adedini sayar."
+            },
+            {
+                id: "s2_33", num: 33, set: "Access Vize Soruları",
+                q: "Özet sorguda (Totals) bir alanın Toplam satırı 'Where' (Koşul) olarak ayarlanırsa ne olur?",
+                options: [
+                    "O alan ekranda sonuç sütunu olarak görünmez, sadece arka planda süzme yapar.",
+                    "O alana göre gruplama yapılır.",
+                    "Access hata verir.",
+                    "O alan en başa taşınır.",
+                    "O alan tablodan silinir."
+                ],
+                ans: 0,
+                exp: "Toplam (Total) satırında 'Where' seçilen sütun gruplamaya dahil edilmez ve ekranda gösterilmez; yalnızca gruplama öncesi filtreleme (WHERE) yapar."
+            },
+            {
+                id: "s2_34", num: 34, set: "Access Vize Soruları",
+                q: "Bir form üzerindeki buton tıklandığında Close Window (PencereKapat) makro eylemi çalıştırılırsa ne gerçekleşir?",
+                options: [
+                    "Veri tabanı tamamen silinir.",
+                    "Seçili olan form veya pencere kapatılır.",
+                    "Yeni bir form açılır.",
+                    "Kayıtlar yazıcıya gönderilir.",
+                    "Bilgisayar kapanır."
+                ],
+                ans: 1,
+                exp: "CloseWindow (PencereKapat) eylemi aktif veya belirtilen formu/raporu kapatır."
+            },
+            {
+                id: "s2_35", num: 35, set: "Access Vize Soruları",
+                q: "Bir formda arama kutusuna yazılan metne göre kayda zıplamayı sağlayan makro eylemi hangisidir?",
+                options: [
+                    "FormAç",
+                    "KayıtBul (FindRecord)",
+                    "Yenile",
+                    "SorguÇalıştır",
+                    "RaporAç"
+                ],
+                ans: 1,
+                exp: "KayıtBul (FindRecord) makro eylemi, belirtilen kritere uyan kaydı bulup imleci o kayda taşır."
+            },
+            {
+                id: "s2_36", num: 36, set: "Access Vize Soruları",
+                q: "Bir müşteriyi silmeden önce kullanıcıya 'Silmek istediğinizden emin misiniz?' sorusunu sormak için hangi makro eylemi kullanılır?",
+                options: [
+                    "Mesaj Kutusu (MessageBox)",
+                    "KayıtSil",
+                    "FormAç",
+                    "SüzgeçUygula",
+                    "NesneSil"
+                ],
+                ans: 0,
+                exp: "Kullanıcıya uyarı veya bilgi mesajı göstermek için Mesaj Kutusu (MessageBox) kullanılır."
+            },
+            {
+                id: "s2_37", num: 37, set: "Access Vize Soruları",
+                q: "Tablo Tasarımında bir alanın Varsayılan Değer (Default Value) özelliğine =Date() yazılırsa ne olur?",
+                options: [
+                    "O alan boş kalır.",
+                    "Yeni kayıt eklendiğinde o alana otomatik olarak günün tarihi atanır.",
+                    "Tarih alanı silinir.",
+                    "Kullanıcı tarih giremez.",
+                    "Sadece saat bilgisi saklanır."
+                ],
+                ans: 1,
+                exp: "=Date() fonksiyonu sistemdeki bugünün tarihini döndürür ve yeni açılan kayıtlara otomatik olarak günün tarihini yazar."
+            },
+            {
+                id: "s2_38", num: 38, set: "Access Vize Soruları",
+                q: "Form Tasarımında birden fazla nesneyi fareyle seçip 'Hizala > Sol' denildiğinde ne olur?",
+                options: [
+                    "Nesneler formun en sol sınırına yapışır.",
+                    "Seçili nesneler, aralarında en solda duran nesnenin hizasına hizalanır.",
+                    "Nesneler silinir.",
+                    "Nesnelerin boyutları eşitlenir.",
+                    "Nesneler gizlenir."
+                ],
+                ans: 1,
+                exp: "Hizala > Sol (Align Left) komutu, seçili denetimleri içlerinde en solda bulunan denetimin sol kenar hizasına çeker."
+            },
+            {
+                id: "s2_39", num: 39, set: "Access Vize Soruları",
+                q: "İlişkiler penceresindeki 'İlişkili Kayıtları İkinci Derecede Sil' (Cascade Delete) seçeneği işaretlenirse ana tablodan bir kayıt silindiğinde ne olur?",
+                code: "Ayar Ekranı:\n+--------------------------------------------------+\n| [X] Bilgi Bütünlüğünü Zorla                      |\n| [X] İlişkili Alanları İkinci Derecede Güncelle   |\n| [X] İlişkili Kayıtları İkinci Derecede Sil       |\n+--------------------------------------------------+",
+                options: [
+                    "Access hata verir ve silmeyi engeller.",
+                    "Detay tablodaki bağlı tüm alt kayıtlar da otomatik olarak silinir.",
+                    "Detay tablodaki kayıtlar etkilenmez.",
+                    "Yalnızca ana tablo silinir.",
+                    "Silinen kayıt geri dönüştürülür."
+                ],
+                ans: 1,
+                exp: "Cascade Delete (İlişkili Kayıtları İkinci Derecede Sil) aktifken ana tablodan bir kayıt silindiğinde, detay tablodaki ilişkili tüm kayıtlar da otomatik silinir."
+            },
+            {
+                id: "s2_40", num: 40, set: "Access Vize Soruları",
+                q: "Access'te yapılan sorguları, formları veya tabloları sol tarafta listeleyen dikey panele ne ad verilir?",
+                options: [
+                    "Şerit Menü (Ribbon)",
+                    "Özellik Sayfası",
+                    "Gezinme Bölmesi (Navigation Pane)",
+                    "Durum Çubuğu",
+                    "Başlık Çubuğu"
+                ],
+                ans: 2,
+                exp: "Veritabanındaki tüm nesneleri (Tablo, Sorgu, Form, Rapor, Makro) sol kenarda listeleyen panele Gezinme Bölmesi (Navigation Pane) denir."
+            },
+            {
+                id: "s2_41", num: 41, set: "Access Vize Soruları",
+                q: "SQL açılımı aşağıdakilerden hangisidir?",
+                options: [
+                    "Simple Query Language",
+                    "Structured Query Language",
+                    "System Query Logic",
+                    "Sequential Query Language",
+                    "Standard Question Language"
+                ],
+                ans: 1,
+                exp: "SQL'in açılımı Structured Query Language (Yapısal Sorgulama Dili)'dir."
+            },
+            {
+                id: "s2_42", num: 42, set: "Access Vize Soruları",
+                q: "Bir tablodaki tüm sütun ve satırları seçmek için kullanılan temel SQL sorgusu hangisidir?",
+                options: [
+                    "SELECT ALL FROM Ogrenciler;",
+                    "SELECT * FROM Ogrenciler;",
+                    "GET * FROM Ogrenciler;",
+                    "FETCH ALL Ogrenciler;",
+                    "SHOW TABLO Ogrenciler;"
+                ],
+                ans: 1,
+                exp: "SQL'de '*' karakteri tüm sütunları temsil eder: SELECT * FROM Ogrenciler;"
+            },
+            {
+                id: "s2_43", num: 43, set: "Access Vize Soruları",
+                q: "SQL'de listelenen kayıtlar içinde tekrar eden (yineleyen) değerleri teke indirmek için hangi anahtar kelime kullanılır?",
+                options: ["UNIQUE", "DISTINCT", "SINGLE", "GROUP", "TOP"],
+                ans: 1,
+                exp: "SELECT DISTINCT ifadesi yinelenen satırları eleyerek sadece benzersiz değerleri döndürür."
+            },
+            {
+                id: "s2_44", num: 44, set: "Access Vize Soruları",
+                q: "Veri tabanında yeni bir tablo oluşturmak için kullanılan DDL (Data Definition Language) komutu hangisidir?",
+                options: [
+                    "INSERT INTO TABLE",
+                    "CREATE TABLE",
+                    "ADD TABLE",
+                    "MAKE TABLE",
+                    "NEW TABLE"
+                ],
+                ans: 1,
+                exp: "Yeni bir tablo tanımlamak ve oluşturmak için CREATE TABLE komutu kullanılır."
+            },
+            {
+                id: "s2_45", num: 45, set: "Access Vize Soruları",
+                q: "Ogrenciler tablosuna yeni bir öğrenci kaydı eklemek için kullanılan doğru SQL ifadesi hangisidir?",
+                options: [
+                    "ADD INTO Ogrenciler VALUES (1, 'Ahmet');",
+                    "INSERT INTO Ogrenciler (OgrenciNo, Ad) VALUES (1, 'Ahmet');",
+                    "UPDATE Ogrenciler SET OgrenciNo = 1, Ad = 'Ahmet';",
+                    "CREATE Ogrenciler (1, 'Ahmet');",
+                    "APPEND TO Ogrenciler VALUES (1, 'Ahmet');"
+                ],
+                ans: 1,
+                exp: "Tabloya yeni satır/kayıt eklemek için INSERT INTO TabloAdi (Sutunlar) VALUES (Degerler) yapısı kullanılır."
+            },
+            {
+                id: "s2_46", num: 46, set: "Access Vize Soruları",
+                q: "Mevcut bir tablodaki verileri güncellemek/değiştirmek için hangi SQL komutu kullanılır?",
+                options: ["ALTER", "CHANGE", "UPDATE", "MODIFY", "REPLACE"],
+                ans: 2,
+                exp: "Tablo içindeki mevcut kayıtların verilerini değiştirmek için UPDATE komutu kullanılır."
+            },
+            {
+                id: "s2_47", num: 47, set: "Access Vize Soruları",
+                q: "Bir tablodan belirli şartı sağlayan kayıtları silmek için hangi komut yapısı kullanılır?",
+                options: [
+                    "REMOVE FROM",
+                    "DELETE FROM",
+                    "DROP FROM",
+                    "TRUNCATE TABLE",
+                    "ERASE FROM"
+                ],
+                ans: 1,
+                exp: "Koşula bağlı kayıt silmek için DELETE FROM TabloAdi WHERE Kosul; yapısı kullanılır."
+            },
+            {
+                id: "s2_48", num: 48, set: "Access Vize Soruları",
+                q: "Veri tabanından 'Ogrenciler' tablosunu yapısı ve tüm verileriyle birlikte tamamen yok etmek/silmek için hangi komut kullanılır?",
+                options: [
+                    "DELETE TABLE Ogrenciler;",
+                    "REMOVE TABLE Ogrenciler;",
+                    "DROP TABLE Ogrenciler;",
+                    "CLEAR TABLE Ogrenciler;",
+                    "TRUNCATE Ogrenciler;"
+                ],
+                ans: 2,
+                exp: "Tabloyu şeması ve içindeki tüm verilerle birlikte veritabanından tamamen kaldırmak için DROP TABLE Ogrenciler; kullanılır."
+            },
+            {
+                id: "s2_49", num: 49, set: "Access Vize Soruları",
+                q: "Sehir alanı 'Kütahya' olan VE GNO'su 3.00 ve üzeri olan öğrencileri getiren SQL sorgusu hangisidir?",
+                options: [
+                    "SELECT * FROM Ogrenciler WHERE Sehir='Kütahya' OR GNO>=3.0;",
+                    "SELECT * FROM Ogrenciler WHERE Sehir='Kütahya' AND GNO>=3.0;",
+                    "SELECT * FROM Ogrenciler HAVING Sehir='Kütahya' AND GNO>=3.0;",
+                    "SELECT * FROM Ogrenciler WHERE Sehir='Kütahya' LIKE GNO>=3.0;",
+                    "SELECT * FROM Ogrenciler WHERE Sehir IN ('Kütahya', 3.0);"
+                ],
+                ans: 1,
+                exp: "Her iki şartın aynı anda sağlanması istendiği için WHERE bloğunda AND operatörü kullanılır."
+            },
+            {
+                id: "s2_50", num: 50, set: "Access Vize Soruları",
+                q: "Şehri 'Kütahya' VEYA 'Eskişehir' olan öğrencileri filtrelemek için kullanılabilecek en pratik SQL koşulu hangisidir?",
+                options: [
+                    "WHERE Sehir = 'Kütahya' AND Sehir = 'Eskişehir'",
+                    "WHERE Sehir IN ('Kütahya', 'Eskişehir')",
+                    "WHERE Sehir LIKE ('Kütahya', 'Eskişehir')",
+                    "WHERE Sehir BETWEEN 'Kütahya' AND 'Eskişehir'",
+                    "WHERE Sehir HAS ('Kütahya', 'Eskişehir')"
+                ],
+                ans: 1,
+                exp: "Aynı sütun için birden fazla OR yazmak yerine IN ('Kütahya', 'Eskişehir') kullanmak en pratik ve okunaklı yöntemdir."
+            },
+            {
+                id: "s2_51", num: 51, set: "Access Vize Soruları",
+                q: "GNO değeri 2.50 ile 3.50 arasında (sınırlar dahil) olan öğrencileri getiren SQL ifadesi hangisidir?",
+                options: [
+                    "WHERE GNO BETWEEN 2.50 AND 3.50",
+                    "WHERE GNO IN (2.50, 3.50)",
+                    "WHERE GNO LIKE '2.50-3.50'",
+                    "WHERE GNO = 2.50 OR GNO = 3.50",
+                    "WHERE GNO CONTAIN 2.50 TO 3.50"
+                ],
+                ans: 0,
+                exp: "Belirli bir alt ve üst sınır aralığını (sınırlar dahil) filtrelemek için BETWEEN 2.50 AND 3.50 kullanılır."
+            },
+            {
+                id: "s2_52", num: 52, set: "Access Vize Soruları",
+                q: "Adı 'A' harfi ile başlayan tüm öğrencileri bulmak için kullanılan SQL ifadesi hangisidir?",
+                options: [
+                    "WHERE Ad = 'A*'",
+                    "WHERE Ad LIKE 'A%' (Access için 'A*')",
+                    "WHERE Ad IN ('A')",
+                    "WHERE Ad = 'A%'",
+                    "WHERE Ad STARTWITH 'A'"
+                ],
+                ans: 1,
+                exp: "Metin kalıbı aramalarında LIKE operatörü kullanılır: Standart SQL'de 'A%', MS Access'te ise 'A*'."
+            },
+            {
+                id: "s2_53", num: 53, set: "Access Vize Soruları",
+                q: "Soyadı içinde 'KAYA' geçen kayıtları süzmek için koşul bloğu nasıl olmalıdır?",
+                options: [
+                    "WHERE Soyad = '%KAYA%'",
+                    "WHERE Soyad LIKE '%KAYA%' (Access için '*KAYA*')",
+                    "WHERE Soyad IN ('KAYA')",
+                    "WHERE Soyad BETWEEN 'K' AND 'A'",
+                    "WHERE Soyad HAS 'KAYA'"
+                ],
+                ans: 1,
+                exp: "İçinde belirli bir kelime geçen kayıtları bulmak için LIKE '%KAYA%' (Access'te '*KAYA*') kullanılır."
+            },
+            {
+                id: "s2_54", num: 54, set: "Access Vize Soruları",
+                q: "Aşağıdaki SQL sorgusu çalıştırıldığında sonuçlar nasıl sıralanır?",
+                code: "SELECT Ad, Soyad, GNO\nFROM Ogrenciler\nORDER BY GNO DESC;",
+                options: [
+                    "GNO'ya göre küçükten büyüğe (artan)",
+                    "GNO'ya göre büyükten küçüğe (azalan)",
+                    "Ad ve Soyada göre alfabetik",
+                    "Rastgele",
+                    "Öğrenci numarasına göre"
+                ],
+                ans: 1,
+                exp: "ORDER BY GNO DESC ifadesi GNO sütununa göre büyükten küçüğe (azalan) sıralama yapar."
+            },
+            {
+                id: "s2_55", num: 55, set: "Access Vize Soruları",
+                q: "ORDER BY cümlesinde sıralama yönü belirtilmezse (ASC/DESC yazılmazsa) varsayılan sıralama nasıldır?",
+                options: [
+                    "Azalan (DESC)",
+                    "Artan / Alfabetik (ASC)",
+                    "Sıralama yapılmaz",
+                    "Hata verir",
+                    "Tersten sıralar"
+                ],
+                ans: 1,
+                exp: "ORDER BY varsayılan olarak ASC (Ascending), yani küçükten büyüğe / A'dan Z'ye artan sıralama yapar."
+            },
+            {
+                id: "s2_56", num: 56, set: "Access Vize Soruları",
+                q: "Ogrenciler tablosundaki tüm öğrencilerin GNO ortalamasını hesaplayan SQL sorgusu hangisidir?",
+                options: [
+                    "SELECT SUM(GNO) FROM Ogrenciler;",
+                    "SELECT COUNT(GNO) FROM Ogrenciler;",
+                    "SELECT AVG(GNO) FROM Ogrenciler;",
+                    "SELECT TOTAL(GNO) FROM Ogrenciler;",
+                    "SELECT MAX(GNO) FROM Ogrenciler;"
+                ],
+                ans: 2,
+                exp: "Aritmetik ortalama hesaplamak için AVG() (Average) fonksiyonu kullanılır."
+            },
+            {
+                id: "s2_57", num: 57, set: "Access Vize Soruları",
+                q: "Sistemdeki toplam kayıt/öğrenci sayısını bulmak için hangi toplulaştırma fonksiyonu kullanılır?",
+                options: ["SUM(*)", "AVG(*)", "COUNT(*)", "TOTAL(*)", "NUMBER(*)"],
+                ans: 2,
+                exp: "Tablodaki toplam satır/kayıt sayısını bulmak için COUNT(*) fonksiyonu kullanılır."
+            },
+            {
+                id: "s2_58", num: 58, set: "Access Vize Soruları",
+                q: "En yüksek not ortalamasına sahip öğrencinin GNO değerini getiren fonksiyon hangisidir?",
+                options: ["TOP()", "MAX()", "HIGH()", "LARGE()", "SUM()"],
+                ans: 1,
+                exp: "Bir sütundaki en büyük değeri bulmak için MAX() fonksiyonu kullanılır."
+            },
+            {
+                id: "s2_59", num: 59, set: "Access Vize Soruları",
+                q: "Öğrencileri şehirlerine göre gruplayarak her şehirde kaç öğrenci olduğunu gösteren sorgu hangisidir?",
+                options: [
+                    "SELECT Sehir, COUNT(*) FROM Ogrenciler GROUP BY Sehir;",
+                    "SELECT Sehir, COUNT(*) FROM Ogrenciler ORDER BY Sehir;",
+                    "SELECT Sehir, SUM(*) FROM Ogrenciler GROUP BY Sehir;",
+                    "SELECT Sehir FROM Ogrenciler WHERE COUNT(*);",
+                    "SELECT Sehir, COUNT(*) FROM Ogrenciler HAVING Sehir;"
+                ],
+                ans: 0,
+                exp: "Şehirlere göre gruplayıp öğrenci sayısını almak için SELECT Sehir, COUNT(*) FROM Ogrenciler GROUP BY Sehir; yazılır."
+            },
+            {
+                id: "s2_60", num: 60, set: "Access Vize Soruları",
+                q: "GROUP BY kullanılan bir sorguda, gruplanmış veriler üzerinde süzme/filtreleme yapmak için WHERE yerine hangi cümle kullanılır?",
+                options: ["ORDER BY", "HAVING", "LIKE", "WHERE AGAIN", "FILTER BY"],
+                ans: 1,
+                exp: "Gruplanmış (GROUP BY) veriler ve toplulaştırma fonksiyonları üzerinde filtreleme yapmak için HAVING kullanılır."
+            },
+            {
+                id: "s2_61", num: 61, set: "Access Vize Soruları",
+                q: "Aşağıdaki sorgunun çıktısı hakkında hangisi DOĞRUDUR?",
+                code: "SELECT Sehir, AVG(GNO) AS Ortalama\nFROM Ogrenciler\nGROUP BY Sehir\nHAVING AVG(GNO) >= 2.50;",
+                options: [
+                    "Tüm şehirlerin ortalamasını gösterir.",
+                    "Yalnızca öğrenci not ortalaması 2.50 ve üzerinde olan şehirleri ve onların ortalamasını getirir.",
+                    "GNO'su 2.50'den küçük şehirleri getirir.",
+                    "Sorgu sözdizim hatası verir.",
+                    "Sadece Kütahya şehrini getirir."
+                ],
+                ans: 1,
+                exp: "Sorgu önce şehirlere göre GNO ortalamasını alır, ardından HAVING ile sadece ortalaması 2.50 ve üstü olan şehirleri listeler."
+            },
+            {
+                id: "s2_62", num: 62, set: "Access Vize Soruları",
+                q: "İki ilişkili tabloyu (örneğin Ogrenciler ve Bolumler) ortak bir alan (BolumID) üzerinden birleştirmek için kullanılan SQL deyimi hangisidir?",
+                options: ["MERGE TABLE", "COMBINE", "INNER JOIN", "CONNECT BY", "UNION ALL"],
+                ans: 2,
+                exp: "İlişkili iki tabloyu ortak anahtar üzerinden yatay birleştirmek için INNER JOIN kullanılır."
+            },
+            {
+                id: "s2_63", num: 63, set: "Access Vize Soruları",
+                q: "Aşağıdaki INNER JOIN sorgusunda 'ON' ifadesinden sonra ne yazılmalıdır?",
+                code: "SELECT Ogrenciler.Ad, Bolumler.BolumAdi\nFROM Ogrenciler\nINNER JOIN Bolumler\nON ___________________________",
+                options: [
+                    "Ogrenciler.GNO > 2.0",
+                    "Ogrenciler.BolumID = Bolumler.BolumID",
+                    "Ogrenciler.Sehir = 'Kütahya'",
+                    "Bolumler.BolumAdi = 'Bilgisayar'",
+                    "Ogrenciler.OgrenciNo = 1"
+                ],
+                ans: 1,
+                exp: "ON anahtar kelimesinden sonra iki tablonun ortak ilişki alanlarının eşitliği (Ogrenciler.BolumID = Bolumler.BolumID) yazılır."
+            },
+            {
+                id: "s2_64", num: 64, set: "Access Vize Soruları",
+                q: "Bölümü olmayan öğrenciler dahil, tüm öğrencileri ve varsa bölüm adlarını getirmek için hangi JOIN türü kullanılır?",
+                options: [
+                    "INNER JOIN",
+                    "LEFT JOIN (veya LEFT OUTER JOIN)",
+                    "RIGHT JOIN",
+                    "CROSS JOIN",
+                    "FULL JOIN"
+                ],
+                ans: 1,
+                exp: "Sol tablodaki (Ogrenciler) tüm kayıtları ve sağ tablodaki (Bolumler) eşleşenleri getirmek için LEFT JOIN kullanılır."
+            },
+            {
+                id: "s2_65", num: 65, set: "Access Vize Soruları",
+                q: "E-posta adresi boş bırakılmış (hiç girilmemiş) öğrencileri bulmak için kullanılan SQL koşulu hangisidir?",
+                options: [
+                    "WHERE Eposta = ''",
+                    "WHERE Eposta = 0",
+                    "WHERE Eposta IS NULL",
+                    "WHERE Eposta = NULL",
+                    "WHERE Eposta EMPTY"
+                ],
+                ans: 2,
+                exp: "SQL'de boş (NULL) değerler '=' ile değil, 'IS NULL' ifadesi ile kontrol edilir."
+            },
+            {
+                id: "s2_66", num: 66, set: "Access Vize Soruları",
+                q: "E-posta alanı dolu olan (boş olmayan) kayıtları getiren koşul hangisidir?",
+                options: [
+                    "WHERE Eposta IS NOT NULL",
+                    "WHERE Eposta NOT NULL",
+                    "WHERE Eposta != NULL",
+                    "WHERE Eposta <> ''",
+                    "WHERE Eposta EXISTS"
+                ],
+                ans: 0,
+                exp: "NULL olmayan (veri girilmiş) kayıtları filtrelemek için WHERE Eposta IS NOT NULL kullanılır."
+            },
+            {
+                id: "s2_67", num: 67, set: "Access Vize Soruları",
+                q: "Ahmet Yılmaz adlı öğrencinin not ortalamasını (GNO) 3.50 olarak güncelleyen doğru SQL sorgusu hangisidir?",
+                options: [
+                    "UPDATE Ogrenciler SET GNO = 3.50 WHERE Ad = 'Ahmet' AND Soyad = 'Yılmaz';",
+                    "CHANGE Ogrenciler SET GNO = 3.50 WHERE Ad = 'Ahmet';",
+                    "MODIFY Ogrenciler GNO = 3.50 WHERE Ad = 'Ahmet';",
+                    "UPDATE GNO = 3.50 FROM Ogrenciler;",
+                    "INSERT INTO Ogrenciler (GNO) VALUES (3.50);"
+                ],
+                ans: 0,
+                exp: "Kayıt güncelleme kalıbı: UPDATE TabloAdi SET Sutun = YeniDeger WHERE Kosul;"
+            },
+            {
+                id: "s2_68", num: 68, set: "Access Vize Soruları",
+                q: "Devamsızlığı 10 günden fazla olan tüm öğrencileri veritabanından silen SQL komutu hangisidir?",
+                options: [
+                    "DROP FROM Ogrenciler WHERE Devamsizlik > 10;",
+                    "DELETE FROM Ogrenciler WHERE Devamsizlik > 10;",
+                    "REMOVE Ogrenciler WHERE Devamsizlik > 10;",
+                    "TRUNCATE Ogrenciler WHERE Devamsizlik > 10;",
+                    "DELETE TABLE Ogrenciler IF Devamsizlik > 10;"
+                ],
+                ans: 1,
+                exp: "Belirli bir koşula uyan satırları silmek için DELETE FROM Ogrenciler WHERE Devamsizlik > 10; kullanılır."
+            },
+            {
+                id: "s2_69", num: 69, set: "Access Vize Soruları",
+                q: "Mevcut 'Ogrenciler' tablosuna 'Telefon' adında yeni bir sütun/alan eklemek için hangi DDL sorgusu kullanılır?",
+                options: [
+                    "UPDATE TABLE Ogrenciler ADD Telefon VARCHAR(15);",
+                    "ALTER TABLE Ogrenciler ADD Telefon VARCHAR(15);",
+                    "INSERT INTO Ogrenciler COLUMN Telefon VARCHAR(15);",
+                    "CREATE COLUMN Telefon IN Ogrenciler;",
+                    "MODIFY TABLE Ogrenciler ADD Telefon;"
+                ],
+                ans: 1,
+                exp: "Mevcut bir tablonun yapısına yeni sütun eklemek için ALTER TABLE TabloAdi ADD YeniSutun VeriTipi; kullanılır."
+            },
+            {
+                id: "s2_70", num: 70, set: "Access Vize Soruları",
+                q: "Sorgu sonucunda hesaplanan sütuna geçici bir isim/etiket vermek (örneğin AVG(GNO) sütun adını 'Ortalama' yapmak) için hangi kelime kullanılır?",
+                options: ["LIKE", "AS", "RENAME", "TITLE", "NAME"],
+                ans: 1,
+                exp: "Sütunlara veya tablolara takma ad (Alias) vermek için AS anahtar kelimesi kullanılır."
+            },
+            {
+                id: "s2_71", num: 71, set: "Access Vize Soruları",
+                q: "SELECT sorgusunda dönen sonuç kümesinden sadece ilk 5 kaydı getirmek için SQL Server / Access tarafında kullanılan deyim hangisidir?",
+                options: ["LIMIT 5", "TOP 5", "FIRST 5", "ROW 5", "ONLY 5"],
+                ans: 1,
+                exp: "MS Access ve SQL Server'da ilk N kaydı getirmek için SELECT TOP 5 * FROM Tablo; kullanılır."
+            },
+            {
+                id: "s2_72", num: 72, set: "Access Vize Soruları",
+                q: "Aşağıdaki SQL ifadesinde hangi mantıksal hata yapılmıştır?",
+                code: "Hatalı SQL Sorgusu:\nSELECT Sehir, GNO\nFROM Ogrenciler\nGROUP BY Sehir;",
+                options: [
+                    "FROM ifadesi yanlış yere yazılmıştır.",
+                    "GROUP BY kullanılan bir sorguda, SELECT kısmındaki GNO alanı ya bir toplulaştırma fonksiyonu (AVG, MAX vb.) içinde olmalı ya da GROUP BY'a eklenmelidir.",
+                    "GROUP BY yerine ORDER BY yazılmalıdır.",
+                    "Sehir alanı metin olduğu için gruplanamaz.",
+                    "Sorgu tamamen doğrudur, hata yoktur."
+                ],
+                ans: 1,
+                exp: "GROUP BY kullanılan sorgularda SELECT listesinde yer alan her sütun ya GROUP BY içinde bulunmalı ya da AVG, SUM, MAX gibi bir aggregate fonksiyonu içinde yer almalıdır."
+            },
+            {
+                id: "s2_73", num: 73, set: "Access Vize Soruları",
+                q: "İki ayrı SELECT sorgusunun sonuçlarını dikey olarak tek bir listede birleştiren SQL komutu hangisidir?",
+                options: [
+                    "JOIN",
+                    "UNION (veya UNION ALL)",
+                    "MERGE",
+                    "GROUP BY",
+                    "CONNECT"
+                ],
+                ans: 1,
+                exp: "İki SELECT sorgusunun sonuç kümelerini alt alta (dikey) birleştirmek için UNION veya UNION ALL kullanılır."
+            },
+            {
+                id: "s2_74", num: 74, set: "Access Vize Soruları",
+                q: "Aşağıdaki sorguda burslu OLMAYAN VE GNO'su 2.00'den küçük öğrencileri getirmek için boşluğa hangi mantıksal operatör gelmelidir?",
+                code: "SELECT * FROM Ogrenciler\nWHERE BursluMu = False _____ GNO < 2.00;",
+                options: ["OR", "AND", "NOT", "IN", "LIKE"],
+                ans: 1,
+                exp: "Her iki koşulun birlikte sağlanması istendiği için boşluğa AND gelmelidir."
+            },
+            {
+                id: "s2_75", num: 75, set: "Access Vize Soruları",
+                q: "SQL dilinde veri ekleme, güncelleme ve silme (INSERT, UPDATE, DELETE) komutları hangi grupta yer alır?",
+                options: [
+                    "DDL (Data Definition Language)",
+                    "DML (Data Manipulation Language)",
+                    "DCL (Data Control Language)",
+                    "TCL (Transaction Control Language)",
+                    "DQL (Data Query Language)"
+                ],
+                ans: 1,
+                exp: "INSERT, UPDATE ve DELETE veriyi işleyen DML (Data Manipulation Language - Veri İşleme Dili) komutlarıdır."
+            },
+            {
+                id: "s2_76", num: 76, set: "Access Vize Soruları",
+                q: "SQL dilinde tablo oluşturma, silme ve yapı değiştirme (CREATE, DROP, ALTER) komutları hangi gruptadır?",
+                options: [
+                    "DML (Data Manipulation Language)",
+                    "DDL (Data Definition Language)",
+                    "DCL (Data Control Language)",
+                    "TCL",
+                    "DQL"
+                ],
+                ans: 1,
+                exp: "CREATE, ALTER, DROP ve TRUNCATE veritabanı nesnelerini tanımlayan DDL (Data Definition Language - Veri Tanımlama Dili) komutlarıdır."
+            },
+            {
+                id: "s2_77", num: 77, set: "Access Vize Soruları",
+                q: "Aşağıdaki sorgunun çıktısı için aşağıdakilerden hangisi söylenebilir?",
+                code: "SELECT Ad, Soyad, Sehir\nFROM Ogrenciler\nWHERE Sehir <> 'İstanbul';",
+                options: [
+                    "Sadece İstanbul'da yaşayan öğrenciler listelenir.",
+                    "İstanbul dışında yaşayan tüm öğrenciler listelenir.",
+                    "Şehri boş olan öğrenciler listelenir.",
+                    "Hata verir, <> sembolü SQL'de kullanılamaz.",
+                    "Tüm öğrenciler ve şehirler listelenir."
+                ],
+                ans: 1,
+                exp: "SQL'de '<>' operatörü 'Eşit Değildir' anlamına gelir ve şehri İstanbul olmayan öğrencileri listeler."
+            },
+            {
+                id: "s2_78", num: 78, set: "Access Vize Soruları",
+                q: "Bir tablodaki en düşük not değerini bulmak için kullanılan toplulaştırma fonksiyonu hangisidir?",
+                options: ["LOW()", "MIN()", "SMALL()", "BOTTOM()", "FEWEST()"],
+                ans: 1,
+                exp: "En küçük / en düşük değeri bulmak için MIN() fonksiyonu kullanılır."
+            },
+            {
+                id: "s2_79", num: 79, set: "Access Vize Soruları",
+                q: "Birden fazla sütuna göre sıralama yapmak için kullanılan doğru SQL kalıbı hangisidir?",
+                options: [
+                    "ORDER BY Sehir, GNO, Isim DESC",
+                    "ORDER BY Sehir AND GNO DESC",
+                    "GROUP BY Sehir, GNO",
+                    "SORT BY Sehir THEN GNO",
+                    "ORDER BY Sehir THEN BY GNO"
+                ],
+                ans: 0,
+                exp: "ORDER BY cümlesinde birden fazla sütun aralarına virgül (,) konularak sıralanır: ORDER BY Sehir, GNO, Isim DESC."
+            },
+            {
+                id: "s2_80", num: 80, set: "Access Vize Soruları",
+                q: "SQL'de bir metin alanında karakter uzunluğunu veya karakter sayısını bulmak için genel SQL standartlarında kullanılan fonksiyon hangisidir?",
+                options: [
+                    "COUNT()",
+                    "LENGTH() / LEN()",
+                    "SIZE()",
+                    "LONG()",
+                    "CHAR_COUNT()"
+                ],
+                ans: 1,
+                exp: "Metin uzunluğunu (karakter sayısını) bulmak için SQL Server/Access'te LEN(), standart SQL/MySQL/Oracle'da LENGTH() kullanılır."
+            }
+        ];
+
+        // ============================================================================
+        // UYGULAMA DURUMU (STATE) VE YÖNETİMİ
+        // ============================================================================
+        let currentDatasetKey = 'set1'; // 'set1' | 'set2' | 'all' | 'exam'
+        let currentViewMode = 'single'; // 'single' | 'list'
+        let currentFilterStatus = 'all'; // 'all' | 'unanswered' | 'correct' | 'wrong'
+        let searchQuery = '';
+        let isShuffled = false;
+        let shuffledPoolIds = [];
+
+        // 30 Soruluk Sınav Modu Durumları
+        let examQuestions = [];
+        let examSubmitted = false;
+        let examSeconds = 0;
+        let examTimerInterval = null;
+
+        let currentIndex = 0;
+
+        // Kullanıcının verdiği cevaplar: { [questionId]: selectedOptionIndex }
+        let userAnswers = {};
+        // Tekil olarak cevabı gösterilenler: { [questionId]: true }
+        let revealedQuestions = {};
+
+        const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+
+        // LocalStorage'dan yükle
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('db_quiz_160_answers');
+                if (saved) userAnswers = JSON.parse(saved);
+            } catch (e) {
+                userAnswers = {};
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('db_quiz_160_answers', JSON.stringify(userAnswers));
+            } catch (e) {}
+        }
+
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function getBasePool() {
+            if (currentDatasetKey === 'set1') return questionsSet1;
+            if (currentDatasetKey === 'set2') return questionsSet2;
+            if (currentDatasetKey === 'exam') return examQuestions;
+            return [...questionsSet1, ...questionsSet2];
+        }
+
+        function getActivePool() {
+            const base = getBasePool();
+            if (!isShuffled) return base;
+
+            const map = new Map(base.map(q => [q.id, q]));
+            const ordered = [];
+            shuffledPoolIds.forEach(id => {
+                if (map.has(id)) {
+                    ordered.push(map.get(id));
+                    map.delete(id);
+                }
+            });
+            // Eğer yeni eklenen varsa sonuna ekle
+            map.forEach(q => ordered.push(q));
+            return ordered;
+        }
+
+        function toggleShuffle() {
+            isShuffled = !isShuffled;
+            const btn = document.getElementById('btn-shuffle');
+            if (isShuffled) {
+                const base = getBasePool();
+                shuffledPoolIds = shuffleArray(base.map(q => q.id));
+                btn.className = "px-3 py-2 rounded-xl text-xs font-semibold bg-purple-600 text-white border border-purple-600 shadow-sm transition flex items-center gap-1.5";
+                btn.innerHTML = `<span>🔀 Karışık Sıra (Aktif)</span>`;
+            } else {
+                shuffledPoolIds = [];
+                btn.className = "px-3 py-2 rounded-xl text-xs font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition flex items-center gap-1.5";
+                btn.innerHTML = `<span>🔀 Karıştır</span>`;
+            }
+            currentIndex = 0;
+            renderMainArea();
+        }
+
+        function startExamMode() {
+            if (examQuestions.length === 0) {
+                generateNewExamSet();
+            }
+            switchDataset('exam');
+        }
+
+        function generateNewExamSet() {
+            const allPool = [...questionsSet1, ...questionsSet2];
+            examQuestions = shuffleArray(allPool).slice(0, 30);
+            // Sınav sorularının önceki cevaplarını temizle ki temiz bir sınav olsun
+            examQuestions.forEach(q => {
+                delete userAnswers[q.id];
+                delete revealedQuestions[q.id];
+            });
+            saveState();
+
+            examSubmitted = false;
+            examSeconds = 0;
+            updateExamTimerUI();
+            if (examTimerInterval) clearInterval(examTimerInterval);
+            examTimerInterval = setInterval(() => {
+                if (!examSubmitted && currentDatasetKey === 'exam') {
+                    examSeconds++;
+                    updateExamTimerUI();
+                }
+            }, 1000);
+
+            if (isShuffled) {
+                shuffledPoolIds = shuffleArray(examQuestions.map(q => q.id));
+            }
+
+            updateExamBannerUI();
+        }
+
+        function regenerateExam() {
+            generateNewExamSet();
+            currentIndex = 0;
+            renderMainArea();
+        }
+
+        function finishExam() {
+            examSubmitted = true;
+            if (examTimerInterval) clearInterval(examTimerInterval);
+            updateExamBannerUI();
+            renderMainArea();
+        }
+
+        function updateExamTimerUI() {
+            const mins = String(Math.floor(examSeconds / 60)).padStart(2, '0');
+            const secs = String(examSeconds % 60).padStart(2, '0');
+            const el = document.getElementById('exam-timer');
+            if (el) el.textContent = `${mins}:${secs}`;
+        }
+
+        function updateExamBannerUI() {
+            const banner = document.getElementById('exam-banner');
+            const pill = document.getElementById('exam-status-pill');
+            const subtext = document.getElementById('exam-subtext');
+            const finishBtn = document.getElementById('btn-finish-exam');
+
+            if (currentDatasetKey === 'exam') {
+                banner.classList.remove('hidden');
+                banner.classList.add('flex');
+            } else {
+                banner.classList.add('hidden');
+                banner.classList.remove('flex');
+                return;
+            }
+
+            if (examSubmitted) {
+                let c = 0, w = 0, u = 0;
+                examQuestions.forEach(q => {
+                    const ua = userAnswers[q.id];
+                    if (ua === undefined) u++;
+                    else if (ua === q.ans) c++;
+                    else w++;
+                });
+                const score = Math.round((c / 30) * 100);
+                pill.textContent = `Tamamlandı • Puan: ${score} / 100`;
+                pill.className = "px-2.5 py-0.5 text-xs rounded-full bg-emerald-400 text-slate-900 font-bold";
+                subtext.textContent = `Sonuç: ${c} Doğru, ${w} Yanlış, ${u} Boş. Tüm doğru cevaplar ve açıklamalar aşağıda açıldı.`;
+                finishBtn.classList.add('hidden');
+            } else {
+                pill.textContent = "Sınav Devam Ediyor";
+                pill.className = "px-2 py-0.5 text-[11px] rounded-full bg-white/20 font-semibold";
+                subtext.textContent = "160 soru içinden rastgele seçilmiş 30 soru. İşaretleme yaptığınızda sorunun açıklaması anında görünür.";
+                finishBtn.classList.remove('hidden');
+            }
+        }
+
+        function getFilteredQuestions() {
+            const pool = getActivePool();
+            return pool.filter(item => {
+                // Durum filtresi
+                const ua = userAnswers[item.id];
+                if (currentFilterStatus === 'unanswered' && ua !== undefined) return false;
+                if (currentFilterStatus === 'correct' && ua !== item.ans) return false;
+                if (currentFilterStatus === 'wrong' && (ua === undefined || ua === item.ans)) return false;
+
+                // Arama filtresi
+                if (searchQuery.trim() !== '') {
+                    const qLower = searchQuery.toLowerCase();
+                    const inQuestion = item.q.toLowerCase().includes(qLower);
+                    const inCode = item.code ? item.code.toLowerCase().includes(qLower) : false;
+                    const inOptions = item.options.some(opt => opt.toLowerCase().includes(qLower));
+                    const inNum = (`soru ${item.num}`).includes(qLower) || (`${item.num}`).includes(qLower);
+                    return inQuestion || inCode || inOptions || inNum;
+                }
+                return true;
+            });
+        }
+
+        // ============================================================================
+        // ARAYÜZ GÜNCELLEME FONKSİYONLARI
+        // ============================================================================
+        function updateStats() {
+            const pool = getActivePool();
+            let correct = 0;
+            let wrong = 0;
+            let unanswered = 0;
+
+            pool.forEach(q => {
+                const ua = userAnswers[q.id];
+                if (ua === undefined) unanswered++;
+                else if (ua === q.ans) correct++;
+                else wrong++;
+            });
+
+            const answeredCount = correct + wrong;
+            const percent = pool.length > 0 ? Math.round((correct / pool.length) * 100) : 0;
+
+            document.getElementById('stat-correct').textContent = correct;
+            document.getElementById('stat-wrong').textContent = wrong;
+            document.getElementById('stat-unanswered').textContent = unanswered;
+            document.getElementById('stat-percent').textContent = `%${percent}`;
+
+            document.getElementById('m-stat-correct').textContent = correct;
+            document.getElementById('m-stat-wrong').textContent = wrong;
+            document.getElementById('m-stat-unanswered').textContent = unanswered;
+            document.getElementById('m-stat-percent').textContent = `%${percent}`;
+
+            document.getElementById('nav-progress-text').textContent = `${answeredCount} / ${pool.length} Çözüldü`;
+        }
+
+        function renderQuestionGrid() {
+            const filtered = getFilteredQuestions();
+            const grid = document.getElementById('question-grid');
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-xs text-slate-400 py-4 text-center">Kriterlere uygun soru bulunamadı.</div>`;
+                return;
+            }
+
+            filtered.forEach((item, idx) => {
+                const ua = userAnswers[item.id];
+                const isCurrent = (idx === currentIndex && currentViewMode === 'single');
+
+                let btnClass = "h-9 rounded-lg text-xs font-bold transition flex items-center justify-center border ";
+                if (isCurrent) {
+                    btnClass += "ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-800 ";
+                }
+
+                if (ua === undefined) {
+                    btnClass += isCurrent
+                        ? "bg-indigo-600 text-white border-indigo-600"
+                        : "bg-slate-100 dark:bg-slate-700/70 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-600 hover:bg-slate-200";
+                } else if (ua === item.ans) {
+                    btnClass += "bg-emerald-500 text-white border-emerald-600";
+                } else {
+                    btnClass += "bg-rose-500 text-white border-rose-600";
+                }
+
+                const btn = document.createElement('button');
+                btn.className = btnClass;
+                btn.textContent = currentDatasetKey === 'all' ? (idx + 1) : item.num;
+                btn.title = `${item.set} - Soru ${item.num}`;
+                btn.onclick = () => {
+                    currentIndex = idx;
+                    if (currentViewMode === 'list') {
+                        const el = document.getElementById(`card-${item.id}`);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        renderMainArea();
+                    }
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        function renderSingleQuestion() {
+            const filtered = getFilteredQuestions();
+            const container = document.getElementById('single-view-container');
+
+            if (filtered.length === 0) {
+                document.getElementById('q-badge').textContent = "Soru Yok";
+                document.getElementById('q-source-badge').textContent = "-";
+                document.getElementById('q-text').textContent = "Seçtiğiniz filtre veya arama kriterine uygun soru bulunamadı.";
+                document.getElementById('q-code-wrapper').classList.add('hidden');
+                document.getElementById('q-options').innerHTML = '';
+                document.getElementById('q-feedback').classList.add('hidden');
+                return;
+            }
+
+            if (currentIndex >= filtered.length) currentIndex = 0;
+            const item = filtered[currentIndex];
+            const ua = userAnswers[item.id];
+            const showAnswer = revealedQuestions[item.id] || ua !== undefined || (currentDatasetKey === 'exam' && examSubmitted);
+
+            document.getElementById('q-badge').textContent = currentDatasetKey === 'exam'
+                ? `Sınav Sorusu ${currentIndex + 1} / ${filtered.length} (Orijinal #${item.num})`
+                : `Soru ${item.num} (${currentIndex + 1} / ${filtered.length})`;
+            document.getElementById('q-source-badge').textContent = item.set;
+            document.getElementById('q-text').textContent = item.q;
+
+            // Kod veya diyagram alanı
+            const codeWrapper = document.getElementById('q-code-wrapper');
+            const codeEl = document.getElementById('q-code');
+            if (item.code) {
+                codeWrapper.classList.remove('hidden');
+                codeEl.textContent = item.code;
+            } else {
+                codeWrapper.classList.add('hidden');
+                codeEl.textContent = '';
+            }
+
+            // Şıklar
+            const optionsContainer = document.getElementById('q-options');
+            optionsContainer.innerHTML = '';
+
+            item.options.forEach((optText, idx) => {
+                const isSelected = ua === idx;
+                const isCorrectOption = item.ans === idx;
+
+                let cardStyle = "w-full text-left p-3.5 sm:p-4 rounded-xl border transition-all flex items-start gap-3.5 group ";
+                let badgeStyle = "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 transition ";
+
+                if (!showAnswer) {
+                    if (isSelected) {
+                        cardStyle += "bg-indigo-600/10 border-indigo-600 text-indigo-950 dark:text-indigo-100 font-medium";
+                        badgeStyle += "bg-indigo-600 text-white";
+                    } else {
+                        cardStyle += "bg-slate-50/70 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20";
+                        badgeStyle += "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 group-hover:bg-indigo-600 group-hover:text-white";
+                    }
+                } else {
+                    if (isCorrectOption) {
+                        cardStyle += "bg-emerald-500/10 border-emerald-500 text-emerald-950 dark:text-emerald-100 font-medium";
+                        badgeStyle += "bg-emerald-500 text-white";
+                    } else if (isSelected && !isCorrectOption) {
+                        cardStyle += "bg-rose-500/10 border-rose-500 text-rose-950 dark:text-rose-100";
+                        badgeStyle += "bg-rose-500 text-white";
+                    } else {
+                        cardStyle += "bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 opacity-75";
+                        badgeStyle += "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400";
+                    }
+                }
+
+                const btn = document.createElement('button');
+                btn.className = cardStyle;
+                btn.onclick = () => selectOption(item.id, idx);
+
+                let rightIcon = '';
+                if (showAnswer && isCorrectOption) {
+                    rightIcon = `<span class="ml-auto text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0 self-center">✓ Doğru Cevap</span>`;
+                } else if (showAnswer && isSelected && !isCorrectOption) {
+                    rightIcon = `<span class="ml-auto text-xs font-bold text-rose-600 dark:text-rose-400 shrink-0 self-center">✗ Seçiminiz</span>`;
+                } else if (!showAnswer && isSelected) {
+                    rightIcon = `<span class="ml-auto text-xs font-bold text-indigo-600 dark:text-indigo-400 shrink-0 self-center">● İşaretlendi</span>`;
+                }
+
+                btn.innerHTML = `
+                    <span class="${badgeStyle}">${optionLetters[idx]}</span>
+                    <span class="text-sm sm:text-base leading-relaxed flex-1">${escapeHtml(optText)}</span>
+                    ${rightIcon}
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            // Çözüm Açıklaması
+            const feedbackEl = document.getElementById('q-feedback');
+            if (showAnswer) {
+                feedbackEl.classList.remove('hidden');
+                if (ua === item.ans) {
+                    feedbackEl.className = "rounded-xl p-4 border text-sm leading-relaxed bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200";
+                    feedbackEl.innerHTML = `
+                        <div class="font-bold text-base mb-1.5 flex items-center gap-2">
+                            <span>🎉 Doğru Cevap! (${optionLetters[item.ans]} Şıkkı)</span>
+                        </div>
+                        <div class="mt-1"><strong>📖 Soru Açıklaması:</strong> ${escapeHtml(item.exp)}</div>
+                    `;
+                } else if (ua !== undefined) {
+                    feedbackEl.className = "rounded-xl p-4 border text-sm leading-relaxed bg-rose-500/10 border-rose-500/30 text-rose-900 dark:text-rose-200";
+                    feedbackEl.innerHTML = `
+                        <div class="font-bold text-base mb-1.5 flex flex-wrap items-center gap-2">
+                            <span>❌ Yanlış Cevap! (Seçiminiz: ${optionLetters[ua]})</span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500 text-white text-xs">✓ Doğru Cevap: ${optionLetters[item.ans]} — ${escapeHtml(item.options[item.ans])}</span>
+                        </div>
+                        <div class="mt-1.5"><strong>📖 Soru Açıklaması:</strong> ${escapeHtml(item.exp)}</div>
+                    `;
+                } else {
+                    feedbackEl.className = "rounded-xl p-4 border text-sm leading-relaxed bg-indigo-500/10 border-indigo-500/30 text-indigo-900 dark:text-indigo-200";
+                    feedbackEl.innerHTML = `
+                        <div class="font-bold text-base mb-1.5">💡 Doğru Cevap: ${optionLetters[item.ans]} — ${escapeHtml(item.options[item.ans])}</div>
+                        <div class="mt-1"><strong>📖 Soru Açıklaması:</strong> ${escapeHtml(item.exp)}</div>
+                    `;
+                }
+            } else {
+                feedbackEl.classList.add('hidden');
+            }
+
+            // İleri / Geri buton durumları
+            document.getElementById('btn-prev').disabled = (currentIndex === 0);
+            document.getElementById('btn-next').disabled = (currentIndex === filtered.length - 1);
+        }
+
+        function renderListView() {
+            const filtered = getFilteredQuestions();
+            const listContainer = document.getElementById('list-view-container');
+            listContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `<div class="bg-white dark:bg-slate-800 p-8 rounded-2xl text-center text-slate-500 border border-slate-200 dark:border-slate-700">Kriterlere uygun soru bulunamadı.</div>`;
+                return;
+            }
+
+            filtered.forEach((item, listIdx) => {
+                const ua = userAnswers[item.id];
+                const showAnswer = revealedQuestions[item.id] || ua !== undefined || (currentDatasetKey === 'exam' && examSubmitted);
+
+                const card = document.createElement('div');
+                card.id = `card-${item.id}`;
+                card.className = "bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 sm:p-6 flex flex-col gap-4";
+
+                const codeBlock = item.code
+                    ? `<pre class="bg-slate-900 text-emerald-400 p-3.5 rounded-xl text-xs sm:text-sm overflow-x-auto border border-slate-700 leading-relaxed">${escapeHtml(item.code)}</pre>`
+                    : '';
+
+                let optionsHtml = '';
+                item.options.forEach((optText, idx) => {
+                    const isSelected = ua === idx;
+                    const isCorrectOption = item.ans === idx;
+
+                    let btnCls = "w-full text-left p-3 rounded-xl border text-sm transition flex items-start gap-3 ";
+                    let bdgCls = "w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ";
+
+                    if (!showAnswer) {
+                        if (isSelected) {
+                            btnCls += "bg-indigo-600/10 border-indigo-600 text-indigo-950 dark:text-indigo-100 font-medium";
+                            bdgCls += "bg-indigo-600 text-white";
+                        } else {
+                            btnCls += "bg-slate-50 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:border-indigo-500";
+                            bdgCls += "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200";
+                        }
+                    } else {
+                        if (isCorrectOption) {
+                            btnCls += "bg-emerald-500/10 border-emerald-500 text-emerald-950 dark:text-emerald-100 font-medium";
+                            bdgCls += "bg-emerald-500 text-white";
+                        } else if (isSelected && !isCorrectOption) {
+                            btnCls += "bg-rose-500/10 border-rose-500 text-rose-950 dark:text-rose-100";
+                            bdgCls += "bg-rose-500 text-white";
+                        } else {
+                            btnCls += "bg-slate-50/40 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 opacity-75";
+                            bdgCls += "bg-slate-200 dark:bg-slate-700 text-slate-500";
+                        }
+                    }
+
+                    optionsHtml += `
+                        <button onclick="selectOption('${item.id}', ${idx})" class="${btnCls}">
+                            <span class="${bdgCls}">${optionLetters[idx]}</span>
+                            <span class="flex-1">${escapeHtml(optText)}</span>
+                        </button>
+                    `;
+                });
+
+                let expHtml = '';
+                if (showAnswer) {
+                    if (ua === item.ans) {
+                        expHtml = `<div class="rounded-xl p-3.5 bg-emerald-500/10 border border-emerald-500/30 text-xs sm:text-sm text-emerald-900 dark:text-emerald-200">
+                            <div class="font-bold mb-1">🎉 Doğru Cevap! (${optionLetters[item.ans]})</div>
+                            <div><strong>📖 Soru Açıklaması:</strong> ${escapeHtml(item.exp)}</div>
+                        </div>`;
+                    } else if (ua !== undefined) {
+                        expHtml = `<div class="rounded-xl p-3.5 bg-rose-500/10 border border-rose-500/30 text-xs sm:text-sm text-rose-900 dark:text-rose-200">
+                            <div class="font-bold mb-1">❌ Yanlış Cevap (Seçiminiz: ${optionLetters[ua]}) • ✓ Doğru Cevap: ${optionLetters[item.ans]} (${escapeHtml(item.options[item.ans])})</div>
+                            <div><strong>📖 Soru Açıklaması:</strong> ${escapeHtml(item.exp)}</div>
+                        </div>`;
+                    } else {
+                        expHtml = `<div class="rounded-xl p-3.5 bg-indigo-500/10 border border-indigo-500/20 text-xs sm:text-sm text-slate-700 dark:text-slate-200">
+                            <div class="font-bold text-indigo-600 dark:text-indigo-400 mb-1">💡 Doğru Cevap: ${optionLetters[item.ans]} (${escapeHtml(item.options[item.ans])})</div>
+                            <div><strong>📖 Soru Açıklaması:</strong> ${escapeHtml(item.exp)}</div>
+                        </div>`;
+                    }
+                }
+
+                const badgeTitle = currentDatasetKey === 'exam' ? `Sınav #${listIdx + 1} (Soru ${item.num})` : `Soru ${item.num}`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold text-xs">${badgeTitle}</span>
+                            <span class="text-xs text-slate-400">${item.set}</span>
+                        </div>
+                        <button onclick="revealById('${item.id}')" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">👁️ Cevabı Göster</button>
+                    </div>
+                    <div class="font-semibold text-base text-slate-800 dark:text-slate-100 leading-relaxed">${escapeHtml(item.q)}</div>
+                    ${codeBlock}
+                    <div class="flex flex-col gap-2">${optionsHtml}</div>
+                    ${expHtml}
+                `;
+
+                listContainer.appendChild(card);
+            });
+        }
+
+        function renderMainArea() {
+            updateStats();
+            renderQuestionGrid();
+            if (currentViewMode === 'single') {
+                renderSingleQuestion();
+            } else {
+                renderListView();
+            }
+        }
+
+        // ============================================================================
+        // KULLANICI ETKİLEŞİMLERİ
+        // ============================================================================
+        function selectOption(questionId, optionIdx) {
+            userAnswers[questionId] = optionIdx;
+            saveState();
+            renderMainArea();
+        }
+
+        function revealCurrentQuestion() {
+            const filtered = getFilteredQuestions();
+            if (filtered.length === 0) return;
+            const item = filtered[currentIndex];
+            revealedQuestions[item.id] = true;
+            renderMainArea();
+        }
+
+        function revealById(questionId) {
+            revealedQuestions[questionId] = true;
+            renderMainArea();
+        }
+
+        function clearCurrentAnswer() {
+            const filtered = getFilteredQuestions();
+            if (filtered.length === 0) return;
+            const item = filtered[currentIndex];
+            delete userAnswers[item.id];
+            delete revealedQuestions[item.id];
+            saveState();
+            renderMainArea();
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderMainArea();
+            }
+        }
+
+        function nextQuestion() {
+            const filtered = getFilteredQuestions();
+            if (currentIndex < filtered.length - 1) {
+                currentIndex++;
+                renderMainArea();
+            }
+        }
+
+        function switchDataset(key) {
+            currentDatasetKey = key;
+            currentIndex = 0;
+
+            if (isShuffled) {
+                const base = getBasePool();
+                shuffledPoolIds = shuffleArray(base.map(q => q.id));
+            }
+
+            const tabs = ['set1', 'set2', 'all', 'exam'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (!btn) return;
+                if (t === key) {
+                    if (t === 'exam') {
+                        btn.className = "px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-rose-600 text-white shadow-sm";
+                    } else {
+                        btn.className = "px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-sm";
+                    }
+                } else {
+                    if (t === 'exam') {
+                        btn.className = "px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-rose-600/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-600 hover:text-white";
+                    } else {
+                        btn.className = "px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600";
+                    }
+                }
+            });
+
+            updateExamBannerUI();
+            renderMainArea();
+        }
+
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            const singleContainer = document.getElementById('single-view-container');
+            const listContainer = document.getElementById('list-view-container');
+            const singleBtn = document.getElementById('view-single-btn');
+            const listBtn = document.getElementById('view-list-btn');
+
+            if (mode === 'single') {
+                singleContainer.classList.remove('hidden');
+                singleContainer.classList.add('flex');
+                listContainer.classList.add('hidden');
+                listContainer.classList.remove('flex');
+
+                singleBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition";
+                listBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition";
+            } else {
+                singleContainer.classList.add('hidden');
+                singleContainer.classList.remove('flex');
+                listContainer.classList.remove('hidden');
+                listContainer.classList.add('flex');
+
+                listBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm transition";
+                singleBtn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition";
+            }
+
+            renderMainArea();
+        }
+
+        function setFilterStatus(status) {
+            currentFilterStatus = status;
+            currentIndex = 0;
+
+            const statuses = ['all', 'unanswered', 'correct', 'wrong'];
+            statuses.forEach(s => {
+                const btn = document.getElementById(`flt-${s}`);
+                if (s === status) {
+                    btn.className = "py-1.5 rounded-lg bg-indigo-600 text-white";
+                } else {
+                    btn.className = "py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300";
+                }
+            });
+
+            renderMainArea();
+        }
+
+        function handleSearch() {
+            searchQuery = document.getElementById('search-input').value;
+            currentIndex = 0;
+            renderMainArea();
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function openResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmReset() {
+            const pool = getActivePool();
+            pool.forEach(item => {
+                delete userAnswers[item.id];
+                delete revealedQuestions[item.id];
+            });
+            saveState();
+            closeResetModal();
+            renderMainArea();
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Klavye kısayolları (Sol/Sağ ok ve A-E tuşları)
+        window.addEventListener('keydown', (e) => {
+            if (document.activeElement && document.activeElement.id === 'search-input') return;
+            if (currentViewMode !== 'single') return;
+
+            if (e.key === 'ArrowRight') {
+                nextQuestion();
+            } else if (e.key === 'ArrowLeft') {
+                prevQuestion();
+            } else {
+                const keyUpper = e.key.toUpperCase();
+                const optIdx = optionLetters.indexOf(keyUpper);
+                if (optIdx !== -1) {
+                    const filtered = getFilteredQuestions();
+                    if (filtered[currentIndex]) {
+                        selectOption(filtered[currentIndex].id, optIdx);
+                    }
+                }
+            }
+        });
+
+        // Başlangıç
+        window.onload = () => {
+            loadState();
+            renderMainArea();
+        };
+    </script>
+</body>
+</html>
