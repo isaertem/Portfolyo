@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="tr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C# Windows Forms & Değişkenler - 100 Soruluk İnteraktif Sınav</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        pre, code { font-family: 'JetBrains Mono', monospace; }
+        .option-btn { transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1); }
+        .option-btn:hover:not(:disabled) { transform: translateX(4px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 9999px; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
+
+    <!-- ÜST SABİT KONTROL PANELİ (MOD SEÇİMİ, SAYAÇ, SKOR TABLOSU) -->
+    <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                
+                <!-- Başlık ve Mod Değiştirici -->
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-indigo-500/20">
+                            C#
+                        </div>
+                        <div>
+                            <h1 class="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                                Windows Forms & Değişkenler
+                            </h1>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">100 Soruluk İnteraktif Soru Bankası</p>
+                        </div>
+                    </div>
+
+                    <!-- Mod Seçim Butonları -->
+                    <div class="inline-flex p-1 rounded-xl bg-slate-200/80 dark:bg-slate-700/80 border border-slate-300/60 dark:border-slate-600">
+                        <button id="btnModeStudy" onclick="switchMode('study')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-indigo-600 text-white shadow-sm">
+                            ⚡ Çalışma Modu (Anında Çözüm)
+                        </button>
+                        <button id="btnModeExam" onclick="switchMode('exam')" class="px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-700 dark:text-slate-300 hover:text-slate-900">
+                            📝 Sınav Modu (Süreli)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canlı İstatistikler & Sınav Kontrolleri -->
+                <div class="flex flex-wrap items-center justify-between lg:justify-end gap-2 sm:gap-3">
+                    <!-- Çalışma Modu İstatistikleri -->
+                    <div id="studyStatsBar" class="flex items-center gap-2 text-xs sm:text-sm">
+                        <span class="px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-800">
+                            ✓ Doğru: <strong id="statCorrect">0</strong>
+                        </span>
+                        <span class="px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 font-semibold border border-rose-200 dark:border-rose-800">
+                            ✗ Yanlış: <strong id="statWrong">0</strong>
+                        </span>
+                        <span class="px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold">
+                            Puan: <strong id="statScore">0</strong>/100
+                        </span>
+                    </div>
+
+                    <!-- Sınav Modu Sayacı ve Bitir Butonu -->
+                    <div id="examControlsBar" class="hidden flex items-center gap-2 text-xs sm:text-sm">
+                        <div class="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 font-mono font-bold border border-amber-300 dark:border-amber-700">
+                            <span>⏱️</span>
+                            <span id="examTimerDisplay">60:00</span>
+                            <button onclick="toggleTimer()" id="btnTimerToggle" class="ml-1 px-1.5 py-0.5 text-[11px] rounded bg-amber-200 dark:bg-amber-800 hover:bg-amber-300">Duraklat</button>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold">
+                            İşaretlenen: <strong id="statAnsweredExam">0</strong>/100
+                        </span>
+                        <button id="btnFinishExam" onclick="finishExam()" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm transition">
+                            🏁 Sınavı Bitir
+                        </button>
+                    </div>
+
+                    <!-- Sıfırla & Tema Butonları -->
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="resetAllProgress()" title="Tüm Cevapları Sıfırla" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-700 hover:bg-rose-100 hover:text-rose-700 dark:hover:bg-rose-900/40 dark:hover:text-rose-300 transition">
+                            🔄 Sıfırla
+                        </button>
+                        <button onclick="toggleDarkMode()" title="Gece/Gündüz Modu" class="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+                            🌓
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- SINAV SONUÇ KARNESİ (SINAV BİTİRİLDİĞİNDE GÖRÜNÜR) -->
+    <div id="examResultBanner" class="hidden max-w-7xl mx-auto px-4 mt-6">
+        <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-emerald-600 rounded-2xl p-6 text-white shadow-xl">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-bold uppercase tracking-wider mb-2">Sınav Sonuç Karnesi</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold">Sınavınız Tamamlandı!</h2>
+                    <p class="text-indigo-100 text-sm mt-1">Aşağıdaki tüm sorularda doğru cevaplar yeşil, yanlışlarınız kırmızı olarak işaretlendi ve <strong>"Neden Yanlış / Çözüm"</strong> kutuları açıldı.</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto">
+                    <div class="bg-white/15 backdrop-blur-sm rounded-xl p-3 text-center">
+                        <div class="text-xs text-indigo-100">Toplam Puan</div>
+                        <div id="resTotalScore" class="text-2xl font-black">0</div>
+                    </div>
+                    <div class="bg-emerald-500/30 backdrop-blur-sm rounded-xl p-3 text-center border border-emerald-300/30">
+                        <div class="text-xs text-emerald-100">Doğru</div>
+                        <div id="resCorrectCount" class="text-2xl font-black">0</div>
+                    </div>
+                    <div class="bg-rose-500/30 backdrop-blur-sm rounded-xl p-3 text-center border border-rose-300/30">
+                        <div class="text-xs text-rose-100">Yanlış</div>
+                        <div id="resWrongCount" class="text-2xl font-black">0</div>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center">
+                        <div class="text-xs text-indigo-100">Boş</div>
+                        <div id="resEmptyCount" class="text-2xl font-black">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ANA İÇERİK ALANI -->
+    <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- SOL / ÜST FİLTRE VE HIZLI GEZİNME PANELİ -->
+        <aside class="lg:col-span-4 xl:col-span-3 space-y-4">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 lg:sticky lg:top-20 space-y-4">
+                
+                <!-- Mod Bilgilendirme Kutusu -->
+                <div id="modeInfoBox" class="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200">
+                    <strong>⚡ Çalışma Modu Aktif:</strong> Şıklara tıkladığınız anda cevabınız kontrol edilir. Yanlış şık seçerseniz <em>neden yanlış olduğu</em> ve doğru çözüm anında açılır.
+                </div>
+
+                <!-- Arama -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Soru veya Kod Ara</label>
+                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Örn: Toolbox, TryParse, KeyPress, byte..." class="w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-700/70 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Konu / Bölüm Filtresi -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Bölüm Filtresi</label>
+                    <select id="categoryFilter" onchange="applyFilters()" class="w-full px-3 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-700/70 border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="all">Tüm Bölümler (100 Soru)</option>
+                        <option value="sec1">Bölüm 1: C# Değişkenler & Veri Türleri (1-25)</option>
+                        <option value="sec2">Bölüm 2: Visual Studio Arayüzü & Toolbox (26-50)</option>
+                        <option value="sec3">Bölüm 3: Kontrol Metotları, Özellikler & Olaylar (51-75)</option>
+                        <option value="sec4">Bölüm 4: C# Kod Analizi & Algoritmalar (76-100)</option>
+                    </select>
+                </div>
+
+                <!-- Durum Filtresi -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Cevap Durumu</label>
+                    <div class="grid grid-cols-3 gap-1.5 text-xs font-semibold">
+                        <button onclick="setStatusFilter('all')" id="fltAll" class="py-1.5 px-2 rounded-lg bg-indigo-600 text-white">Tümü</button>
+                        <button onclick="setStatusFilter('wrong')" id="fltWrong" class="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">Yanlışlar</button>
+                        <button onclick="setStatusFilter('unanswered')" id="fltUnanswered" class="py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">Boşlar</button>
+                    </div>
+                </div>
+
+                <!-- Soru Navigasyon Haritası (1 - 100) -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Soru Haritası (1-100)</label>
+                        <span id="visibleCountLabel" class="text-[11px] text-slate-400">100 soru</span>
+                    </div>
+                    <div id="questionNavGrid" class="grid grid-cols-10 gap-1 max-h-56 overflow-y-auto custom-scrollbar p-1 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <!-- JS ile 1-100 butonları oluşturulacak -->
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- SAĞ SORU LİSTESİ ALANI -->
+        <section class="lg:col-span-8 xl:col-span-9 space-y-5" id="questionsContainer">
+            <!-- JS ile sorular buraya render edilecek -->
+        </section>
+
+    </main>
+
+    <script>
+        // ============================================================================
+        // 100 SORULUK VERİ TABANI (Proje adlarından bağımsız; doğrudan C# Kod Analizi,
+        // Değişkenler, Visual Studio IDE Arayüzü ve Toolbox Kontrolleri üzerine kurulu)
+        // ============================================================================
+        const questionsData = [
+            // ================= BÖLÜM 1: C# DEĞİŞKENLER VE VERİ TÜRLERİ (1 - 25) =================
+            {
+                id: 1, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "C# programlama dilinde 'byte' veri türünün bellekte kapladığı alan ve tutabileceği değer aralığı aşağıdakilerden hangisidir?",
+                options: [
+                    "1 bayt / -128 ile 127 arası tam sayı",
+                    "1 bayt / 0 ile 255 arası tam sayı",
+                    "2 bayt / 0 ile 65535 arası tam sayı",
+                    "4 bayt / 0 ile 255 arası tam sayı"
+                ],
+                ans: 1,
+                exp: "'byte' veri türü bellekte 1 bayt yer kaplar ve 0 ile 255 arasındaki işaretsiz tam sayıları tutar (Örn: byte a = 5;).",
+                reasons: [
+                    "-128 ile 127 aralığı 'byte' değil, işaretli 1 baytlık 'sbyte' veri türüne aittir.",
+                    "Doğru! byte türü 1 bayt yer kaplar ve negatif değer alamaz (0..255).",
+                    "2 bayt ve 0..65535 aralığı 'ushort' veri türüne aittir.",
+                    "byte veri türü bellekte 4 bayt değil, yalnızca 1 bayt yer kaplar."
+                ]
+            },
+            {
+                id: 2, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki tam sayı veri türlerinden hangisi negatif tam sayı değerlerini SAKLAYAMAZ?",
+                options: [
+                    "sbyte",
+                    "short",
+                    "ushort",
+                    "long"
+                ],
+                ans: 2,
+                exp: "'ushort' (unsigned short) işaretsiz 2 baytlık tam sayı türüdür ve yalnızca 0 ile 65535 arasındaki tam sayıları tutabilir.",
+                reasons: [
+                    "sbyte türü -128 ile 127 arasındaki negatif ve pozitif değerleri saklayabilir.",
+                    "short türü -32768 ile 32767 arasındaki negatif ve pozitif değerleri saklayabilir.",
+                    "Doğru! Başındaki 'u' (unsigned - işaretsiz) harfi negatif sayı tutamayacağını (0..65535) gösterir.",
+                    "long türü negatif ve pozitif tam sayıları saklayabilir."
+                ]
+            },
+            {
+                id: 3, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Bellekte 2 bayt yer kaplayan ve -32768 ile 32767 arasında tam sayı tutan değişken türü hangisidir?",
+                options: [
+                    "int",
+                    "short",
+                    "byte",
+                    "uint"
+                ],
+                ans: 1,
+                exp: "'short' veri türü bellekte 2 bayt yer kaplar ve -32768 ile 32767 arasındaki tam sayıları tutar.",
+                reasons: [
+                    "int türü 2 bayt değil, 4 bayt yer kaplar (-2147483648..2147483647).",
+                    "Doğru! short türü 2 baytlık işaretli tam sayı türüdür.",
+                    "byte türü 1 bayt yer kaplar ve 0..255 arası değer alır.",
+                    "uint türü 4 bayt yer kaplar ve negatif değer alamaz (0..4294967295)."
+                ]
+            },
+            {
+                id: 4, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'int' veri türünün bellekte kapladığı boyut kaç bayttır ve değer aralığı nedir?",
+                options: [
+                    "2 bayt / -32768 ile 32767 arası",
+                    "4 bayt / -2147483648 ile 2147483647 arası",
+                    "8 bayt / 0 ile 4294967295 arası",
+                    "16 bayt / Sınırsız"
+                ],
+                ans: 1,
+                exp: "'int' veri türü bellekte 4 bayt yer kaplar ve -2147483648 ile 2147483647 arasındaki tam sayıları tutar.",
+                reasons: [
+                    "Bu boyut ve aralık 'short' veri türüne aittir.",
+                    "Doğru! int veri türü 4 bayttır ve yaklaşık ±2.14 milyar aralığında tam sayı tutar.",
+                    "8 bayt 'long' ve 'ulong' türlerine aittir; ayrıca 0..4294967295 aralığı 4 baytlık 'uint' türüdür.",
+                    "16 bayt reel sayı türü olan 'decimal'e aittir."
+                ]
+            },
+            {
+                id: 5, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki tam sayı veri türlerinden hangisi bellekte en fazla yer (8 bayt) kaplar?",
+                options: [
+                    "uint",
+                    "int",
+                    "long",
+                    "ushort"
+                ],
+                ans: 2,
+                exp: "'long' (ve 'ulong') tam sayı türleri bellekte 8 bayt yer kaplar.",
+                reasons: [
+                    "uint bellekte 4 bayt yer kaplar.",
+                    "int bellekte 4 bayt yer kaplar.",
+                    "Doğru! long veri türü 8 bayt ile en geniş tam sayı türlerinden biridir.",
+                    "ushort bellekte sadece 2 bayt yer kaplar."
+                ]
+            },
+            {
+                id: 6, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'float' türünde bir değişkene değer atanırken sayının sonuna hangi karakter getirilmelidir?",
+                code: "float a = 5F; // veya float a = 5f;",
+                options: [
+                    "M veya m",
+                    "D veya d",
+                    "F veya f",
+                    "S veya s"
+                ],
+                ans: 2,
+                exp: "float değişkene değer atarken sayının sonuna F veya f eklenir: float a = 5F; veya float a = 5f;",
+                reasons: [
+                    "M veya m karakteri 'decimal' veri türü için kullanılır (decimal a = 5M;).",
+                    "D veya d karakteri 'double' veri türü için kullanılır (double a = 5D;).",
+                    "Doğru! float türünde sayının sonuna F veya f karakteri eklenir.",
+                    "C# dilinde S veya s şeklinde bir sayısal tür soneki yoktur."
+                ]
+            },
+            {
+                id: 7, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'decimal' veri türünün bellekte kapladığı boyut kaç bayttır ve değer atarken sonuna hangi ek getirilir?",
+                code: "decimal a = 5M; // veya decimal a = 5m;",
+                options: [
+                    "8 bayt / D veya d",
+                    "16 bayt / M veya m",
+                    "4 bayt / F veya f",
+                    "16 bayt / D veya d"
+                ],
+                ans: 1,
+                exp: "'decimal' veri türü bellekte 16 bayt yer kaplar ve değer atanırken sonuna M veya m harfi eklenir.",
+                reasons: [
+                    "8 bayt ve D/d eki 'double' veri türüne aittir.",
+                    "Doğru! decimal 16 bayt yer kaplar ve M veya m sonekini alır.",
+                    "4 bayt ve F/f eki 'float' veri türüne aittir.",
+                    "decimal 16 bayttır ancak D/d eki double için kullanılır, decimal için M/m kullanılır."
+                ]
+            },
+            {
+                id: 8, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki reel (ondalıklı) sayı türlerinden hangisi 8 bayt yer kaplar ve sonuna D veya d eki alabilir?",
+                options: [
+                    "float",
+                    "decimal",
+                    "double",
+                    "ulong"
+                ],
+                ans: 2,
+                exp: "'double' veri türü 8 bayt yer kaplar ve double a = 5; veya double a = 5d; veya double a = 5D; şeklinde tanımlanabilir.",
+                reasons: [
+                    "float 4 bayt yer kaplar ve F/f eki alır.",
+                    "decimal 16 bayt yer kaplar ve M/m eki alır.",
+                    "Doğru! double 8 baytlık reel sayı türüdür ve D/d soneki alabilir.",
+                    "ulong 8 bayttır ancak reel sayı değil, işaretsiz tam sayı türüdür."
+                ]
+            },
+            {
+                id: 9, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Tek bir karakteri tutan 'char' veri türünün bellekteki boyutu nedir ve değeri nasıl atanır?",
+                options: [
+                    "1 bayt / Çift tırnak (\"h\") içinde",
+                    "2 bayt / Tek tırnak ('h') içinde",
+                    "4 bayt / Tek tırnak ('h') içinde",
+                    "Sınırsız / Çift tırnak (\"h\") içinde"
+                ],
+                ans: 1,
+                exp: "'char' veri türü bellekte 2 bayt yer kaplar, tek bir karakteri tutar ve tek tırnak içinde yazılır: char a = 'h';",
+                reasons: [
+                    "char 1 bayt değildir ve çift tırnak 'string' türü için kullanılır.",
+                    "Doğru! char 2 bayttır ve tek tırnak ('h') ile tanımlanır.",
+                    "char 4 bayt değil, 2 bayt yer kaplar.",
+                    "Sınırsız boyut ve çift tırnak 'string' veri türüne aittir."
+                ]
+            },
+            {
+                id: 10, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki C# kod bloğu çalıştırılmak istendiğinde 3. satırdaki 'im' ifadesi neden derleme hatasına yol açar?",
+                code: "char a = 'g';\nstring b = \"deneme\";\nstring c = a + b + \"defter\" + 'im';",
+                options: [
+                    "Tek tırnak (' ') yalnızca tek bir karakter (char) tutabilir; 'im' iki karakter olduğu için çift tırnak (\"im\") içinde yazılmalıdır",
+                    "String birleştirmede '+' operatörü kullanılamaz",
+                    "char değişkeni string bir ifadeyle birleştirilemez",
+                    "Değişken isimleri tek harfli olamaz"
+                ],
+                ans: 0,
+                exp: "C# dilinde tek tırnak (' ') char sabitleri içindir ve yalnızca 1 karakter alabilir. Birden fazla karakter içeren metinler çift tırnak (\"im\") içinde string olarak yazılmalıdır.",
+                reasons: [
+                    "Doğru! 'im' iki karakter olduğu için tek tırnak içinde yazılamaz, \"im\" şeklinde çift tırnakla yazılmalıdır.",
+                    "Yanlış; C# dilinde '+' operatörü string ve char ifadeleri uç uca birleştirir.",
+                    "Yanlış; char ve string ifadeler '+' ile sorunsuz birleştirilir.",
+                    "Yanlış; a, b, c gibi tek harfli değişken isimleri tamamen geçerlidir."
+                ]
+            },
+            {
+                id: 11, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Metin tutan ve boyutu 'Sınırsız' olarak ifade edilen, çift tırnak içinde değer atanan veri türü hangisidir?",
+                code: "string a = \" teknikleri\";",
+                options: [
+                    "char",
+                    "text",
+                    "string",
+                    "varchar"
+                ],
+                ans: 2,
+                exp: "'string' veri türü metinsel ifadeleri tutar, çift tırnak içinde yazılır ve boyutu sınırsızdır.",
+                reasons: [
+                    "char sadece 2 bayttır ve tek bir karakter tutar.",
+                    "C# temel veri türleri arasında 'text' adında bir değişken türü yoktur.",
+                    "Doğru! Metin tutan ve boyutu sınırsız olarak belirtilen tür string'dir.",
+                    "varchar SQL veritabanı veri türüdür, C# değişken türü değildir."
+                ]
+            },
+            {
+                id: 12, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki değişken tanımlamalarından hangisi veri türünün değer aralığı sınırını aştığı için YANLIŞTIR?",
+                options: [
+                    "sbyte a = -120;",
+                    "byte b = 260;",
+                    "ushort c = 60000;",
+                    "float d = 5f;"
+                ],
+                ans: 1,
+                exp: "'byte' veri türü en fazla 255 değerini alabilir (0..255). 260 değeri byte sınırını aştığı için derleme hatası verir.",
+                reasons: [
+                    "sbyte -128 ile 127 arası değer alabildiği için -120 geçerlidir.",
+                    "Doğru! byte maksimum 255 alabilir, 260 atanması sınır aşımı hatasıdır.",
+                    "ushort 0 ile 65535 arası değer alabildiği için 60000 geçerlidir.",
+                    "float sonuna f eki alarak doğru tanımlanmıştır."
+                ]
+            },
+            {
+                id: 13, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'sbyte' veri türünün alabileceği en küçük ve en büyük tam sayı değerleri nelerdir?",
+                options: [
+                    "0 ile 255",
+                    "-128 ile 127",
+                    "-32768 ile 32767",
+                    "-127 ile 128"
+                ],
+                ans: 1,
+                exp: "sbyte bellekte 1 bayt yer kaplar ve -128 ile 127 arasındaki işaretli tam sayıları tutar.",
+                reasons: [
+                    "0 ile 255 aralığı işaretsiz 'byte' türüne aittir.",
+                    "Doğru! sbyte (signed byte) -128 ile 127 aralığındadır.",
+                    "-32768 ile 32767 aralığı 2 baytlık 'short' türüne aittir.",
+                    "Negatif taraf -128'e kadar inerken pozitif taraf sıfır da dahil olduğu için 127'de biter."
+                ]
+            },
+            {
+                id: 14, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'ulong' veri türü bellekte kaç bayt yer kaplar ve alabileceği en küçük değer kaçtır?",
+                options: [
+                    "4 bayt / 0",
+                    "8 bayt / 0",
+                    "8 bayt / -9223372036854775808",
+                    "16 bayt / 0"
+                ],
+                ans: 1,
+                exp: "'ulong' 8 bayt yer kaplar ve işaretsiz (unsigned) olduğu için 0 ile 18446744073709551615 arasında tam sayı tutar.",
+                reasons: [
+                    "4 bayt ve 0'dan başlayan tür 'uint'tir, ulong 8 bayttır.",
+                    "Doğru! ulong 8 bayttır ve işaretsiz olduğu için en küçük değeri 0'dır.",
+                    "Negatif sınır işaretli 'long' veri türüne aittir.",
+                    "16 bayt 'decimal' türüne aittir."
+                ]
+            },
+            {
+                id: 15, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "C# dilinde 'string' türündeki bir değişkene '+' operatörü ile aşağıdakilerden hangileri eklenip atanabilir?",
+                options: [
+                    "Sadece string sabitler",
+                    "Sadece char değişkenler",
+                    "char ve/veya string sabit ya da değişkenler",
+                    "Hiçbiri eklenemez"
+                ],
+                ans: 2,
+                exp: "String türüne char ve/veya string sabit ya da değişkenler '+' işaretiyle uç uca eklenip (birleştirilip) atanabilir.",
+                reasons: [
+                    "Eksik bilgi; char sabit ve değişkenler de eklenebilir.",
+                    "Eksik bilgi; string sabit ve değişkenler de eklenebilir.",
+                    "Doğru! Hem char hem de string sabit ya da değişkenler + operatörüyle birleştirilebilir.",
+                    "Yanlış; C# dilinde + operatörü metin birleştirme işlemi yapar."
+                ]
+            },
+            {
+                id: 16, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'uint' veri türü bellekte kaç bayt yer kaplar ve değer aralığı nedir?",
+                options: [
+                    "2 bayt / 0..65535",
+                    "4 bayt / 0..4294967295",
+                    "4 bayt / -2147483648..2147483647",
+                    "8 bayt / 0..18446744073709551615"
+                ],
+                ans: 1,
+                exp: "'uint' (unsigned int) bellekte 4 bayt yer kaplar ve 0 ile 4294967295 arasındaki işaretsiz tam sayıları tutar.",
+                reasons: [
+                    "2 bayt ve 0..65535 aralığı 'ushort' türüne aittir.",
+                    "Doğru! uint 4 baytlık işaretsiz tam sayıdır.",
+                    "Bu aralık işaretli 'int' türüne aittir.",
+                    "8 baytlık bu aralık 'ulong' türüne aittir."
+                ]
+            },
+            {
+                id: 17, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki reel (ondalıklı) sayı türlerinden hangisinin bellekte kapladığı alan en büyüktür?",
+                options: [
+                    "float",
+                    "double",
+                    "decimal",
+                    "long"
+                ],
+                ans: 2,
+                exp: "Reel sayı türlerinden float 4 bayt, double 8 bayt, decimal ise 16 bayt yer kaplar.",
+                reasons: [
+                    "float sadece 4 bayt yer kaplar.",
+                    "double 8 bayt yer kaplar, decimal'den küçüktür.",
+                    "Doğru! decimal 16 bayt ile en fazla yer kaplayan reel sayı türüdür.",
+                    "long 8 bayttır ve reel sayı değil, tam sayı türüdür."
+                ]
+            },
+            {
+                id: 18, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'ushort' veri türünün alabileceği maksimum tam sayı değeri kaçtır?",
+                options: [
+                    "32767",
+                    "65535",
+                    "255",
+                    "4294967295"
+                ],
+                ans: 1,
+                exp: "ushort 2 baytlık işaretsiz tam sayıdır ve 0 ile 65535 arasında değer alır.",
+                reasons: [
+                    "32767 işaretli 'short' türünün maksimum değeridir.",
+                    "Doğru! ushort maksimum 65535 değerini alabilir.",
+                    "255 'byte' türünün maksimum değeridir.",
+                    "4294967295 'uint' türünün maksimum değeridir."
+                ]
+            },
+            {
+                id: 19, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki değişken tanımlamalarından hangisi 'double' veri türü için GEÇERLİ bir kullanımdır?",
+                options: [
+                    "double a = 5D;",
+                    "double a = 5d;",
+                    "double a = 5;",
+                    "Hepsi geçerlidir"
+                ],
+                ans: 3,
+                exp: "double türünde bir değişkene double a = 5; veya double a = 5d; veya double a = 5D; şeklinde değer atanabilir.",
+                reasons: [
+                    "Tek başına doğru ama diğer şıklar da geçerlidir.",
+                    "Tek başına doğru ama diğer şıklar da geçerlidir.",
+                    "Tek başına doğru ama diğer şıklar da geçerlidir.",
+                    "Doğru! double türü soneksiz, 'd' sonekli veya 'D' sonekli atanabilir."
+                ]
+            },
+            {
+                id: 20, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki kod çalıştığında 'sonuc' değişkeninin değeri ne olur?",
+                code: "char harf = 'C';\nstring ek = \"#\";\nstring ders = \" Programlama\";\nstring sonuc = harf + ek + ders;",
+                options: [
+                    "C# Programlama",
+                    "harfekders",
+                    "Derleme hatası verir",
+                    "C # Programlama"
+                ],
+                ans: 0,
+                exp: "char ve string değişkenler '+' operatörü ile uç uca eklenerek 'C# Programlama' metnini oluşturur.",
+                reasons: [
+                    "Doğru! 'C' + \"#\" + \" Programlama\" birleşerek \"C# Programlama\" değerini üretir.",
+                    "Değişkenlerin isimleri değil, içlerindeki değerler birleştirilir.",
+                    "char ve string '+' operatörü ile hatasız birleştirilir.",
+                    "C ile # arasında boşluk karakteri yoktur."
+                ]
+            },
+            {
+                id: 21, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "'float' veri türünün bellekte kapladığı alan kaç bayttır ve hangi tür sayıları tutar?",
+                options: [
+                    "2 bayt / Tam sayı",
+                    "4 bayt / Reel (ondalıklı) sayı",
+                    "8 bayt / Reel (ondalıklı) sayı",
+                    "4 bayt / Sadece pozitif tam sayı"
+                ],
+                ans: 1,
+                exp: "'float' bellekte 4 bayt yer kaplar ve ±1.5*10^-45 ile ±3.4*10^38 arasındaki reel (ondalıklı) sayıları tutar.",
+                reasons: [
+                    "2 bayt tam sayı 'short' veya 'ushort' türüdür.",
+                    "Doğru! float 4 baytlık reel sayı türüdür.",
+                    "8 baytlık reel sayı 'double' türüdür.",
+                    "4 baytlık pozitif tam sayı 'uint' türüdür."
+                ]
+            },
+            {
+                id: 22, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki veri türü çiftlerinden hangilerinin her ikisi de bellekte 4 bayt yer kaplar?",
+                options: [
+                    "int ve float",
+                    "short ve int",
+                    "double ve float",
+                    "byte ve char"
+                ],
+                ans: 0,
+                exp: "int (4 bayt), uint (4 bayt) ve float (4 bayt) bellekte eşit miktarda (4 bayt) yer kaplar.",
+                reasons: [
+                    "Doğru! Hem int hem de float bellekte 4 bayt yer kaplar.",
+                    "short 2 bayt, int 4 bayt yer kaplar.",
+                    "double 8 bayt, float 4 bayt yer kaplar.",
+                    "byte 1 bayt, char 2 bayt yer kaplar."
+                ]
+            },
+            {
+                id: 23, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Aşağıdaki veri türü çiftlerinden hangilerinin her ikisi de bellekte 8 bayt yer kaplar?",
+                options: [
+                    "long ve double",
+                    "int ve double",
+                    "decimal ve long",
+                    "ulong ve float"
+                ],
+                ans: 0,
+                exp: "long (8 bayt), ulong (8 bayt) ve double (8 bayt) bellekte 8 bayt yer kaplar.",
+                reasons: [
+                    "Doğru! long (tam sayı) ve double (reel sayı) 8'er bayt yer kaplar.",
+                    "int 4 bayt, double 8 bayt yer kaplar.",
+                    "decimal 16 bayt, long 8 bayt yer kaplar.",
+                    "ulong 8 bayt, float 4 bayt yer kaplar."
+                ]
+            },
+            {
+                id: 24, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "Bellekte 2 bayt yer kaplayan veri türlerinin tamamı hangi şıkta bir arada verilmiştir?",
+                options: [
+                    "byte, sbyte, char",
+                    "short, ushort, char",
+                    "int, uint, short",
+                    "short, ushort, string"
+                ],
+                ans: 1,
+                exp: "Bellekte 2 bayt yer kaplayan türler: short (2 bayt), ushort (2 bayt) ve char (2 bayt) türleridir.",
+                reasons: [
+                    "byte ve sbyte 1'er bayttır.",
+                    "Doğru! short, ushort ve char türlerinin üçü de 2 bayt yer kaplar.",
+                    "int ve uint 4'er bayttır.",
+                    "string türünün boyutu 2 bayt değil, sınırsızdır."
+                ]
+            },
+            {
+                id: 25, sec: "sec1", cat: "Bölüm 1: C# Değişkenler ve Veri Türleri",
+                q: "-50 tam sayısını bellekte EN AZ yer kaplayacak şekilde saklamak için hangi veri türü seçilmelidir?",
+                options: [
+                    "byte",
+                    "sbyte",
+                    "ushort",
+                    "short"
+                ],
+                ans: 1,
+                exp: "-50 negatif bir sayıdır. Negatif sayı tutabilen en küçük boyutlu tür 1 baytlık 'sbyte' (-128..127) türüdür.",
+                reasons: [
+                    "byte 1 bayttır ancak negatif sayı (-50) tutamaz (0..255).",
+                    "Doğru! sbyte 1 bayt yer kaplar ve -128..127 aralığında olduğu için -50'yi tutabilir.",
+                    "ushort negatif sayı tutamaz ve 2 bayttır.",
+                    "short -50'yi tutabilir ancak 2 bayt yer kapladığı için en az yer kaplayan seçenek değildir."
+                ]
+            },
+
+            // ================= BÖLÜM 2: VISUAL STUDIO ARAYÜZÜ VE TOOLBOX KONTROLLERİ (26 - 50) =================
+            {
+                id: 26, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Visual Studio ortamında Button, TextBox, Label, ListBox gibi form kontrollerinin (nesnelerinin) bulunduğu ve sürükle-bırak yöntemiyle forma eklendiği panel hangisidir?",
+                options: [
+                    "Solution Explorer (Çözüm Gezgini)",
+                    "Toolbox (Araç Kutusu)",
+                    "Properties (Özellikler Penceresi)",
+                    "Error List (Hata Listesi)"
+                ],
+                ans: 1,
+                exp: "Toolbox (Araç Kutusu), Windows Forms tasarımında kullanılan tüm görsel kontrollerin (Button, TextBox, Label, ComboBox vb.) yer aldığı araç panelidir.",
+                reasons: [
+                    "Solution Explorer projedeki dosya ve klasörleri listeler.",
+                    "Doğru! Form üzerine eklenecek tüm kontroller Toolbox (Araç Kutusu) panelinden alınır.",
+                    "Properties seçili kontrolün özelliklerini (renk, metin, boyut vb.) değiştirmek için kullanılır.",
+                    "Error List koddaki yazım ve derleme hatalarını gösterir."
+                ]
+            },
+            {
+                id: 27, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Form üzerindeki bir kontrolün (örneğin bir Button'un) arka plan rengini, üzerindeki yazıyı veya adını tasarım aşamasında değiştirmek için kullanılan Visual Studio penceresi hangisidir?",
+                options: [
+                    "Toolbox (Araç Kutusu)",
+                    "Properties (Özellikler Penceresi)",
+                    "Output (Çıktı Penceresi)",
+                    "Server Explorer"
+                ],
+                ans: 1,
+                exp: "Properties (Özellikler) penceresi (kısayolu F4), formda seçili olan nesnenin Text, Name, BackColor, Font gibi özelliklerini değiştirmeyi sağlar.",
+                reasons: [
+                    "Toolbox yeni kontrol eklemek içindir, mevcut kontrolün özelliklerini düzenlemez.",
+                    "Doğru! Nesnelerin tasarım ayarları Properties (Özellikler) penceresinden yapılır.",
+                    "Output penceresi derleme ve çalışma zamanı mesajlarını gösterir.",
+                    "Server Explorer sunucu ve veritabanı bağlantılarını yönetir."
+                ]
+            },
+            {
+                id: 28, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Visual Studio'da bir kontrolün üzerine gelip 'Properties' (Özellikler) penceresinin üst kısmındaki 'Şimşek (⚡)' simgesine tıklandığında aşağıdakilerden hangisi listelenir?",
+                options: [
+                    "Kontrolün renk paleti",
+                    "Kontrolün Olayları (Events - Click, KeyPress, SelectedIndexChanged vb.)",
+                    "Projedeki diğer formlar",
+                    "Değişken türleri tablosu"
+                ],
+                ans: 1,
+                exp: "Properties penceresindeki Şimşek (⚡) ikonu 'Events' (Olaylar) sekmesini açar. Buradan Click, KeyPress, Load gibi olay metotları oluşturulabilir.",
+                reasons: [
+                    "Renk paleti BackColor veya ForeColor özelliğine tıklandığında açılır.",
+                    "Doğru! Şimşek simgesi seçili kontrolün Olaylarını (Events) listeler.",
+                    "Projedeki formlar Solution Explorer'da listelenir.",
+                    "Değişken türleri Properties penceresinde yer almaz."
+                ]
+            },
+            {
+                id: 29, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Toolbox'tan forma eklenen bir kontrolün 'Name' özelliği ile 'Text' özelliği arasındaki temel fark nedir?",
+                options: [
+                    "İkisi de tamamen aynıdır",
+                    "'Name' nesnenin C# kod ekranında çağrıldığı programatik adıdır (örn: button1); 'Text' ise kullanıcının ekranda gördüğü başlıktır (örn: Hesapla)",
+                    "'Text' kod içinde nesneyi çağırmak için kullanılır, 'Name' ekranda görünür",
+                    "'Name' sadece sayılardan oluşabilir"
+                ],
+                ans: 1,
+                exp: "'Name' özelliği kontrolün kod tarafındaki değişken adıdır (örn: textBox1, button1). 'Text' ise kontrolün üzerinde kullanıcıya görünen metindir (örn: 'Temizle', 'Faktöriyel hesapla').",
+                reasons: [
+                    "Yanlış; görevleri birbirinden tamamen farklıdır.",
+                    "Doğru! Kod yazarken 'Name' değerini (button1.PerformClick()), ekranda başlık göstermek için ise 'Text' özelliğini kullanırız.",
+                    "Tam tersi ifade edilmiştir.",
+                    "C# kuralları gereği 'Name' özelliği rakamla başlayamaz ve sadece sayı olamaz."
+                ]
+            },
+            {
+                id: 30, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Form üzerinde kullanıcıdan klavye aracılığıyla veri (sayı veya metin) girişi almak ya da hesaplanan tek satırlık sonucu göstermek için kullanılan Toolbox kontrolü hangisidir?",
+                options: [
+                    "Label",
+                    "TextBox",
+                    "Button",
+                    "RadioButton"
+                ],
+                ans: 1,
+                exp: "TextBox (Metin Kutusu), kullanıcının içine veri girebildiği veya sonuçların metin olarak yazdırılabildiği kutu kontrolüdür.",
+                reasons: [
+                    "Label sadece sabit açıklama/başlık yazıları göstermek içindir, kullanıcı içine tıklayıp yazı yazamaz.",
+                    "Doğru! Veri girişi ve metin gösterimi için TextBox kullanılır.",
+                    "Button tıklama işlemleri içindir.",
+                    "RadioButton seçenek işaretlemek içindir."
+                ]
+            },
+            {
+                id: 31, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Form üzerine 'Sayı Giriniz:', 'Sonuç:', 'Çarpım Tablosu' gibi kullanıcının değiştiremeyeceği sabit bilgilendirme ve başlık yazılarını eklemek için kullanılan Toolbox kontrolü hangisidir?",
+                options: [
+                    "TextBox",
+                    "Label",
+                    "ComboBox",
+                    "ListBox"
+                ],
+                ans: 1,
+                exp: "Label (Etiket) kontrolü, form üzerindeki diğer kontrollerin ne işe yaradığını belirten sabit başlık ve açıklamaları göstermek için kullanılır.",
+                reasons: [
+                    "TextBox veri giriş kutusudur, sabit etiket değildir.",
+                    "Doğru! Sabit başlık ve etiket metinleri için Label kontrolü kullanılır.",
+                    "ComboBox açılır seçim listesidir.",
+                    "ListBox çok satırlı liste kutusudur."
+                ]
+            },
+            {
+                id: 32, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Çok sayıda veriyi (örneğin bir sayının tüm tam bölenlerini veya çarpım tablosunun tüm satırlarını) alt alta bir liste halinde ekranda göstermek için kullanılan Toolbox kontrolü hangisidir?",
+                options: [
+                    "TextBox",
+                    "ListBox",
+                    "Label",
+                    "RadioButton"
+                ],
+                ans: 1,
+                exp: "ListBox kontrolü, birden fazla öğeyi (Items) alt alta satırlar halinde listelemek ve göstermek için kullanılır.",
+                reasons: [
+                    "TextBox varsayılan olarak tek satırlı metin girişi içindir ve Items koleksiyonuna sahip değildir.",
+                    "Doğru! Çoklu elemanları alt alta listelemek için ListBox kullanılır.",
+                    "Label sabit metin etiketidir.",
+                    "RadioButton tekli seçim düğmesidir."
+                ]
+            },
+            {
+                id: 33, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Normalde tek satır yer kaplayan, ancak sağ tarafındaki küçük oka tıklandığında aşağı doğru açılarak içindeki seçeneklerden (örneğin 1'den 10'a kadar sayılardan) birini seçmeyi sağlayan Toolbox kontrolü hangisidir?",
+                options: [
+                    "ListBox",
+                    "ComboBox",
+                    "GroupBox",
+                    "CheckBox"
+                ],
+                ans: 1,
+                exp: "ComboBox (Açılır Liste Kutusu), tıklandığında aşağı doğru açılan (drop-down) bir liste sunar ve kullanıcının listeden bir öğe seçmesini sağlar.",
+                reasons: [
+                    "ListBox açılır kapanır değildir, form üzerinde sürekli açık bir liste kutusu olarak durur.",
+                    "Doğru! Aşağı doğru açılan seçim listesi kontrolü ComboBox'tır.",
+                    "GroupBox kontrolleri gruplamak için kullanılan çerçevedir.",
+                    "CheckBox onay kutusudur."
+                ]
+            },
+            {
+                id: 34, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Kullanıcıya birden fazla seçenek sunulduğunda, aynı grup içindeki seçeneklerden YALNIZCA BİR TANESİNİN seçilebilmesini sağlayan yuvarlak seçim kontrolü hangisidir?",
+                options: [
+                    "CheckBox",
+                    "RadioButton",
+                    "Button",
+                    "ComboBox"
+                ],
+                ans: 1,
+                exp: "RadioButton (Radyo Düğmesi), aynı kapsayıcı içindeki seçeneklerden sadece birinin seçilmesine izin verir (biri seçildiğinde diğerinin seçimi otomatik kalkar).",
+                reasons: [
+                    "CheckBox (Onay Kutusu) aynı anda birden fazla seçeneğin işaretlenmesine izin verir.",
+                    "Doğru! Tekli seçim yaptırmak için yuvarlak RadioButton kontrolü kullanılır.",
+                    "Button komut çalıştırmak içindir, seçili kalma (Checked) özelliği yoktur.",
+                    "ComboBox yuvarlak seçim düğmesi değil, açılır listedir."
+                ]
+            },
+            {
+                id: 35, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Visual Studio form tasarım ekranında bir Button kontrolünün üzerine fare ile ÇİFT TIKLANDIĞINDA ne gerçekleşir?",
+                options: [
+                    "Buton formdan silinir",
+                    "Butonun rengi değişir",
+                    "Kod düzenleyici (Form1.cs) açılır ve o butonun varsayılan olayı olan 'Click' (örneğin button1_Click) metodu otomatik oluşturulur",
+                    "Proje derlenip çalıştırılır"
+                ],
+                ans: 2,
+                exp: "Form tasarımcısında bir nesneye çift tıklamak, o nesnenin varsayılan olay metodunu (Button için Click, Form için Load, ComboBox için SelectedIndexChanged) otomatik oluşturur.",
+                reasons: [
+                    "Çift tıklamak kontrolü silmez (silmek için Delete tuşu kullanılır).",
+                    "Renk değiştirmek Properties penceresindeki BackColor ile yapılır.",
+                    "Doğru! Butona çift tıklandığında button_Click olay metodu kod sayfasında otomatik açılır.",
+                    "Projeyi çalıştırmak için F5 veya Start butonuna basılır."
+                ]
+            },
+            {
+                id: 36, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Form tasarım ekranında (Form1.cs [Design]) boş bir alana veya formun başlık çubuğuna çift tıklandığında hangi olay metodu otomatik olarak oluşturulur?",
+                options: [
+                    "Form1_Click",
+                    "Form1_Load",
+                    "Form1_Close",
+                    "button1_Click"
+                ],
+                ans: 1,
+                exp: "Form kontrolünün varsayılan olayı 'Load' olayıdır. Formun boş bir yerine çift tıklandığında form açılırken çalışacak olan 'Form1_Load' metodu oluşturulur.",
+                reasons: [
+                    "Formun varsayılan olayı Click değil Load'dır.",
+                    "Doğru! Form üzerine çift tıklandığında Form1_Load metodu açılır.",
+                    "Form1_Close varsayılan olay değildir.",
+                    "button1_Click sadece button1 üzerine çift tıklandığında açılır."
+                ]
+            },
+            {
+                id: 37, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Form üzerindeki birden fazla kontrolü (örneğin hesap makinesi rakam butonlarını veya RadioButton gruplarını) bir arada tutmak ve ortak bir arka plan/çerçeve içinde gruplamak için kullanılan Toolbox kapsayıcı (Container) kontrolleri hangileridir?",
+                options: [
+                    "Label ve TextBox",
+                    "Panel ve GroupBox",
+                    "ListBox ve ComboBox",
+                    "Timer ve OpenFileDialog"
+                ],
+                ans: 1,
+                exp: "Panel ve GroupBox kontrolleri Toolbox'ın 'Containers' (Kapsayıcılar) grubunda yer alır ve diğer kontrolleri kendi içlerinde gruplamak için kullanılır.",
+                reasons: [
+                    "Label ve TextBox kapsayıcı (container) kontrol değildir.",
+                    "Doğru! Kontrolleri bir çerçeve veya renkli bir alan içinde gruplamak için Panel veya GroupBox kullanılır.",
+                    "ListBox ve ComboBox veri listeleme kontrolleridir.",
+                    "Timer ve OpenFileDialog görünmeyen bileşenlerdir."
+                ]
+            },
+            {
+                id: 38, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Properties (Özellikler) penceresinde bir kontrolün arka plan rengini ve yazı rengini değiştirmek için kullanılan özellikler sırasıyla hangileridir?",
+                options: [
+                    "BackColor ve ForeColor",
+                    "Color ve TextColor",
+                    "Background ve FontColor",
+                    "FillColor ve LineColor"
+                ],
+                ans: 0,
+                exp: "Windows Forms kontrollerinde arka plan rengi 'BackColor', üzerindeki metnin (yazının) rengi ise 'ForeColor' özelliği ile ayarlanır.",
+                reasons: [
+                    "Doğru! Arka plan rengi BackColor, yazı rengi ForeColor özelliğidir.",
+                    "Windows Forms'ta Color ve TextColor adında standart özellikler yoktur.",
+                    "Background ve FontColor CSS/Web terimleridir.",
+                    "FillColor ve LineColor şekil çizimlerinde kullanılır."
+                ]
+            },
+            {
+                id: 39, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Visual Studio'da hazırlanan bir Windows Forms projesini derleyip çalıştırmak (Hata Ayıklama / Debug modunda başlatmak) için kullanılan klavye kısayolu ve üst menü butonu nedir?",
+                options: [
+                    "F1 / Help",
+                    "F5 / Start (Yeşil Oynat Butonu)",
+                    "F4 / Properties",
+                    "Ctrl + Z / Undo"
+                ],
+                ans: 1,
+                exp: "Visual Studio'da üst araç çubuğundaki yeşil 'Start' (Başlat) butonuna basmak veya klavyeden F5 tuşuna basmak projeyi derler ve formu çalıştırır.",
+                reasons: [
+                    "F1 yardım penceresini açar.",
+                    "Doğru! F5 tuşu (veya Start butonu) uygulamayı çalıştırır.",
+                    "F4 tuşu Properties (Özellikler) penceresini açar.",
+                    "Ctrl + Z yapılan son işlemi geri alır."
+                ]
+            },
+            {
+                id: 40, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Visual Studio arayüzünde projeye ait tüm dosyaların (Form1.cs, Program.cs, References vb.) ağaç yapısında listelendiği panel hangisidir?",
+                options: [
+                    "Toolbox",
+                    "Solution Explorer (Çözüm Gezgini)",
+                    "Properties Window",
+                    "Task List"
+                ],
+                ans: 1,
+                exp: "Solution Explorer (Çözüm Gezgini), çözüm (solution) ve proje içerisindeki tüm form, kod ve yapılandırma dosyalarını hiyerarşik olarak gösterir.",
+                reasons: [
+                    "Toolbox form kontrollerini barındırır.",
+                    "Doğru! Proje dosyaları Solution Explorer (Çözüm Gezgini) panelinde yer alır.",
+                    "Properties Window seçili nesnenin özelliklerini gösterir.",
+                    "Task List görevleri gösterir."
+                ]
+            },
+            {
+                id: 41, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Bir TextBox kontrolüne kullanıcının klavyeden en fazla kaç karakter girebileceğini (örneğin en fazla 3 basamaklı sayı) Properties penceresinden sınırlandırmak için hangi özellik kullanılır?",
+                options: [
+                    "MaxLength",
+                    "Multiline",
+                    "Size",
+                    "TabIndex"
+                ],
+                ans: 0,
+                exp: "TextBox kontrolünün 'MaxLength' özelliği, kutuya girilebilecek maksimum karakter sayısını belirler (kod içinde ise textBox1.Text.Length ile kontrol edilebilir).",
+                reasons: [
+                    "Doğru! MaxLength özelliği girilebilecek maksimum karakter uzunluğunu sınırlar.",
+                    "Multiline TextBox'ın çok satırlı olup olmayacağını belirler.",
+                    "Size kontrolün ekrandaki genişlik ve yükseklik boyutunu (piksel) belirler.",
+                    "TabIndex Tab tuşuna basıldığında odaklanma sırasını belirler."
+                ]
+            },
+            {
+                id: 42, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Sonuç gösterilen bir TextBox kutusuna kullanıcının dışarıdan klavyeyle müdahale edip yazı yazmasını engellemek (sadece okunabilir yapmak) için Properties penceresinden hangi özellik 'True' yapılmalıdır?",
+                options: [
+                    "Multiline",
+                    "ReadOnly",
+                    "Visible",
+                    "AutoSize"
+                ],
+                ans: 1,
+                exp: "'ReadOnly' (Salt Okunur) özelliği True yapıldığında kullanıcı TextBox içindeki sonucu görebilir ve kopyalayabilir ancak klavyeyle değiştiremez.",
+                reasons: [
+                    "Multiline çok satırlı girişi açar.",
+                    "Doğru! ReadOnly = true yapıldığında metin kutusu salt okunur hale gelir.",
+                    "Visible = false yapılırsa kutu ekranda tamamen gizlenir.",
+                    "AutoSize otomatik boyutlandırma özelliğidir."
+                ]
+            },
+            {
+                id: 43, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Bir kontrolün (örneğin bir Button veya TextBox'ın) form üzerinde aktif/tıklanabilir olup olmayacağını belirleyen özellik hangisidir?",
+                options: [
+                    "Visible",
+                    "Enabled",
+                    "Checked",
+                    "Locked"
+                ],
+                ans: 1,
+                exp: "'Enabled' özelliği false yapıldığında kontrol pasif (soluk/gri) hale gelir ve kullanıcı o kontrole tıklayamaz veya veri giremez.",
+                reasons: [
+                    "Visible kontrolün görünürlüğünü (gizli/görünür) ayarlar.",
+                    "Doğru! Enabled özelliği kontrolün etkin (kullanılabilir) olup olmadığını belirler.",
+                    "Checked sadece RadioButton ve CheckBox'ta seçili olma durumudur.",
+                    "Locked tasarım ekranında kontrolün yerinin yanlışlıkla kaydırılmasını engeller."
+                ]
+            },
+            {
+                id: 44, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Formun en üstündeki başlık çubuğunda yazan 'Form1' metnini 'Hesap Makinası' olarak değiştirmek için hangi nesnenin hangi özelliği değiştirilmelidir?",
+                options: [
+                    "Form1 nesnesinin 'Name' özelliği",
+                    "Form1 nesnesinin 'Text' özelliği",
+                    "Button1 nesnesinin 'Text' özelliği",
+                    "Label1 nesnesinin 'Name' özelliği"
+                ],
+                ans: 1,
+                exp: "Pencerenin başlık çubuğunda görünen yazı, Form nesnesinin 'Text' özelliğidir.",
+                reasons: [
+                    "Formun Name özelliğini değiştirmek sınıf adını değiştirir ve boşluk içeremez.",
+                    "Doğru! Form seçiliyken Properties'ten 'Text' özelliği değiştirildiğinde pencere başlığı değişir.",
+                    "Button1'in Text özelliği sadece butonun üzerindeki yazıyı değiştirir.",
+                    "Label1 formun başlık çubuğunu kontrol etmez."
+                ]
+            },
+            {
+                id: 45, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Bir ComboBox kontrolünde kullanıcı açılır listeden yeni bir eleman seçtiğinde otomatik olarak tetiklenen varsayılan olay (Event) hangisidir?",
+                options: [
+                    "comboBox1_Click",
+                    "comboBox1_SelectedIndexChanged",
+                    "comboBox1_KeyPress",
+                    "comboBox1_Load"
+                ],
+                ans: 1,
+                exp: "ComboBox'ta seçili öğe (ve dolayısıyla seçili indeks) her değiştiğinde 'SelectedIndexChanged' olayı tetiklenir.",
+                reasons: [
+                    "Click sadece kutuya tıklandığında çalışır, listeden yeni seçim yapıldığını yakalamak için standart olay değildir.",
+                    "Doğru! ComboBox üzerine çift tıklandığında da açılan varsayılan olay SelectedIndexChanged'dir.",
+                    "KeyPress klavyeden tuşa basıldığında çalışır.",
+                    "ComboBox kontrolünün Load olayı yoktur (Load formun olayıdır)."
+                ]
+            },
+            {
+                id: 46, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Bir RadioButton kontrolünün seçili olma durumu değiştiğinde (işaretlendiğinde veya işareti kaldırıldığında) çalışan varsayılan olay hangisidir?",
+                options: [
+                    "radioButton1_CheckedChanged",
+                    "radioButton1_SelectedIndexChanged",
+                    "radioButton1_TextChanged",
+                    "radioButton1_KeyPress"
+                ],
+                ans: 0,
+                exp: "RadioButton üzerine tasarım ekranında çift tıklandığında 'CheckedChanged' (seçili olma durumu değiştiğinde) olay metodu oluşturulur.",
+                reasons: [
+                    "Doğru! Checked özelliği her değiştiğinde CheckedChanged olayı tetiklenir.",
+                    "SelectedIndexChanged ListBox ve ComboBox kontrollerine aittir.",
+                    "TextChanged kontrolün üzerindeki yazı değiştiğinde çalışır.",
+                    "KeyPress klavye tuş basımı olayıdır."
+                ]
+            },
+            {
+                id: 47, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Visual Studio'da form tasarım ekranında (Design) yanlışlıkla bir 'label1' üzerine çift tıklanıp boş bir 'label1_Click' metodu oluştuğunda, bu metodu kod sayfasından doğrudan silmek neden tasarım ekranında hataya yol açabilir?",
+                options: [
+                    "Form1.Designer.cs dosyasında o olaya ait bağlantı satırı (label1.Click += ...) hala durduğu için derleyici silinen metodu arar ve hata verir",
+                    "C# dilinde metot silmek yasak olduğu için",
+                    "Label kontrolü silindiği için",
+                    "Bilgisayarın belleği dolduğu için"
+                ],
+                ans: 0,
+                exp: "Olay metodu oluşturulduğunda Designer dosyasına bağlantı kodu eklenir. Kod sayfasından metodu silmeden önce Properties -> Events (⚡) sekmesinden olay bağlantısını temizlemek gerekir; bu yüzden çoğu zaman kod sayfasında içi boş bırakılır.",
+                reasons: [
+                    "Doğru! Designer dosyası hala o metodu referans gösterdiği için doğrudan silinirse tasarım ekranı hata verir.",
+                    "Normal metotlar silinebilir, sadece forma bağlı olay metotlarında Events sekmesinden bağlantı kaldırılmalıdır.",
+                    "Metodu silmek Label'ı silmez.",
+                    "Bellekle ilgisi yoktur."
+                ]
+            },
+            {
+                id: 48, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Bir Windows Forms uygulamasında form sınıfının yapıcı metodunda (Constructor) yer alan 'InitializeComponent();' satırının görevi nedir?",
+                code: "public Form1()\n{\n    InitializeComponent();\n}",
+                options: [
+                    "Formu kapatmak",
+                    "Tasarım ekranında Toolbox'tan forma eklenen tüm kontrolleri (Button, TextBox vb.) ve özelliklerini oluşturup ekrana çizmek",
+                    "Sadece değişkenleri sıfırlamak",
+                    "Kullanıcıdan sayı istemek"
+                ],
+                ans: 1,
+                exp: "InitializeComponent() metodu, Visual Studio tasarımcısının arka planda oluşturduğu tüm kontrolleri, boyutlarını, konumlarını ve olaylarını başlatan zorunlu metottur.",
+                reasons: [
+                    "Formu kapatmaz, tam tersine bileşenleri başlatır.",
+                    "Doğru! Bu satır silinirse form açıldığında üzerindeki hiçbir buton veya kutu ekranda görünmez.",
+                    "Değişkenleri sıfırlamaz.",
+                    "Kullanıcıdan veri istemez."
+                ]
+            },
+            {
+                id: 49, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Toolbox'tan forma sırasıyla 3 adet TextBox eklendiğinde ve 'Name' özelliklerine hiç dokunulmadığında Visual Studio bunları otomatik olarak nasıl isimlendirir?",
+                options: [
+                    "text1, text2, text3",
+                    "textBox1, textBox2, textBox3",
+                    "box1, box2, box3",
+                    "string1, string2, string3"
+                ],
+                ans: 1,
+                exp: "Visual Studio, Toolbox'tan eklenen kontrolleri kontrol türü + sıra numarası (camelCase) formatında otomatik isimlendirir: textBox1, textBox2, textBox3.",
+                reasons: [
+                    "Kontrolün türü Text değil TextBox'tır.",
+                    "Doğru! Varsayılan isimlendirme textBox1, textBox2, textBox3 şeklindedir.",
+                    "box1 şeklinde isimlendirmez.",
+                    "string1 şeklinde isimlendirmez."
+                ]
+            },
+            {
+                id: 50, sec: "sec2", cat: "Bölüm 2: Visual Studio Arayüzü ve Toolbox",
+                q: "Bir TextBox kontrolünün içindeyken kullanıcı klavyeden bir tuşa bastığı anda çalışan ve basılan karakteri kontrol etmeye/engellemeye yarayan olay (Event) hangisidir?",
+                options: [
+                    "Click",
+                    "KeyPress",
+                    "Load",
+                    "MouseHover"
+                ],
+                ans: 1,
+                exp: "KeyPress olayı, kontrol odaktayken klavyeden bir karakter tuşuna basıldığında tetiklenir ve KeyPressEventArgs (e) üzerinden basılan tuşu yakalar.",
+                reasons: [
+                    "Click fare tıklaması olayıdır.",
+                    "Doğru! Klavyeden basılan karakterleri kontrol etmek ve kısıtlamak için KeyPress olayı kullanılır.",
+                    "Load formun yüklenme olayıdır.",
+                    "MouseHover fare imleci kontrolün üzerine geldiğinde çalışır."
+                ]
+            },
+
+            // ================= BÖLÜM 3: KONTROL METOTLARI, ÖZELLİKLER VE OLAYLAR (51 - 75) =================
+            {
+                id: 51, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki C# kod satırlarının sırasıyla yaptığı işlemler hangi şıkta doğru açıklanmıştır?",
+                code: "textBox1.Clear();\nlistBox1.Items.Clear();",
+                options: [
+                    "textBox1'i formdan siler / listBox1'i formdan siler",
+                    "textBox1 içindeki yazıyı temizler / listBox1 içindeki tüm satırları (öğeleri) temizler",
+                    "Sadece ilk karakteri siler / Sadece son satırı siler",
+                    "İkisi de derleme hatası verir"
+                ],
+                ans: 1,
+                exp: "textBox1.Clear() metin kutusunun içindeki metni boşaltır; listBox1.Items.Clear() ise liste kutusunun Items koleksiyonundaki tüm elemanları temizler.",
+                reasons: [
+                    "Kontrolleri formdan kaldırmaz, sadece içlerindeki verileri temizler.",
+                    "Doğru! TextBox doğrudan .Clear() ile, ListBox ise .Items.Clear() ile temizlenir.",
+                    "Tek bir karakteri veya satırı değil, tüm içeriği temizler.",
+                    "Her iki kullanım da tamamen doğrudur."
+                ]
+            },
+            {
+                id: 52, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kodda yer alan 'button2.PerformClick();' komutunun görevi nedir?",
+                code: "private void Form1_Load(object sender, EventArgs e)\n{\n    button2.PerformClick();\n}",
+                options: [
+                    "button2'yi ekranda gizler",
+                    "Kullanıcı fareyle tıklamadan, kod içerisinden button2'nin Click olayını (button2_Click metodunu) otomatik olarak çalıştırır",
+                    "button2'nin adını değiştirir",
+                    "Formu kapatır"
+                ],
+                ans: 1,
+                exp: "PerformClick() metodu, ilgili butona kullanıcı tıklamış gibi butonun Click olayını tetikler. Kod tekrarını önlemek için sıkça kullanılır.",
+                reasons: [
+                    "Gizlemek için Visible = false kullanılır.",
+                    "Doğru! Başka bir olayın içinden bir butonun Click metodunu tetiklemek için PerformClick() kullanılır.",
+                    "Butonun adını değiştirmez.",
+                    "Formu kapatmaz."
+                ]
+            },
+            {
+                id: 53, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki döngü çalıştığında 'comboBox1' kontrolünde ne gerçekleşir?",
+                code: "for (int i = 1; i <= 10; i++)\n{\n    comboBox1.Items.Add(i);\n}",
+                options: [
+                    "comboBox1'in içine sadece 10 sayısı eklenir",
+                    "comboBox1'in açılır listesine 1'den 10'a kadar (1 ve 10 dahil) olan tam sayılar sırasıyla eklenir",
+                    "comboBox1 içindeki tüm elemanlar silinir",
+                    "1'den 10'a kadar olan sayıların toplamı olan 55 sayısı eklenir"
+                ],
+                ans: 1,
+                exp: "comboBox1.Items.Add(i) komutu döngünün her adımında (i=1, 2, ..., 10) değeri ComboBox'ın eleman listesine ekler.",
+                reasons: [
+                    "Add komutu döngünün içinde olduğu için her adımda çalışır, toplam 10 eleman eklenir.",
+                    "Doğru! 1'den 10'a kadar olan tam sayılar ComboBox listesine öğe olarak eklenir.",
+                    "Silme işlemi Clear() ile yapılır, Add() ekleme yapar.",
+                    "Toplama işlemi yapılmamakta, i değerleri tek tek listeye eklenmektedir."
+                ]
+            },
+            {
+                id: 54, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Bir temizleme butonunun içine 'comboBox1.Items.Clear();' yerine 'comboBox1.Text = \" \";' yazılmasının temel sebebi nedir?",
+                options: [
+                    "ComboBox'ın Items özelliği olmadığı için",
+                    "ComboBox'ın açılır listesindeki seçenekleri (örneğin 1-10 arası sayıları) kaybetmeden sadece o an kutuda seçili görünen yazıyı temizlemek için",
+                    "Programı hızlandırmak için",
+                    "ListBox'ı temizlemek için"
+                ],
+                ans: 1,
+                exp: "Eğer comboBox1.Items.Clear() yazılırsa Form_Load'da eklenen 1..10 arası tüm seçenekler listeden silinir ve bir daha seçim yapılamaz. comboBox1.Text = \" \"; ise sadece görünen metni temizler.",
+                reasons: [
+                    "Yanlış; ComboBox'ın Items özelliği vardır.",
+                    "Doğru! Açılır listedeki elemanları silmeden sadece ekranda seçili görünen değeri temizlemek için Text özelliği sıfırlanır.",
+                    "Hızla ilgisi yoktur, işlevsel bir farktır.",
+                    "Bu kod ListBox'ı etkilemez."
+                ]
+            },
+            {
+                id: 55, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kod parçasında 'int.TryParse(textBox1.Text, out int girilenSayi)' metodunun kullanımı hangi avantajı sağlar?",
+                code: "bool sayiGecerliMi = int.TryParse(textBox1.Text, out int girilenSayi);\nif (!sayiGecerliMi)\n{\n    MessageBox.Show(\"Lütfen önce kutuya geçerli bir sayı giriniz!\");\n    return;\n}",
+                options: [
+                    "Metin kutusu boşsa veya harf girilmişse programın çökmesini (hata fırlatmasını) önler; dönüşüm başarısızsa 'false' döndürerek kullanıcıya uyarı mesajı verilmesini sağlar",
+                    "Ondalıklı sayıları yuvarlar",
+                    "Metin kutusuna sadece harf girilmesini sağlar",
+                    "Sayıyı otomatik olarak negatif yapar"
+                ],
+                ans: 0,
+                exp: "Convert.ToInt32 metodu kutu boşken çalıştırılırsa program çöker (FormatException). int.TryParse ise çökmeden dönüşümü dener; başarılıysa true döndürüp değeri 'girilenSayi'ya yazar, başarısızsa false döndürür.",
+                reasons: [
+                    "Doğru! TryParse güvenli dönüşüm yapar ve hatalı girişlerde programın çökmesini engeller.",
+                    "TryParse yuvarlama yapmaz, tam sayıya dönüştürmeyi dener.",
+                    "Harf girildiğinde false döndürür.",
+                    "Sayıyı negatif yapmaz."
+                ]
+            },
+            {
+                id: 56, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Yukarıdaki kod bloğunda 'MessageBox.Show(...);' satırından hemen sonra kullanılan 'return;' komutunun görevi nedir?",
+                options: [
+                    "Formu kapatmak",
+                    "Geçersiz veri girildiği için metodun geri kalan satırlarını (hesaplama döngüsünü) çalıştırmadan metottan derhal çıkmak",
+                    "Başlangıç ekranına dönmek",
+                    "Döngüyü 1 artırmak"
+                ],
+                ans: 1,
+                exp: "void bir olay metodunda 'return;' komutu çalıştığında o metot anında sonlanır ve alt satırlardaki kodlar çalıştırılmaz.",
+                reasons: [
+                    "Formu kapatmaz (Formu kapatmak için this.Close() veya Application.Exit() kullanılır).",
+                    "Doğru! Hatalı giriş tespit edildiğinde alt satırlardaki çarpım tablosu kodlarının çalışmasını engeller.",
+                    "Başka bir ekrana dönmez.",
+                    "Döngü sayacını artırmaz."
+                ]
+            },
+            {
+                id: 57, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kod satırlarında 'comboBox1.SelectedItem' ifadesi neyi temsil eder?",
+                code: "if (comboBox1.SelectedItem == null)\n{\n    return;\n}\nint secilenSayi = Convert.ToInt32(comboBox1.SelectedItem);",
+                options: [
+                    "ComboBox içindeki toplam eleman sayısını",
+                    "Kullanıcının ComboBox listesinden o an seçmiş olduğu öğeyi (değeri)",
+                    "ComboBox'ın ekrandaki genişliğini",
+                    "ComboBox'taki en son elemanı"
+                ],
+                ans: 1,
+                exp: "SelectedItem özelliği, ComboBox veya ListBox'ta kullanıcının seçtiği öğeyi döndürür. Hiçbir öğe seçili değilse 'null' döner.",
+                reasons: [
+                    "Toplam eleman sayısı Items.Count ile alınır.",
+                    "Doğru! SelectedItem o an seçili olan öğeyi verir.",
+                    "Genişlik Width özelliği ile alınır.",
+                    "Son elemanı değil, kullanıcının seçtiği elemanı verir."
+                ]
+            },
+            {
+                id: 58, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kod bloğu bir butonun Click olayında çalıştırıldığında ne iş yapar?",
+                code: "if (radioButton1.Checked && textBox1.Text.Length < 3)\n{\n    textBox1.Text += \"5\";\n}\nif (radioButton2.Checked && textBox2.Text.Length < 3)\n{\n    textBox2.Text += \"5\";\n}",
+                options: [
+                    "textBox1 ve textBox2'deki sayıları 5 ile çarpar",
+                    "Hangi RadioButton seçiliyse ve ilgili TextBox'taki karakter sayısı 3'ten azsa, o kutunun sonuna '5' rakamını ekler",
+                    "Kutulardaki metin uzunluğu 3'ten büyükse 5 ekler",
+                    "Her iki kutuya aynı anda 5 yazar"
+                ],
+                ans: 1,
+                exp: "radioButton1.Checked seçili olma durumunu, textBox1.Text.Length < 3 ise kutuda en fazla 2 karakter olmasını (yani toplamda 3 basamağı geçmemesini) kontrol eder ve sonuna '5' karakterini ekler.",
+                reasons: [
+                    "Çarpma yapmaz, string birleştirme (+=) ile yan yana rakam yazar.",
+                    "Doğru! Seçili RadioButton'a göre hedef kutuya en fazla 3 basamak olacak şekilde '5' rakamını ekler.",
+                    "Koşul Length > 3 değil, Length < 3'tür.",
+                    "Aynı kapsayıcıdaki iki RadioButton aynı anda Checked olamayacağı için sadece seçili olana yazar."
+                ]
+            },
+            {
+                id: 59, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Yukarıdaki kodda 'textBox1.Text' içinde zaten \"48\" yazıyorken butona 2 kez üst üste basılırsa 'textBox1.Text' içeriği ne olur?",
+                options: [
+                    "4855",
+                    "485",
+                    "58",
+                    "5"
+                ],
+                ans: 1,
+                exp: "\"48\" metninin uzunluğu (Length) 2'dir. İlk basışta 2 < 3 olduğu için \"485\" olur (uzunluk 3 olur). İkinci basışta 3 < 3 koşulu yanlış (false) olduğu için ikinci '5' eklenmez.",
+                reasons: [
+                    "Length < 3 sınırı nedeniyle 4. basamak eklenemez.",
+                    "Doğru! İlk basışta '485' olur, uzunluk 3'e ulaştığı için ikinci basış engellenir.",
+                    "Sayısal toplama yapılmaz, metin birleştirme yapılır.",
+                    "Eski metin silinmez, += ile sonuna eklenir."
+                ]
+            },
+            {
+                id: 60, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Bir TextBox'ın 'KeyPress' olayına yazılan aşağıdaki kod satırı ne işe yarar?",
+                code: "private void textBox1_KeyPress(object sender, KeyPressEventArgs e)\n{\n    e.Handled = !char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar);\n}",
+                options: [
+                    "Metin kutusuna sadece harf girilmesine izin verir",
+                    "Metin kutusuna klavyeden sadece rakam (0-9) girilmesine ve Backspace gibi kontrol tuşlarının kullanılmasına izin verir; harf ve sembol girişini engeller",
+                    "Metin kutusundaki yazıyı büyük harfe çevirir",
+                    "Enter tuşuna basıldığında formu kapatır"
+                ],
+                ans: 1,
+                exp: "char.IsDigit(e.KeyChar) basılan tuşun rakam olup olmadığını, char.IsControl(e.KeyChar) ise Backspace gibi kontrol tuşu olup olmadığını denetler. İkisi de değilse e.Handled = true yapılarak karakterin kutuya yazılması engellenir.",
+                reasons: [
+                    "Harfler IsDigit olmadığı için e.Handled = true olur ve engellenir.",
+                    "Doğru! Harf ve özel karakter girişini kilitleyerek sadece rakam ve silme (kontrol) tuşlarına izin verir.",
+                    "Büyük harfe çevirme işlemi yapmaz.",
+                    "Formu kapatma komutu içermez."
+                ]
+            },
+            {
+                id: 61, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Yukarıdaki KeyPress kodunda '!char.IsControl(e.KeyChar)' ifadesi çıkarılıp sadece 'e.Handled = !char.IsDigit(e.KeyChar);' yazılırsa kullanıcı hangi sorunu yaşar?",
+                options: [
+                    "Kutuya hiç rakam yazamaz",
+                    "Kutuya yazdığı rakamları klavyedeki Backspace (geri silme) tuşuyla silemez",
+                    "Kutuya harf yazabilir",
+                    "Fare ile kutuya tıklayamaz"
+                ],
+                ans: 1,
+                exp: "Backspace tuşu bir rakam değildir, bir kontrol karakteridir (char.IsControl). Eğer kontrol karakterlerine izin verilmezse Backspace tuşu da engellenir ve kullanıcı yazdığını klavyeden silemez.",
+                reasons: [
+                    "IsDigit rakamlara yine izin verir.",
+                    "Doğru! Backspace bir kontrol tuşu olduğu için silme işleminin çalışması adına !char.IsControl şarttır.",
+                    "Harfler yine engellenir.",
+                    "KeyPress klavye olayıdır, fare tıklamasını etkilemez."
+                ]
+            },
+            {
+                id: 62, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Bir TextBox'ın 'KeyPress' olayında kullanılan aşağıdaki alternatif kod bloğu neyi kontrol etmektedir?",
+                code: "private void textBox1_KeyPress(object sender, KeyPressEventArgs e)\n{\n    if ((int)e.KeyChar < 45 || (int)e.KeyChar > 57)\n    {\n        e.Handled = true; // Text kilitlenir\n    }\n    else\n    {\n        e.Handled = false; // Text açılır\n    }\n}",
+                options: [
+                    "Girilen sayının değerinin 45 ile 57 arasında olup olmadığını",
+                    "Klavyeden basılan tuşun ASCII tablosundaki sayısal karşılığının 45 ile 57 arasında olup olmadığını (bu aralık dışındaki harf vb. tuşları engeller)",
+                    "Metin kutusuna en fazla 57 karakter girilmesini",
+                    "Sadece büyük harflerin girilmesini"
+                ],
+                ans: 1,
+                exp: "(int)e.KeyChar ifadesi basılan karakterin ASCII tablosundaki tam sayı kodunu verir. ASCII 48-57 arası '0'-'9' rakamlarıdır, 45 ise '-' (eksi) işaretidir. Bu aralık dışındaki tuşlar e.Handled = true ile engellenir.",
+                reasons: [
+                    "Kutudaki sayıyı değil, o an basılan tek bir karakterin ASCII kodunu kontrol eder.",
+                    "Doğru! Basılan karakterin ASCII kodunu kontrol ederek harf girişini kilitler.",
+                    "Karakter uzunluğu (Length) kontrolü değildir.",
+                    "Büyük harflerin ASCII kodları 65-90 arasındadır ve bu kodda engellenir."
+                ]
+            },
+            {
+                id: 63, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Yukarıdaki ASCII tabanlı KeyPress kodunda alt sınırın 48 ('0' rakamı) yerine 45 olarak belirlenmesi kullanıcıya hangi imkanı tanır?",
+                options: [
+                    "Negatif tam sayı girebilmek için '-' (eksi işareti, ASCII kodu 45) tuşunu kullanabilmesini sağlar",
+                    "Boşluk (Space) tuşunu kullanabilmesini sağlar",
+                    "Harf girebilmesini sağlar",
+                    "Enter tuşunu kullanabilmesini sağlar"
+                ],
+                ans: 0,
+                exp: "ASCII tablosunda 45 numaralı karakter '-' (eksi) işaretidir. Pozitif/Negatif sayı kontrolü yapılan bir uygulamada kullanıcının negatif sayı girebilmesi için '-' tuşuna izin verilmiştir.",
+                reasons: [
+                    "Doğru! ASCII 45 '-' karakteridir ve negatif sayı girişine olanak tanır.",
+                    "Boşluk tuşunun ASCII kodu 32'dir (32 < 45 olduğu için engellenir).",
+                    "Harflerin ASCII kodları 65'ten başlar.",
+                    "Enter tuşunun ASCII kodu 13'tür."
+                ]
+            },
+            {
+                id: 64, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "'KeyPressEventArgs e' parametresinde yer alan 'e.Handled = true;' komutu tam olarak ne yapar?",
+                options: [
+                    "Basılan karakterin TextBox'a yazılmasına izin verir",
+                    "Tuş basımı olayının programcı tarafından tutulduğunu bildirerek karakterin TextBox'a yazılmasını İPTAL EDER (engeller)",
+                    "TextBox içindeki tüm metni siler",
+                    "Uygulamayı durdurur"
+                ],
+                ans: 1,
+                exp: "e.Handled = true; yapıldığında Windows Forms basılan tuşu TextBox'a göndermez, yani tuş kilitlenmiş/engellenmiş olur.",
+                reasons: [
+                    "İzin vermek için e.Handled = false; kullanılır.",
+                    "Doğru! e.Handled = true; basılan karakterin metin kutusuna işlenmesini engeller.",
+                    "Mevcut metni silmez, sadece o an basılan tuşu yazmaz.",
+                    "Uygulamayı durdurmaz."
+                ]
+            },
+            {
+                id: 65, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki iki kod satırı bir 'double s' değişkenini 'textBox3.Text' özelliğine atamak için kullanılmıştır. Bu iki satır hakkında ne söylenebilir?",
+                code: "textBox3.Text = s.ToString();\ntextBox3.Text = Convert.ToString(s);",
+                options: [
+                    "İkisi de sayısal 's' değişkenini metne (string) dönüştürüp textBox3'te gösterir; birbirinin alternatifi olan iki doğru yöntemdir",
+                    "İlk satır hata verir, sadece ikinci satır çalışır",
+                    "Sayının değerini iki katına çıkarır",
+                    "Sonucu iki defa yan yana yazar"
+                ],
+                ans: 0,
+                exp: "C# dilinde sayısal bir değişkeni string'e çevirmek için hem 's.ToString()' hem de 'Convert.ToString(s)' kullanılabilir. İkinci satır '=' ataması kullandığı için birincinin üzerine aynı değeri yazar.",
+                reasons: [
+                    "Doğru! Her iki metot da sayısal değeri string türüne dönüştürür.",
+                    "Her iki satır da hatasız çalışır.",
+                    "Matematiksel işlem yapmaz.",
+                    "'+=' değil '=' kullanıldığı için yan yana eklemez, üzerine yazar."
+                ]
+            },
+            {
+                id: 66, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Ondalıklı bir bölme işleminin sonucunu ekranda gösterirken kullanılan aşağıdaki iki farklı yöntem arasındaki teknik fark nedir?",
+                code: "// 1. Yöntem:\ns = Math.Round(a / b, 2);\ntextBox3.Text = s.ToString();\n\n// 2. Yöntem:\ns = a / b;\ntextBox3.Text = s.ToString(\"0.00\");",
+                options: [
+                    "1. yöntem 's' değişkeninin sayısal değerini virgülden sonra en fazla 2 basamağa yuvarlar; 2. yöntem ise sayıyı metne çevirirken virgülden sonra sabit 2 hane (örn: 2.50) olacak şekilde formatlar",
+                    "İkisi de sayıyı tam sayıya çevirir",
+                    "1. yöntem sadece tam sayılarda çalışır",
+                    "2. yöntem bölme işlemini yapmaz"
+                ],
+                ans: 0,
+                exp: "Math.Round(değer, 2) matematiksel yuvarlama yapar (örn: 2.5 ise 2.5 kalır, 2.567 ise 2.57 olur). ToString(\"0.00\") ise string formatlama yapar ve virgülden sonra mutlaka 2 basamak gösterir (örn: 2.5 ise \"2.50\" yazar).",
+                reasons: [
+                    "Doğru! Math.Round sayısal yuvarlama yaparken, ToString(\"0.00\") metinsel görünüm formatlaması yapar.",
+                    "İkisi de 2 ondalık basamak korur, tam sayıya çevirmez.",
+                    "Math.Round double/decimal türlerinde çalışır.",
+                    "2. yöntemde de s = a / b ile bölme yapılır."
+                ]
+            },
+            {
+                id: 67, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kodda 'if (textBox1.Text != \"\" && textBox2.Text != \"\")' koşulu neyi kontrol etmektedir?",
+                code: "if (textBox1.Text != \"\" && textBox2.Text != \"\")\n{\n    double a = Convert.ToDouble(textBox1.Text);\n    double b = Convert.ToDouble(textBox2.Text);\n    ...\n}\nelse\n{\n    MessageBox.Show(\"Veri girişi yok! Lütfen her iki kutuya da sayı giriniz.\");\n}",
+                options: [
+                    "Kutulardan sadece birinin dolu olmasını",
+                    "Hem textBox1'in hem de textBox2'nin boş OLMAMASINI (her iki kutuya da veri girilmiş olmasını)",
+                    "İki kutudaki sayıların birbirine eşit olmamasını",
+                    "Kutuların tamamen boş olmasını"
+                ],
+                ans: 1,
+                exp: "'!=' eşit değildir, '\"\"' boş metin, '&&' ise VE operatörüdür. Yani textBox1 boş değilse VE textBox2 boş değilse hesaplama yapılır; aksi halde uyarı mesajı gösterilir.",
+                reasons: [
+                    "VE (&&) operatörü kullanıldığı için her iki kutunun da dolu olması şarttır.",
+                    "Doğru! Her iki metin kutusunun da boş bırakılmadığını doğrular.",
+                    "textBox1.Text != textBox2.Text yazılmamıştır, \"\" (boş string) ile karşılaştırılmıştır.",
+                    "Boş olmasını değil, boş olmamasını (!= \"\") kontrol eder."
+                ]
+            },
+            {
+                id: 68, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Bir ListBox kontrolünün içinde o an kaç adet eleman (satır) bulunduğunu tam sayı olarak döndüren özellik hangisidir?",
+                code: "if (listBox1.Items.Count == 2 && sayi > 1)",
+                options: [
+                    "listBox1.Text.Length",
+                    "listBox1.Items.Count",
+                    "listBox1.SelectedIndex",
+                    "listBox1.MaxLength"
+                ],
+                ans: 1,
+                exp: "listBox1.Items.Count özelliği, ListBox'ın Items koleksiyonundaki toplam öğe (eleman) sayısını verir.",
+                reasons: [
+                    "Text.Length metin uzunluğunu verir, listedeki eleman sayısını vermez.",
+                    "Doğru! Items.Count listedeki toplam eleman adedini döndürür.",
+                    "SelectedIndex seçili elemanın sıra numarasını verir.",
+                    "ListBox'ta MaxLength özelliği yoktur."
+                ]
+            },
+            {
+                id: 69, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kodda 'sayi' ve 'toplam' değişkenlerinin metotların dışında, doğrudan 'class Form1' bloğunun içinde tanımlanmasının amacı nedir?",
+                code: "public partial class Form1 : Form\n{\n    int sayi;\n    int toplam = 0;\n\n    private void button1_Click(object sender, EventArgs e) { ... }\n    private void button2_Click(object sender, EventArgs e) { ... }\n}",
+                options: [
+                    "Sadece görsel tasarım ekranında görünmeleri için",
+                    "Form içerisindeki tüm metotların (button1_Click, button2_Click, button3_Click) bu değişkenlere ortaklaşa erişebilmesi ve değerlerini paylaşabilmesi için (Sınıf düzeyinde değişken)",
+                    "Değişkenlerin değerinin hiç değiştirilememesi için",
+                    "C# dilinde metot içinde int tanımlanamayacağı için"
+                ],
+                ans: 1,
+                exp: "Bir metot içinde tanımlanan yerel (local) değişkene başka bir metottan erişilemez. Değişkenler sınıf düzeyinde (Form1 içinde, metotların dışında) tanımlandığında formdaki tüm buton olayları aynı değişkeni kullanabilir.",
+                reasons: [
+                    "Kodla tanımlanan değişkenler tasarım ekranında görünmez.",
+                    "Doğru! Sınıf düzeyindeki (global) değişkenler formdaki tüm olay metotları tarafından ortak kullanılabilir.",
+                    "Değerleri metotlar içinde değiştirilebilir.",
+                    "Metot içinde de int tanımlanabilir (ancak sadece o metot içinde geçerli olur)."
+                ]
+            },
+            {
+                id: 70, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Kullanıcıya ekranda küçük bir diyalog penceresi ile bilgi veya hata mesajı göstermek için kullanılan standart Windows Forms komutu hangisidir?",
+                options: [
+                    "Console.WriteLine(\"Hata\");",
+                    "MessageBox.Show(\"Hata\");",
+                    "textBox1.Show(\"Hata\");",
+                    "Form.Alert(\"Hata\");"
+                ],
+                ans: 1,
+                exp: "Windows Forms uygulamalarında açılır mesaj kutusu göstermek için 'MessageBox.Show(\"mesaj\");' metodu kullanılır.",
+                reasons: [
+                    "Console.WriteLine konsol uygulamalarında ekrana yazı yazar.",
+                    "Doğru! Mesaj penceresi MessageBox.Show() ile açılır.",
+                    "textBox1.Show() kontrolü görünür yapar, mesaj penceresi açmaz.",
+                    "Form.Alert() adında bir metot yoktur."
+                ]
+            },
+            {
+                id: 71, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Bir TextBox kontrolünden okunan 'textBox1.Text' ifadesinin veri türü nedir ve bununla dört işlem yapabilmek için ne gerekir?",
+                options: [
+                    "int türündedir, doğrudan matematiksel işlem yapılabilir",
+                    "string (metin) türündedir; matematiksel işlem yapabilmek için Convert.ToInt32, Convert.ToDouble veya int.TryParse ile sayısal türe dönüştürülmelidir",
+                    "double türündedir",
+                    "char türündedir"
+                ],
+                ans: 1,
+                exp: "TextBox.Text özelliği her zaman 'string' türündedir. İçine rakam girilse bile matematiksel toplama, çıkarma, çarpma, bölme yapabilmek için sayısal bir veri türüne dönüştürülmelidir.",
+                reasons: [
+                    "Doğrudan '+' uygulanırsa sayıları toplamaz, yan yana metin olarak birleştirir.",
+                    "Doğru! Text özelliği string döndürdüğü için sayısal dönüşüm şarttır.",
+                    "Otomatik double değildir.",
+                    "char tek karakterdir, Text ise string'dir."
+                ]
+            },
+            {
+                id: 72, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kod çalıştığında 'listBox1' içine eklenen metin tam olarak nedir?",
+                code: "int girilenSayi = 6;\nint i = 4;\nint sonuc = girilenSayi * i;\nlistBox1.Items.Add(girilenSayi + \" x \" + i + \" = \" + sonuc);",
+                options: [
+                    "24",
+                    "6 x 4 = 24",
+                    "girilenSayi x i = sonuc",
+                    "6 * 4 = 24"
+                ],
+                ans: 1,
+                exp: "Değişkenlerin değerleri ile çift tırnak içindeki sabit metinler (' x ' ve ' = ') birleştirilerek '6 x 4 = 24' satırı listBox1'e eklenir.",
+                reasons: [
+                    "Sadece sonuc değil, işlem metni de birleştirilmiştir.",
+                    "Doğru! 6 + \" x \" + 4 + \" = \" + 24 birleşerek \"6 x 4 = 24\" metnini oluşturur.",
+                    "Değişkenler çift tırnak içinde olmadığı için isimleri değil değerleri yazılır.",
+                    "Çift tırnak içinde '*' değil, ' x ' yazılmıştır."
+                ]
+            },
+            {
+                id: 73, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "C# dilinde iki tam sayı (int) bölündüğünde küsurat kaybolmasın ve ondalıklı sonuç elde edilsin diye hesap makinesi kodlarında değişkenler hangi türde tanımlanmıştır?",
+                code: "double a, b, s;\na = Convert.ToDouble(textBox1.Text);\nb = Convert.ToDouble(textBox2.Text);\ns = a / b;",
+                options: [
+                    "byte",
+                    "double",
+                    "int",
+                    "char"
+                ],
+                ans: 1,
+                exp: "Eğer a ve b 'int' olarak tanımlansaydı 5 / 2 işlemi 2.5 yerine 2 sonucunu verirdi. Ondalıklı sonuçları doğru hesaplamak için 'double' ve 'Convert.ToDouble' kullanılmıştır.",
+                reasons: [
+                    "byte tam sayı türüdür, ondalıklı sonuç tutamaz.",
+                    "Doğru! Reel (ondalıklı) bölme işlemi için double türü kullanılmıştır.",
+                    "int tam sayı bölmesi yapar ve virgülden sonrasını atar.",
+                    "char tek karakter tutar."
+                ]
+            },
+            {
+                id: 74, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Aşağıdaki kodda 'textBox1.Text += \"7\";' satırının açık yazılışı hangisidir?",
+                options: [
+                    "textBox1.Text = \"7\";",
+                    "textBox1.Text = textBox1.Text + \"7\";",
+                    "textBox1.Text = 7 + 7;",
+                    "textBox1.Clear();"
+                ],
+                ans: 1,
+                exp: "'+=' operatörü string ifadelerde mevcut metni koruyup sağına yeni metni ekler (textBox1.Text = textBox1.Text + \"7\";).",
+                reasons: [
+                    "Bu ifade eski yazıyı silip sadece 7 yazar.",
+                    "Doğru! Mevcut metnin sonuna '7' karakterini ekler.",
+                    "Sayısal toplama yapmaz.",
+                    "Metni temizlemez."
+                ]
+            },
+            {
+                id: 75, sec: "sec3", cat: "Bölüm 3: Kontrol Metotları, Özellikler ve Olaylar",
+                q: "Bir projeye isim verirken '5.10.2026_uygulama' gibi rakamla başlayan bir ad verildiğinde Visual Studio neden namespace adını otomatik olarak '_5._10._2026_uygulama' şeklinde başına alt çizgi (_) koyarak başlatır?",
+                options: [
+                    "C# dil kurallarına göre değişken, sınıf ve namespace (ad alanı) isimleri rakamla başlayamayacağı için",
+                    "Dosyanın gizli olması için",
+                    "Sadece tarih içeren projelere özel olduğu için",
+                    "Hata vermesi için"
+                ],
+                ans: 0,
+                exp: "C# sözdizimi kuralları gereği hiçbir tanımlayıcı (identifier) rakamla başlayamaz; harf veya alt çizgi (_) ile başlamalıdır.",
+                reasons: [
+                    "Doğru! C# tanımlayıcıları rakamla başlayamayacağı için Visual Studio otomatik olarak başa '_' ekler.",
+                    "Gizlilikle ilgisi yoktur.",
+                    "Rakamla başlayan her isim için geçerlidir.",
+                    "Hata vermemesi, derlenebilmesi için bu düzeltmeyi yapar."
+                ]
+            },
+
+            // ================= BÖLÜM 4: C# KOD ANALİZİ VE ALGORİTMALAR (76 - 100) =================
+            {
+                id: 76, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki C# kod bloğu genel olarak hangi matematiksel işlemi gerçekleştirmektedir?",
+                code: "double X = Convert.ToDouble(textBox1.Text);\ndouble F = 1;\nstring METİN = \"\";\nfor (int j = 1; j <= X; j++)\n{\n    if (j == X) METİN += j.ToString();\n    if (j < X) METİN += j.ToString() + \"*\";\n    F *= j;\n}\ntextBox2.Text = X.ToString() + \"!-->\";\ntextBox2.Text += METİN + \"=\" + F.ToString();",
+                options: [
+                    "Girilen sayının asal olup olmadığını bulur",
+                    "Girilen sayının faktöriyelini (X!) hesaplar ve çarpanların açık yazılışıyla birlikte textBox2'de gösterir",
+                    "Girilen sayının tam bölenlerini bulur",
+                    "Girilen sayının karesini alır"
+                ],
+                ans: 1,
+                exp: "1'den X'e kadar olan sayıları 'F *= j' ile birbiriyle çarparak X! (faktöriyel) değerini hesaplar ve '4!-->1*2*3*4=24' formatında yazdırır.",
+                reasons: [
+                    "Asal sayı kontrolü yapmamaktadır.",
+                    "Doğru! 1'den X'e kadar ardışık çarpım yaparak faktöriyel hesaplar ve açılımını metin olarak gösterir.",
+                    "Bölme veya mod alma işlemi yoktur.",
+                    "Karesini değil, faktöriyelini alır."
+                ]
+            },
+            {
+                id: 77, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Yukarıdaki faktöriyel kodunda 'textBox1' içine '4' girilip buton çalıştırıldığında 'textBox2.Text' içinde tam olarak ne yazar?",
+                options: [
+                    "24",
+                    "4! = 24",
+                    "4!-->1*2*3*4=24",
+                    "4!-->1*2*3*4*=24"
+                ],
+                ans: 2,
+                exp: "X=4 için önce '4!-->' atanır, ardından döngüde oluşan METİN ('1*2*3*4') + '=' + F ('24') eklenerek '4!-->1*2*3*4=24' elde edilir.",
+                reasons: [
+                    "Sadece sonucu değil, X!--> ve çarpanların metnini de yazdırmaktadır.",
+                    "Ok işareti (-->) ve çarpanların açılımı (1*2*3*4) eksik.",
+                    "Doğru! Kod tam olarak '4!-->1*2*3*4=24' metnini üretir.",
+                    "j == X olduğunda sonuna '*' eklenmediği için 4'ten sonra '*' işareti olmaz."
+                ]
+            },
+            {
+                id: 78, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Faktöriyel kodundaki döngü içinde neden 'if (j == X)' ve 'if (j < X)' şeklinde iki ayrı koşul yazılmıştır?",
+                code: "if (j == X) METİN += j.ToString();\nif (j < X) METİN += j.ToString() + \"*\";",
+                options: [
+                    "Döngüyü hızlandırmak için",
+                    "Çarpanlar metne eklenirken son sayıdan (j == X) sonra '=' işaretinin önüne fazladan '*' (çarpı) işareti konulmasını engellemek için",
+                    "Sadece çift sayıları çarpmak için",
+                    "F değişkenini sıfırlamak için"
+                ],
+                ans: 1,
+                exp: "j < X iken sayıların sağına '*' eklenir ('1*2*3*'). Son adıma (j == X) gelindiğinde ise '4*' değil sadece '4' eklenmesi gerekir ki sonuç '1*2*3*4=24' olsun.",
+                reasons: [
+                    "Performansla ilgisi yoktur.",
+                    "Doğru! Son elemandan sonra fazladan '*' işareti çıkmasını önler.",
+                    "Tek-çift kontrolü yapmaz.",
+                    "F değişkenini sıfırlamaz."
+                ]
+            },
+            {
+                id: 79, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Faktöriyel hesaplayan kodda 'double F = 1;' yerine 'double F = 0;' yazılsaydı sonuç nasıl etkilenirdi?",
+                options: [
+                    "Hiçbir şey değişmezdi",
+                    "0 çarpma işleminde yutan eleman olduğu için 'F *= j' işlemi sonucunda F her zaman 0 çıkardı",
+                    "Sonuç 1 fazla çıkardı",
+                    "Derleme hatası verirdi"
+                ],
+                ans: 1,
+                exp: "Ardışık çarpma işlemlerinde başlangıç değeri çarpmanın etkisiz elemanı olan 1 olmalıdır. 0 verilirse 0 * 1 * 2... her zaman 0 sonucunu üretir.",
+                reasons: [
+                    "Sonuç tamamen yanlış (0) çıkardı.",
+                    "Doğru! 0 ile çarpılan her sayı 0 olacağı için faktöriyel sonucu hep 0 görünürdü.",
+                    "Toplama değil çarpma yapıldığı için 1 fazla çıkmaz, 0 çıkar.",
+                    "Derleme hatası vermez, mantıksal hata oluşur."
+                ]
+            },
+            {
+                id: 80, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Faktöriyel kodunda 'textBox1' içine '0' girilirse 'textBox2.Text' çıktısı ne olur?",
+                options: [
+                    "0!-->=1",
+                    "0!-->0=0",
+                    "Hata verir",
+                    "Boş kalır"
+                ],
+                ans: 0,
+                exp: "X = 0 olduğunda 'for (int j = 1; j <= 0; j++)' koşulu başlangıçta false olur ve döngüye hiç girilmez. METİN boş (\"\") kalır, F ise başlangıç değeri olan 1 kalır: '0!-->=1' yazdırılır.",
+                reasons: [
+                    "Doğru! Döngü hiç çalışmaz, F=1 kalır ve '0!-->=1' çıktısı üretilir.",
+                    "Döngüye girilmediği için F sıfırlanmaz.",
+                    "Kod hata vermez.",
+                    "textBox2.Text'e atama satırları döngünün dışında olduğu için boş kalmaz."
+                ]
+            },
+            {
+                id: 81, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki C# kod bloğu çalıştırıldığında 'listBox1' içerisine hangi verileri ekler ve 'toplam' değişkeninde neyi hesaplar?",
+                code: "listBox1.Items.Clear();\nsayi = Convert.ToInt32(textBox1.Text);\nint kalan;\nfor (int i = 1; i <= sayi; i++)\n{\n    kalan = sayi % i;\n    if (kalan == 0)\n    {\n        toplam = toplam + i;\n        listBox1.Items.Add(i);\n    }\n}",
+                options: [
+                    "Sayının faktöriyelini hesaplar",
+                    "1'den sayıya kadar olan sayılar içinde 'sayi'yı kalansız bölen (tam bölen) tüm sayıları listBox1'e ekler ve bu bölenlerin toplamını hesaplar",
+                    "Sayının çarpım tablosunu oluşturur",
+                    "1'den sayıya kadar olan tüm tek sayıları listeler"
+                ],
+                ans: 1,
+                exp: "'kalan = sayi % i;' ile sayının i'ye bölümünden kalan bulunur. 'kalan == 0' ise i sayısı tam bölendir; listBox1'e eklenir ve 'toplam' değişkenine ilave edilir.",
+                reasons: [
+                    "Çarpma işlemi yoktur, mod (%) alma işlemi vardır.",
+                    "Doğru! Sayının pozitif tam bölenlerini bulup listeler ve toplamlarını hesaplar.",
+                    "Çarpım tablosu oluşturmaz.",
+                    "i % 2 değil, sayi % i kontrol edilmektedir."
+                ]
+            },
+            {
+                id: 82, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Yukarıdaki tam bölen bulma kodunda 'textBox1' içine '12' girilirse 'listBox1' içerisine sırasıyla hangi sayılar eklenir?",
+                options: [
+                    "1, 2, 3, 4, 6, 12",
+                    "1, 2, 3, 4, 6",
+                    "2, 3, 4, 6",
+                    "1, 12"
+                ],
+                ans: 0,
+                exp: "Döngü i = 1'den i <= 12'ye kadar çalışır. 12'yi kalansız bölen sayılar: 1, 2, 3, 4, 6 ve 12'dir.",
+                reasons: [
+                    "Doğru! 12'nin tüm pozitif tam bölenleri (1 ve 12 dahil) 6 tanedir: 1, 2, 3, 4, 6, 12.",
+                    "Koşul i <= sayi olduğu için 12 sayısı da listeye eklenir.",
+                    "1 ve 12 de tam bölendir.",
+                    "2, 3, 4 ve 6 da 12'yi tam böler."
+                ]
+            },
+            {
+                id: 83, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod bloğu bir sayının 'Mükemmel Sayı' olup olmadığını kontrol etmektedir. Kodda 'button1.PerformClick();' satırından hemen sonra neden 'toplam = toplam - sayi;' işlemi yapılmıştır?",
+                code: "private void button2_Click(object sender, EventArgs e)\n{\n    button1.PerformClick(); // Tam bölenleri bulur ve toplar\n    toplam = toplam - sayi;\n    if (toplam == sayi)\n        MessageBox.Show(sayi.ToString() + \" Mükemmel sayıdır\");\n    else\n        MessageBox.Show(sayi.ToString() + \" Mükemmel sayı değildir\");\n    toplam = 0;\n}",
+                options: [
+                    "Sayının negatifini almak için",
+                    "Mükemmel sayı 'kendisi hariç pozitif tam bölenlerinin toplamı kendisine eşit olan sayı' olduğu için, button1'de toplama dahil edilen sayının kendisini toplamdan çıkarmak için",
+                    "Sayının yarısını bulmak için",
+                    "Döngüyü sıfırlamak için"
+                ],
+                ans: 1,
+                exp: "button1 döngüsü 1'den 'sayi'ya kadar (sayi dahil) tüm tam bölenleri toplar (Örn: 6 için 1+2+3+6 = 12). Kendisi hariç bölenler toplamını elde etmek için toplamdan 'sayi' çıkarılır (12 - 6 = 6).",
+                reasons: [
+                    "toplam her zaman sayıdan büyük veya eşit olduğu için negatif çıkmaz.",
+                    "Doğru! Kendisi hariç tam bölenlerinin toplamını bulmak için sayının kendisi toplamdan düşülür.",
+                    "Yarısını bulmak için 2'ye bölünmesi gerekirdi.",
+                    "Döngü zaten button1 içinde tamamlanmıştır."
+                ]
+            },
+            {
+                id: 84, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Yukarıdaki mükemmel sayı kontrol koduna göre, 'textBox1' içine aşağıdakilerden hangisi girilirse ekranda '... Mükemmel sayıdır' mesajı görünür?",
+                options: [
+                    "8",
+                    "10",
+                    "6",
+                    "12"
+                ],
+                ans: 2,
+                exp: "6'nın kendisi hariç pozitif tam bölenleri 1, 2 ve 3'tür. Toplamları: 1 + 2 + 3 = 6 olduğu için 6 mükemmel sayıdır (Bir sonraki mükemmel sayı 28'dir: 1+2+4+7+14=28).",
+                reasons: [
+                    "8'in kendisi hariç bölenleri: 1 + 2 + 4 = 7 (8'e eşit değil).",
+                    "10'un kendisi hariç bölenleri: 1 + 2 + 5 = 8 (10'a eşit değil).",
+                    "Doğru! 6'nın kendisi hariç bölenleri toplamı 1 + 2 + 3 = 6'dır.",
+                    "12'nin kendisi hariç bölenleri: 1 + 2 + 3 + 4 + 6 = 16 (12'ye eşit değil)."
+                ]
+            },
+            {
+                id: 85, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod bloğu bir sayının 'Asal Sayı' olup olmadığını nasıl tespit etmektedir?",
+                code: "private void button3_Click(object sender, EventArgs e)\n{\n    toplam = 0;\n    button1.PerformClick(); // Tam bölenleri listBox1'e ekler\n    if (listBox1.Items.Count == 2 && sayi > 1)\n    {\n        MessageBox.Show(sayi.ToString() + \" Asal sayıdır.\");\n    }\n    else\n    {\n        MessageBox.Show(sayi.ToString() + \" Asal sayı değildir.\");\n    }\n    toplam = 0;\n}",
+                options: [
+                    "Sayının 2'ye bölümünden kalana bakarak",
+                    "Tam bölenleri listBox1'e eklettikten sonra, listedeki tam bölen sayısının 2'ye eşit olup olmadığını (1 ve kendisi) ve sayının 1'den büyük olduğunu kontrol ederek",
+                    "Tam bölenlerin toplamının 2 olup olmadığını kontrol ederek",
+                    "Sayının tek sayı olup olmadığını kontrol ederek"
+                ],
+                ans: 1,
+                exp: "Asal sayılar 1'den büyük olan ve yalnızca 2 tane pozitif tam böleni (1 ve kendisi) bulunan sayılardır. button1 tüm tam bölenleri listBox1'e eklediği için listBox1.Items.Count == 2 şartı sayının asal olduğunu kanıtlar.",
+                reasons: [
+                    "Sadece 2'ye bölünmeye bakmak 9, 15, 21 gibi asal olmayan tek sayıları ayırt edemez; üstelik 2 sayısı çift olduğu halde asaldır.",
+                    "Doğru! Pozitif tam bölen adedi (listBox1.Items.Count) tam olarak 2 ise ve sayı > 1 ise sayı asaldır.",
+                    "Bölenlerin toplamını değil, bölenlerin adedini (Count) kontrol etmektedir.",
+                    "Tek sayı kontrolü yapmamaktadır."
+                ]
+            },
+            {
+                id: 86, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Yukarıdaki asal sayı kontrol kodunda 'textBox1' içine '1' girilirse hangi mesaj gösterilir ve nedeni nedir?",
+                options: [
+                    "'1 Asal sayıdır.' / Çünkü 1 tek sayıdır",
+                    "'1 Asal sayı değildir.' / Çünkü 1'in sadece 1 tane tam böleni vardır (Items.Count 1'dir) ve sayi > 1 koşulu sağlanmaz",
+                    "Program hata verir",
+                    "Hiçbir mesaj gösterilmez"
+                ],
+                ans: 1,
+                exp: "1 sayısının tam böleni sadece 1'dir (listBox1.Items.Count = 1 olur) ve 1 > 1 yanlış olduğu için if koşulu sağlanmaz, else bloğu çalışarak '1 Asal sayı değildir.' mesajını verir.",
+                reasons: [
+                    "Matematiksel olarak en küçük asal sayı 2'dir; 1 asal değildir.",
+                    "Doğru! Hem Items.Count == 2 hem de sayi > 1 koşulları false olduğu için '1 Asal sayı değildir.' mesajı çıkar.",
+                    "Kod hata vermez.",
+                    "else bloğu çalışır ve mesaj gösterir."
+                ]
+            },
+            {
+                id: 87, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod bloğu çalıştırıldığında girilen tam sayı için neyi belirler?",
+                code: "if (textBox1.Text != \"\")\n{\n    int sayı = Convert.ToInt32(textBox1.Text);\n    if (sayı > 0)\n        MessageBox.Show(sayı.ToString() + \" Sayısı POZİTİF\");\n    else if (sayı < 0)\n        MessageBox.Show(sayı.ToString() + \" Sayısı NEGATİF\");\n    else\n        MessageBox.Show(sayı.ToString() + \" Sayısı NÖTR\");\n}\nelse\n{\n    MessageBox.Show(\"Bir Tamsayı Giriniz\");\n}",
+                options: [
+                    "Sayının tek mi çift mi olduğunu",
+                    "Metin kutusu doluysa sayının Pozitif (>0), Negatif (<0) veya Nötr (0) olduğunu; kutu boşsa uyarı mesajı verilmesini",
+                    "Sayının asal olup olmadığını",
+                    "Sayının basamak sayısını"
+                ],
+                ans: 1,
+                exp: "Dıştaki if kutunun boş olup olmadığını kontrol eder. İçteki if - else if - else yapısı ise sayının 0'dan büyük (Pozitif), 0'dan küçük (Negatif) veya 0'a eşit (Nötr) olma durumunu belirler.",
+                reasons: [
+                    "Tek/çift kontrolü % 2 ile yapılır.",
+                    "Doğru! Boşluk kontrolüyle birlikte Pozitif, Negatif ve Nötr kontrolü yapar.",
+                    "Asal kontrolü yapmaz.",
+                    "Basamak sayısını bulmaz."
+                ]
+            },
+            {
+                id: 88, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod bloğu çalıştırıldığında ne iş yapar?",
+                code: "int S;\nS = Convert.ToInt32(textBox1.Text);\nif (S % 2 == 0)\n{\n    MessageBox.Show(S.ToString() + \" Sayısı ÇİFT Sayıdır\");\n}\nelse\n{\n    MessageBox.Show(S.ToString() + \" Sayısı TEK Sayıdır\");\n}",
+                options: [
+                    "Sayının 2 katını alır",
+                    "Sayının 2'ye bölümünden kalana (S % 2) bakarak ÇİFT veya TEK sayı olduğunu mesaj kutusuyla gösterir",
+                    "Sadece pozitif sayıları kontrol eder",
+                    "Sayının karekökünü alır"
+                ],
+                ans: 1,
+                exp: "'S % 2' ifadesi S sayısının 2'ye bölümünden kalanı verir. Kalan 0 ise sayı ÇİFT, değilse TEK sayıdır.",
+                reasons: [
+                    "2 ile çarpma işlemi yoktur.",
+                    "Doğru! Mod 2 (S % 2 == 0) kontrolü ile sayının çift mi tek mi olduğunu bulur.",
+                    "Negatif ve pozitif tüm tam sayılarda tek/çift kontrolü yapar.",
+                    "Karekök alma işlemi yoktur."
+                ]
+            },
+            {
+                id: 89, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Yukarıdaki Tek/Çift kontrol kodunda kullanıcı 'textBox1' kutusunu boş bırakıp butona tıklarsa ne olur?",
+                options: [
+                    "\"Bir Tamsayı Giriniz\" mesajı çıkar",
+                    "Boşluk kontrolü (if textBox1.Text != \"\") veya TryParse kullanılmadığı için 'Convert.ToInt32(textBox1.Text)' satırında çalışma zamanı hatası (FormatException) oluşur",
+                    "\"0 Sayısı ÇİFT Sayıdır\" mesajı çıkar",
+                    "Hiçbir şey olmaz"
+                ],
+                ans: 1,
+                exp: "Convert.ToInt32(\"\") boş bir metni tam sayıya çeviremez ve FormatException hatası fırlatır. Bu hatayı önlemek için öncesinde if (textBox1.Text != \"\") veya int.TryParse kullanılmalıdır.",
+                reasons: [
+                    "Bu kod bloğunda boşluk kontrolü ve uyarı mesajı yazılmamıştır.",
+                    "Doğru! Boş metin doğrudan Convert.ToInt32'ye gönderildiğinde FormatException hatası oluşur.",
+                    "Boş metin otomatik olarak 0 kabul edilmez.",
+                    "Hata fırlatılır."
+                ]
+            },
+            {
+                id: 90, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki çarpım tablosu kodunda 'textBox1' içine '8' yazılıp 'comboBox1' listesinden '5' seçildiğinde 'listBox1' içerisine kaç satır eklenir ve son satırda ne yazar?",
+                code: "int secilenSayi = Convert.ToInt32(comboBox1.SelectedItem);\nlistBox1.Items.Clear();\nfor (int i = 1; i <= secilenSayi; i++)\n{\n    int sonuc = girilenSayi * i;\n    listBox1.Items.Add(girilenSayi + \" x \" + i + \" = \" + sonuc);\n}",
+                options: [
+                    "8 satır eklenir / Son satır: 8 x 8 = 64",
+                    "5 satır eklenir / Son satır: 8 x 5 = 40",
+                    "5 satır eklenir / Son satır: 5 x 8 = 40",
+                    "10 satır eklenir / Son satır: 8 x 10 = 80"
+                ],
+                ans: 1,
+                exp: "Döngü 1'den 'secilenSayi'ya (5'e) kadar çalışır, yani 5 satır eklenir. Her satırda girilenSayi (8) x i = sonuc yazıldığı için 5. satırda '8 x 5 = 40' yazar.",
+                reasons: [
+                    "Döngü sınırı girilenSayi (8) değil, secilenSayi (5) değeridir.",
+                    "Doğru! i=1..5 için 5 satır eklenir ve son satır '8 x 5 = 40' olur.",
+                    "Önce girilenSayi (8), sonra i (5) yazılmaktadır.",
+                    "Döngü 10'a kadar değil, secilenSayi'ya (5) kadar döner."
+                ]
+            },
+            {
+                id: 91, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod çalıştığında 'textBox3.Text' içinde hangi değer görünür?",
+                code: "double a = 15;\ndouble b = 4;\ndouble s = a / b;\ntextBox3.Text = s.ToString(\"0.00\");",
+                options: [
+                    "3",
+                    "3.75",
+                    "3.8",
+                    "4.00"
+                ],
+                ans: 1,
+                exp: "15 / 4 = 3.75 eder. s.ToString(\"0.00\") virgülden sonra 2 basamak formatında '3.75' (veya Türkçe yerel ayarlarda '3,75') olarak yazdırır.",
+                reasons: [
+                    "a ve b double olduğu için tam sayı bölmesi yapılmaz.",
+                    "Doğru! 15 / 4 = 3.75'tir ve iki ondalık basamakla gösterilir.",
+                    "2 basamaklı formatta 3.75 yuvarlanmaz, olduğu gibi 3.75 görünür.",
+                    "Tam sayıya yuvarlanmaz."
+                ]
+            },
+            {
+                id: 92, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod çalıştığında 'textBox3.Text' içinde hangi değer görünür?",
+                code: "double a = 10;\ndouble b = 3;\ndouble s = Math.Round(a / b, 2);\ntextBox3.Text = s.ToString();",
+                options: [
+                    "3",
+                    "3.33",
+                    "3.34",
+                    "3.33333333333333"
+                ],
+                ans: 1,
+                exp: "10 / 3 = 3.333333... eder. Math.Round(a / b, 2) virgülden sonra 2 basamağa yuvarladığı için sonuç 3.33 olur.",
+                reasons: [
+                    "2 ondalık basamağa yuvarlanmaktadır, tam sayıya değil.",
+                    "Doğru! 3.333... virgülden sonra 2 basamağa yuvarlandığında 3.33 olur.",
+                    "3. basamak 3 olduğu için (5'ten küçük) yukarı yuvarlanmaz.",
+                    "Math.Round(..., 2) nedeniyle 2 basamaktan fazlası kırpılır."
+                ]
+            },
+            {
+                id: 93, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod çalıştığında 'textBox3.Text' içinde hangi değer görünür?",
+                code: "double a = 14;\ndouble b = 9;\ndouble s = Math.Round(a / b, 2);\ntextBox3.Text = s.ToString();",
+                options: [
+                    "1.55",
+                    "1.56",
+                    "1.5",
+                    "2"
+                ],
+                ans: 1,
+                exp: "14 / 9 = 1.555555... eder. Virgülden sonraki 3. basamak 5 (veya üstü) olduğu için Math.Round(..., 2) 2. basamağı yukarı yuvarlar ve sonuç 1.56 olur.",
+                reasons: [
+                    "1.555... değerinde 3. basamak 5 olduğu için 1.55 olarak kalmaz, yukarı yuvarlanır.",
+                    "Doğru! 1.555... iki ondalık basamağa yuvarlandığında 1.56 olur.",
+                    "2 basamağa yuvarlanmaktadır.",
+                    "Tam sayıya yuvarlanmaz."
+                ]
+            },
+            {
+                id: 94, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki tam bölen bulma metodunda 'toplam' değişkeni sınıf düzeyinde (global) tanımlanmıştır. Ancak bu metot içinde 'toplam = 0;' sıfırlaması unutulmuştur. Kullanıcı bu butona 6 sayısı için iki kez üst üste tıklarsa 'toplam' değişkeninin değeri ne olur?",
+                code: "int sayi;\nint toplam = 0;\n\nprivate void button1_Click(object sender, EventArgs e)\n{\n    listBox1.Items.Clear();\n    sayi = Convert.ToInt32(textBox1.Text);\n    for (int i = 1; i <= sayi; i++)\n    {\n        if (sayi % i == 0)\n        {\n            toplam = toplam + i;\n            listBox1.Items.Add(i);\n        }\n    }\n}",
+                options: [
+                    "12",
+                    "24",
+                    "6",
+                    "0"
+                ],
+                ans: 1,
+                exp: "6'nın tam bölenleri (1+2+3+6) toplamı 12'dir. İlk tıklamada toplam = 12 olur. Metot başında 'toplam = 0;' olmadığı için ikinci tıklamada 12'nin üzerine tekrar 12 eklenir ve toplam 24 olur.",
+                reasons: [
+                    "İlk tıklamada 12 olur, ancak ikinci tıklamada sıfırlanmadığı için üstüne eklenir.",
+                    "Doğru! Sınıf düzeyindeki toplam değişkeni metot başında sıfırlanmadığı için 12 + 12 = 24 olur.",
+                    "Kendisi hariç toplam değildir.",
+                    "Sıfırlama kodu yoktur."
+                ]
+            },
+            {
+                id: 95, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod parçasında 'kalan' değişkeninin değeri döngünün her adımında nasıl değişir? (sayi = 5 için)",
+                code: "int sayi = 5;\nfor (int i = 1; i <= sayi; i++)\n{\n    int kalan = sayi % i;\n}",
+                options: [
+                    "Sırasıyla: 0, 1, 2, 1, 0 değerlerini alır",
+                    "Her adımda 0 olur",
+                    "Sırasıyla: 5, 4, 3, 2, 1 değerlerini alır",
+                    "Her adımda 1 olur"
+                ],
+                ans: 0,
+                exp: "i=1 için 5%1 = 0; i=2 için 5%2 = 1; i=3 için 5%3 = 2; i=4 için 5%4 = 1; i=5 için 5%5 = 0 olur. Kalanın 0 olduğu adımlar (1 ve 5) tam bölenlerdir.",
+                reasons: [
+                    "Doğru! 5'in 1, 2, 3, 4, 5'e bölümünden kalanlar sırasıyla 0, 1, 2, 1, 0'dır.",
+                    "5 sayısı 2, 3 ve 4'e tam bölünmediği için kalan her adımda 0 olmaz.",
+                    "Çıkarma işlemi değil mod alma işlemi yapılmaktadır.",
+                    "1 ve 5'e bölümünden kalan 0'dır."
+                ]
+            },
+            {
+                id: 96, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki iki kod parçasından 1.si ile 2.si arasındaki fark nedir?",
+                code: "// 1. Kod:\ntextBox1.Text = \"3\" + \"5\";\n\n// 2. Kod:\nint s = 3 + 5;\ntextBox1.Text = s.ToString();",
+                options: [
+                    "İkisi de textBox1'e 8 yazar",
+                    "1. kod metin birleştirme yaptığı için '35' yazar; 2. kod tam sayıları matematiksel olarak topladığı için '8' yazar",
+                    "İkisi de '35' yazar",
+                    "1. kod hata verir"
+                ],
+                ans: 1,
+                exp: "Çift tırnak içindeki \"3\" ve \"5\" string (metin) olduğu için '+' operatörü bunları yan yana birleştirir (\"35\"). 2. kodda ise 3 ve 5 tam sayı (int) olduğu için matematiksel toplamları (8) hesaplanır.",
+                reasons: [
+                    "1. kodda tırnak içinde string ifadeler birleştirildiği için 8 yazmaz.",
+                    "Doğru! Stringlerde '+' yan yana birleştirir ('35'), sayısal türlerde '+' matematiksel toplama yapar ('8').",
+                    "2. kodda int toplama işlemi vardır, 8 yazar.",
+                    "1. kod geçerli bir string birleştirme işlemidir, hata vermez."
+                ]
+            },
+            {
+                id: 97, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki döngü tamamlandığında 'F' ve 'METİN' değişkenlerinin son değerleri ne olur?",
+                code: "double X = 3;\ndouble F = 1;\nstring METİN = \"\";\nfor (int j = 1; j <= X; j++)\n{\n    if (j == X) METİN += j.ToString();\n    if (j < X) METİN += j.ToString() + \"*\";\n    F *= j;\n}",
+                options: [
+                    "F = 6  /  METİN = \"1*2*3\"",
+                    "F = 6  /  METİN = \"1*2*3*\"",
+                    "F = 3  /  METİN = \"1*2*3\"",
+                    "F = 9  /  METİN = \"3*3\""
+                ],
+                ans: 0,
+                exp: "j=1 için METİN=\"1*\", F=1; j=2 için METİN=\"1*2*\", F=2; j=3 (j==X) için METİN=\"1*2*3\", F=6 olur.",
+                reasons: [
+                    "Doğru! 1*2*3 çarpımı F = 6 değerini ve \"1*2*3\" metnini üretir.",
+                    "j == X olduğunda sonuna '*' eklenmez.",
+                    "F = 1 * 1 * 2 * 3 = 6 olur.",
+                    "Karesi değil faktöriyeli hesaplanmaktadır."
+                ]
+            },
+            {
+                id: 98, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod bloğunda 'textBox1' içine '-24' girilirse ekranda hangi mesaj kutusu açılır?",
+                code: "int S = Convert.ToInt32(textBox1.Text);\nif (S % 2 == 0)\n    MessageBox.Show(S.ToString() + \" Sayısı ÇİFT Sayıdır\");\nelse\n    MessageBox.Show(S.ToString() + \" Sayısı TEK Sayıdır\");",
+                options: [
+                    "-24 Sayısı ÇİFT Sayıdır",
+                    "-24 Sayısı TEK Sayıdır",
+                    "-24 Sayısı NEGATİF",
+                    "Hata verir"
+                ],
+                ans: 0,
+                exp: "-24 sayısı 2'ye kalansız bölünür (-24 % 2 == 0 doğrudur). Bu nedenle '-24 Sayısı ÇİFT Sayıdır' mesajı gösterilir.",
+                reasons: [
+                    "Doğru! Negatif çift sayıların da 2'ye bölümünden kalan 0'dır.",
+                    "-24 tek sayı değildir.",
+                    "Bu kodda negatiflik kontrolü değil, S % 2 == 0 kontrolü vardır.",
+                    "Convert.ToInt32 negatif tam sayıları sorunsuz dönüştürür."
+                ]
+            },
+            {
+                id: 99, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Aşağıdaki kod bloğunda 'textBox1' içine '13' girilirse 'listBox1.Items.Count' değeri kaç olur ve hangi mesaj gösterilir?",
+                code: "listBox1.Items.Clear();\nsayi = Convert.ToInt32(textBox1.Text);\nfor (int i = 1; i <= sayi; i++)\n{\n    if (sayi % i == 0)\n        listBox1.Items.Add(i);\n}\nif (listBox1.Items.Count == 2 && sayi > 1)\n    MessageBox.Show(sayi.ToString() + \" Asal sayıdır.\");\nelse\n    MessageBox.Show(sayi.ToString() + \" Asal sayı değildir.\");",
+                options: [
+                    "Items.Count = 2 olur (1 ve 13) / '13 Asal sayıdır.' mesajı gösterilir",
+                    "Items.Count = 13 olur / '13 Asal sayı değildir.' mesajı gösterilir",
+                    "Items.Count = 1 olur / '13 Asal sayı değildir.' mesajı gösterilir",
+                    "Items.Count = 0 olur / '13 Asal sayıdır.' mesajı gösterilir"
+                ],
+                ans: 0,
+                exp: "13 asal bir sayı olduğu için 1 ile 13 arasında sadece 1 ve 13'e tam bölünür. listBox1'e 2 eleman eklenir (Items.Count == 2) ve '13 Asal sayıdır.' mesajı çıkar.",
+                reasons: [
+                    "Doğru! 13'ün tam bölenleri yalnızca 1 ve 13'tür; eleman sayısı 2 olduğu için asal sayı mesajı verir.",
+                    "Sadece tam bölenler (sayi % i == 0 olanlar) listBox1'e eklenmektedir.",
+                    "1 ve 13 olmak üzere 2 böleni vardır.",
+                    "Bölen sayısı 0 olamaz."
+                ]
+            },
+            {
+                id: 100, sec: "sec4", cat: "Bölüm 4: C# Kod Analizi ve Algoritmalar",
+                q: "Bir Windows Forms uygulamasında kullanıcının yaptığı tüm girişleri ve sonuç listesini tek bir 'Temizle' butonuyla sıfırlamak ve form ilk açıldığında da aynı temizliğin otomatik yapılmasını sağlamak için en uygun C# yapısı hangisidir?",
+                code: "private void buttonTemizle_Click(object sender, EventArgs e)\n{\n    textBox1.Clear();\n    textBox2.Clear();\n    listBox1.Items.Clear();\n    comboBox1.Text = \" \";\n}\n\nprivate void Form1_Load(object sender, EventArgs e)\n{\n    buttonTemizle.PerformClick();\n}",
+                options: [
+                    "Temizleme kodlarını Temizle butonunun Click olayına yazmak ve Form1_Load içinde 'buttonTemizle.PerformClick();' ile bu butonu tetiklemek",
+                    "Formu kapatıp yeniden açmak",
+                    "Sadece Form1_Load içine yazıp Temizle butonunu boş bırakmak",
+                    "InitializeComponent() metodunu silmek"
+                ],
+                ans: 0,
+                exp: "Temizleme komutlarını 'Temizle' butonuna yazıp Form1_Load içinde 'PerformClick()' çağırmak, aynı kodları iki yere tekrar yazmadan hem açılışta hem de butona basıldığında temizlik yapılmasını sağlar.",
+                reasons: [
+                    "Doğru! Kod tekrarını önleyen ve ders uygulamalarında da kullanılan en temiz yöntem budur.",
+                    "Formu kapatıp açmak doğru bir yöntem değildir.",
+                    "Temizle butonu boş bırakılırsa kullanıcı butona bastığında ekran temizlenmez.",
+                    "InitializeComponent() silinirse form üzerindeki hiçbir kontrol oluşmaz."
+                ]
+            }
+        ];
+
+        // ============================================================================
+        // UYGULAMA DURUMU (STATE)
+        // ============================================================================
+        let currentMode = 'study'; // 'study' | 'exam'
+        let examFinished = false;
+        let userAnswers = new Array(questionsData.length).fill(null); // Seçilen şık indeksleri (0-3 veya null)
+        let statusFilter = 'all'; // 'all' | 'wrong' | 'unanswered'
+
+        // Sınav Sayacı
+        let timerSeconds = 60 * 60; // 60 dakika
+        let timerInterval = null;
+        let timerRunning = false;
+
+        // Harf Karşılıkları
+        const optionLetters = ['A', 'B', 'C', 'D'];
+
+        // ============================================================================
+        // BAŞLANGIÇ YÜKLEMESİ
+        // ============================================================================
+        function initApp() {
+            renderNavGrid();
+            renderQuestions();
+            updateStats();
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+
+        // ============================================================================
+        // SORU HARİTASI (1 - 100) OLUŞTURMA VE GÜNCELLEME
+        // ============================================================================
+        function renderNavGrid() {
+            const grid = document.getElementById('questionNavGrid');
+            grid.innerHTML = '';
+            questionsData.forEach((item, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `navBtn-${idx}`;
+                btn.textContent = item.id;
+                btn.onclick = () => scrollToQuestion(item.id);
+                btn.className = getNavButtonClass(idx);
+                grid.appendChild(btn);
+            });
+        }
+
+        function getNavButtonClass(idx) {
+            const base = "h-7 rounded-md text-[11px] font-bold transition-all flex items-center justify-center border ";
+            const chosen = userAnswers[idx];
+            const correct = questionsData[idx].ans;
+
+            if (chosen === null) {
+                return base + "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-400";
+            }
+
+            if (currentMode === 'exam' && !examFinished) {
+                return base + "bg-blue-600 text-white border-blue-600 shadow-sm";
+            }
+
+            // Çalışma modu veya bitmiş sınav
+            if (chosen === correct) {
+                return base + "bg-emerald-500 text-white border-emerald-600";
+            } else {
+                return base + "bg-rose-500 text-white border-rose-600";
+            }
+        }
+
+        function scrollToQuestion(id) {
+            const card = document.getElementById(`qCard-${id}`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.classList.add('ring-2', 'ring-indigo-500');
+                setTimeout(() => card.classList.remove('ring-2', 'ring-indigo-500'), 1400);
+            }
+        }
+
+        // ============================================================================
+        // SORULARI EKRANA ÇİZME (RENDER)
+        // ============================================================================
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+            const catVal = document.getElementById('categoryFilter').value;
+
+            let visibleCount = 0;
+
+            questionsData.forEach((item, idx) => {
+                // Kategori filtresi
+                if (catVal !== 'all' && item.sec !== catVal) return;
+
+                // Arama filtresi
+                if (searchVal) {
+                    const hay = (item.q + ' ' + (item.code || '') + ' ' + item.options.join(' ') + ' ' + item.cat).toLowerCase();
+                    if (!hay.includes(searchVal)) return;
+                }
+
+                // Durum filtresi
+                const chosen = userAnswers[idx];
+                if (statusFilter === 'unanswered' && chosen !== null) return;
+                if (statusFilter === 'wrong') {
+                    if (currentMode === 'exam' && !examFinished) return; // Sınav bitmeden yanlışlar gizli
+                    if (chosen === null || chosen === item.ans) return;
+                }
+
+                visibleCount++;
+
+                const card = document.createElement('article');
+                card.id = `qCard-${item.id}`;
+                card.className = "bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700 transition-all";
+
+                // Üst rozet ve kategori
+                let statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">Cevaplanmadı</span>`;
+                if (chosen !== null) {
+                    if (currentMode === 'exam' && !examFinished) {
+                        statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">İşaretlendi (${optionLetters[chosen]})</span>`;
+                    } else if (chosen === item.ans) {
+                        statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300">✓ Doğru Cevap</span>`;
+                    } else {
+                        statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300">✗ Yanlış Cevap</span>`;
+                    }
+                } else if (currentMode === 'exam' && examFinished) {
+                    statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300">Boş Bırakıldı</span>`;
+                }
+
+                // Kod bloğu varsa oluştur
+                const codeHtml = item.code ? `
+                    <div class="my-3.5 rounded-xl overflow-hidden border border-slate-700 bg-slate-900 text-slate-100 shadow-inner">
+                        <div class="px-3.5 py-1.5 bg-slate-800/90 border-b border-slate-700 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                            <span>Form1.cs (C# Kodu)</span>
+                            <span>Soru #${item.id}</span>
+                        </div>
+                        <pre class="p-3.5 text-xs sm:text-sm overflow-x-auto leading-relaxed"><code>${escapeHtml(item.code)}</code></pre>
+                    </div>
+                ` : '';
+
+                // Şık Butonları
+                let optionsHtml = `<div class="grid grid-cols-1 gap-2.5 mt-4">`;
+                item.options.forEach((optText, optIdx) => {
+                    const btnStyle = getOptionButtonStyle(idx, optIdx);
+                    const badgeStyle = getOptionBadgeStyle(idx, optIdx);
+                    const iconRight = getOptionRightIcon(idx, optIdx);
+
+                    optionsHtml += `
+                        <button onclick="handleOptionClick(${idx}, ${optIdx})" class="option-btn w-full text-left p-3.5 rounded-xl border-2 flex items-start gap-3 ${btnStyle}">
+                            <span class="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center font-bold text-xs mt-0.5 ${badgeStyle}">
+                                ${optionLetters[optIdx]}
+                            </span>
+                            <span class="flex-1 text-sm sm:text-[15px] font-medium leading-snug">${escapeHtml(optText)}</span>
+                            ${iconRight}
+                        </button>
+                    `;
+                });
+                optionsHtml += `</div>`;
+
+                // Açıklama / Neden Yanlış Kutusu
+                const showFeedback = (currentMode === 'study' && chosen !== null) || (currentMode === 'exam' && examFinished);
+                let feedbackHtml = '';
+
+                if (showFeedback) {
+                    const isCorrect = chosen === item.ans;
+                    const isUnanswered = chosen === null;
+
+                    if (isCorrect) {
+                        feedbackHtml = `
+                            <div class="mt-4 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 text-sm space-y-1.5">
+                                <div class="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                                    <span>🎉 Tebrikler! Doğru Şık: ${optionLetters[item.ans]}</span>
+                                </div>
+                                <p class="text-emerald-900/90 dark:text-emerald-200 leading-relaxed">${escapeHtml(item.exp)}</p>
+                            </div>
+                        `;
+                    } else if (isUnanswered) {
+                        feedbackHtml = `
+                            <div class="mt-4 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-sm space-y-2">
+                                <div class="font-bold text-amber-800 dark:text-amber-300">
+                                    ⚠️ Bu soruyu boş bıraktınız. Doğru Şık: ${optionLetters[item.ans]} (${escapeHtml(item.options[item.ans])})
+                                </div>
+                                <p class="text-slate-700 dark:text-slate-200 leading-relaxed"><strong>Çözüm Açıklaması:</strong> ${escapeHtml(item.exp)}</p>
+                            </div>
+                        `;
+                    } else {
+                        // Yanlış şık seçildiğinde: Neden seçilen şık yanlış + Doğru çözüm + Diğer şıkların analizi
+                        feedbackHtml = `
+                            <div class="mt-4 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-sm space-y-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-rose-200/80 dark:border-rose-800/60 pb-2">
+                                    <span class="font-extrabold text-rose-700 dark:text-rose-300">
+                                        ❌ Seçtiğiniz ${optionLetters[chosen]} Şıkkı Neden Yanlış?
+                                    </span>
+                                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-md bg-emerald-600 text-white">
+                                        Doğru Cevap: ${optionLetters[item.ans]} Şıkkı
+                                    </span>
+                                </div>
+                                <div class="p-3 rounded-lg bg-white/80 dark:bg-slate-900/60 border border-rose-200 dark:border-rose-800/60 text-rose-900 dark:text-rose-200">
+                                    <strong>${optionLetters[chosen]} Şıkkı Analizi:</strong> ${escapeHtml(item.reasons[chosen])}
+                                </div>
+                                <div class="p-3 rounded-lg bg-emerald-100/70 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800/70 text-emerald-950 dark:text-emerald-200">
+                                    <strong>✓ Doğru Çözüm (${optionLetters[item.ans]}):</strong> ${escapeHtml(item.exp)}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                card.innerHTML = `
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-extrabold text-xs">Soru ${item.id}</span>
+                            <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">${escapeHtml(item.cat)}</span>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                        ${escapeHtml(item.q)}
+                    </h3>
+                    ${codeHtml}
+                    ${optionsHtml}
+                    ${feedbackHtml}
+                `;
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('visibleCountLabel').textContent = `${visibleCount} soru gösteriliyor`;
+
+            if (visibleCount === 0) {
+                container.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-10 text-center border border-slate-200 dark:border-slate-700">
+                        <div class="text-4xl mb-2">🔍</div>
+                        <h3 class="text-lg font-bold">Aramanıza veya filtrenize uygun soru bulunamadı</h3>
+                        <p class="text-sm text-slate-500 mt-1">Filtreleri sıfırlayarak tüm 100 soruyu tekrar görüntüleyebilirsiniz.</p>
+                        <button onclick="resetFilters()" class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold">Tüm Soruları Göster</button>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================================================
+        // ŞIK BUTONU STİL HESAPLAYICILARI
+        // ============================================================================
+        function getOptionButtonStyle(qIdx, optIdx) {
+            const chosen = userAnswers[qIdx];
+            const correct = questionsData[qIdx].ans;
+
+            // Henüz cevaplanmamış
+            if (chosen === null) {
+                if (currentMode === 'exam' && examFinished && optIdx === correct) {
+                    return "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200";
+                }
+                return "border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/60 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/40 dark:hover:bg-slate-700/60";
+            }
+
+            // Sınav modunda ve sınav henüz bitmediyse (Sadece seçilen mavi görünür)
+            if (currentMode === 'exam' && !examFinished) {
+                if (chosen === optIdx) {
+                    return "border-blue-600 bg-blue-50 dark:bg-blue-950/50 text-blue-900 dark:text-blue-200 shadow-sm";
+                }
+                return "border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 hover:border-blue-400";
+            }
+
+            // Çalışma modu VEYA bitmiş sınav modu (Doğru yeşil, yanlış kırmızı)
+            if (optIdx === correct) {
+                return "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-200 shadow-sm";
+            }
+            if (chosen === optIdx && chosen !== correct) {
+                return "border-rose-500 bg-rose-50 dark:bg-rose-950/50 text-rose-950 dark:text-rose-200";
+            }
+            return "border-slate-200/70 dark:border-slate-700/60 bg-slate-50/30 dark:bg-slate-800/30 opacity-65";
+        }
+
+        function getOptionBadgeStyle(qIdx, optIdx) {
+            const chosen = userAnswers[qIdx];
+            const correct = questionsData[qIdx].ans;
+
+            if (chosen === null) {
+                if (currentMode === 'exam' && examFinished && optIdx === correct) {
+                    return "bg-emerald-600 text-white";
+                }
+                return "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300";
+            }
+
+            if (currentMode === 'exam' && !examFinished) {
+                return chosen === optIdx ? "bg-blue-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300";
+            }
+
+            if (optIdx === correct) {
+                return "bg-emerald-600 text-white";
+            }
+            if (chosen === optIdx && chosen !== correct) {
+                return "bg-rose-600 text-white";
+            }
+            return "bg-slate-200 dark:bg-slate-700 text-slate-500";
+        }
+
+        function getOptionRightIcon(qIdx, optIdx) {
+            const chosen = userAnswers[qIdx];
+            const correct = questionsData[qIdx].ans;
+
+            if (currentMode === 'exam' && !examFinished) {
+                if (chosen === optIdx) {
+                    return `<span class="text-xs font-bold text-blue-600 dark:text-blue-400 self-center">Seçildi</span>`;
+                }
+                return '';
+            }
+
+            if (chosen !== null || (currentMode === 'exam' && examFinished)) {
+                if (optIdx === correct) {
+                    return `<span class="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 self-center">✓ Doğru</span>`;
+                }
+                if (chosen === optIdx && chosen !== correct) {
+                    return `<span class="text-xs font-extrabold text-rose-600 dark:text-rose-400 self-center">✗ Seçiminiz</span>`;
+                }
+            }
+            return '';
+        }
+
+        // ============================================================================
+        // ŞIK TIKLAMA İŞLEYİCİSİ
+        // ============================================================================
+        function handleOptionClick(qIdx, optIdx) {
+            // Sınav bittiyse sınav modunda değiştirmeye izin verme
+            if (currentMode === 'exam' && examFinished) return;
+
+            userAnswers[qIdx] = optIdx;
+
+            // Harita butonunu güncelle
+            const navBtn = document.getElementById(`navBtn-${qIdx}`);
+            if (navBtn) navBtn.className = getNavButtonClass(qIdx);
+
+            updateStats();
+            renderQuestions();
+        }
+
+        // ============================================================================
+        // İSTATİSTİKLERİ GÜNCELLEME
+        // ============================================================================
+        function updateStats() {
+            let correctCount = 0;
+            let wrongCount = 0;
+            let answeredCount = 0;
+
+            userAnswers.forEach((ans, idx) => {
+                if (ans !== null) {
+                    answeredCount++;
+                    if (ans === questionsData[idx].ans) {
+                        correctCount++;
+                    } else {
+                        wrongCount++;
+                    }
+                }
+            });
+
+            document.getElementById('statCorrect').textContent = correctCount;
+            document.getElementById('statWrong').textContent = wrongCount;
+            document.getElementById('statScore').textContent = correctCount;
+            document.getElementById('statAnsweredExam').textContent = answeredCount;
+        }
+
+        // ============================================================================
+        // MOD DEĞİŞTİRME (ÇALIŞMA MODU <-> SINAV MODU)
+        // ============================================================================
+        function switchMode(mode) {
+            currentMode = mode;
+            const btnStudy = document.getElementById('btnModeStudy');
+            const btnExam = document.getElementById('btnModeExam');
+            const studyStatsBar = document.getElementById('studyStatsBar');
+            const examControlsBar = document.getElementById('examControlsBar');
+            const modeInfoBox = document.getElementById('modeInfoBox');
+            const examResultBanner = document.getElementById('examResultBanner');
+
+            if (mode === 'study') {
+                stopTimer();
+                btnStudy.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-indigo-600 text-white shadow-sm";
+                btnExam.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-700 dark:text-slate-300 hover:text-slate-900";
+                studyStatsBar.classList.remove('hidden');
+                examControlsBar.classList.add('hidden');
+                examResultBanner.classList.add('hidden');
+                modeInfoBox.innerHTML = `<strong>⚡ Çalışma Modu Aktif:</strong> Şıklara tıkladığınız anda cevabınız kontrol edilir. Yanlış şık seçerseniz <em>neden yanlış olduğu</em> ve doğru çözüm anında açılır.`;
+            } else {
+                examFinished = false;
+                btnExam.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-indigo-600 text-white shadow-sm";
+                btnStudy.className = "px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-700 dark:text-slate-300 hover:text-slate-900";
+                studyStatsBar.classList.add('hidden');
+                examControlsBar.classList.remove('hidden');
+                examResultBanner.classList.add('hidden');
+                document.getElementById('btnFinishExam').classList.remove('hidden');
+                modeInfoBox.innerHTML = `<strong>📝 Sınav Modu Aktif:</strong> Soruları işaretleyin (cevaplar gizli tutulur). Bitirdiğinizde üstteki <strong>"🏁 Sınavı Bitir"</strong> butonuna basarak puanınızı ve yanlışlarınızın nedenlerini görün.`;
+                startTimer();
+            }
+
+            renderNavGrid();
+            renderQuestions();
+            updateStats();
+        }
+
+        // ============================================================================
+        // SINAVI BİTİRME VE KARNE HESAPLAMA
+        // ============================================================================
+        function finishExam() {
+            examFinished = true;
+            stopTimer();
+
+            let correctCount = 0;
+            let wrongCount = 0;
+            let emptyCount = 0;
+
+            userAnswers.forEach((ans, idx) => {
+                if (ans === null) {
+                    emptyCount++;
+                } else if (ans === questionsData[idx].ans) {
+                    correctCount++;
+                } else {
+                    wrongCount++;
+                }
+            });
+
+            document.getElementById('resTotalScore').textContent = `${correctCount} / 100`;
+            document.getElementById('resCorrectCount').textContent = correctCount;
+            document.getElementById('resWrongCount').textContent = wrongCount;
+            document.getElementById('resEmptyCount').textContent = emptyCount;
+
+            document.getElementById('examResultBanner').classList.remove('hidden');
+            document.getElementById('studyStatsBar').classList.remove('hidden');
+
+            renderNavGrid();
+            renderQuestions();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ============================================================================
+        // SAYAÇ (TIMER) İŞLEMLERİ
+        // ============================================================================
+        function startTimer() {
+            if (timerRunning) return;
+            timerRunning = true;
+            document.getElementById('btnTimerToggle').textContent = 'Duraklat';
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            timerRunning = false;
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('btnTimerToggle').textContent = 'Devam Et';
+        }
+
+        function toggleTimer() {
+            if (timerRunning) stopTimer();
+            else startTimer();
+        }
+
+        function updateTimerDisplay() {
+            const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+            const secs = String(timerSeconds % 60).padStart(2, '0');
+            document.getElementById('examTimerDisplay').textContent = `${mins}:${secs}`;
+        }
+
+        // ============================================================================
+        // FİLTRE VE SIFIRLAMA FONKSİYONLARI
+        // ============================================================================
+        function applyFilters() {
+            renderQuestions();
+        }
+
+        function setStatusFilter(status) {
+            statusFilter = status;
+            const ids = { all: 'fltAll', wrong: 'fltWrong', unanswered: 'fltUnanswered' };
+            Object.keys(ids).forEach(k => {
+                const el = document.getElementById(ids[k]);
+                if (k === status) {
+                    el.className = "py-1.5 px-2 rounded-lg bg-indigo-600 text-white";
+                } else {
+                    el.className = "py-1.5 px-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300";
+                }
+            });
+            renderQuestions();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = 'all';
+            setStatusFilter('all');
+        }
+
+        function resetAllProgress() {
+            userAnswers = new Array(questionsData.length).fill(null);
+            examFinished = false;
+            timerSeconds = 60 * 60;
+            updateTimerDisplay();
+            document.getElementById('examResultBanner').classList.add('hidden');
+            if (currentMode === 'exam') startTimer();
+            renderNavGrid();
+            renderQuestions();
+            updateStats();
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
